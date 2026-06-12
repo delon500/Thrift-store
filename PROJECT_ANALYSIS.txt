@@ -1,0 +1,392 @@
+PROJECT ANALYSIS
+Generated: 2026-06-10
+Workspace: D:\New Thrift\E-commerce-App
+
+1. HIGH-LEVEL OVERVIEW
+
+This repository is a three-part JavaScript application:
+
+- frontend: customer-facing Vite + React application.
+- admin: administrator Vite + React application.
+- backend: Express API server using PostgreSQL, JWT authentication, Cloudinary uploads, and OpenAI product image analysis.
+
+There is no root package.json. Each application is managed independently from its own folder.
+
+2. TOP-LEVEL STRUCTURE
+
+E-commerce-App
+|-- README.md
+|-- .gitignore
+|-- PROJECT_ANALYSIS.txt
+|-- frontend
+|   |-- package.json
+|   |-- package-lock.json
+|   |-- vite.config.js
+|   |-- eslint.config.js
+|   |-- index.html
+|   |-- README.md
+|   `-- src
+|       |-- App.jsx
+|       |-- main.jsx
+|       |-- index.css
+|       |-- app
+|       |-- assets
+|       |-- components
+|       |-- data
+|       |-- features
+|       |-- layout
+|       |-- lib
+|       `-- pages
+|-- admin
+|   |-- package.json
+|   |-- package-lock.json
+|   |-- vite.config.js
+|   |-- eslint.config.js
+|   |-- index.html
+|   |-- README.md
+|   |-- public
+|   `-- src
+|       |-- App.jsx
+|       |-- main.jsx
+|       |-- index.css
+|       |-- app
+|       |-- assets
+|       |-- components
+|       |-- data
+|       |-- features
+|       |-- layout
+|       |-- lib
+|       `-- pages
+`-- backend
+    |-- package.json
+    |-- package-lock.json
+    |-- server.js
+    |-- config
+    |-- controllers
+    |-- middleware
+    `-- routes
+
+3. FRONTEND APPLICATION
+
+Path: frontend
+Type: Vite React single-page application.
+API base URL: http://localhost:5000/api
+Entry files:
+- src/main.jsx
+- src/App.jsx
+- src/app/router.jsx
+- src/lib/axios.js
+
+Scripts:
+- npm run dev: start Vite development server.
+- npm run build: build production assets.
+- npm run lint: run ESLint.
+- npm run preview: preview production build.
+
+Main runtime dependencies:
+- @fontsource/lexend: Lexend font package.
+- @tailwindcss/vite: Tailwind CSS Vite integration.
+- @tanstack/react-query: server state and async request management.
+- axios: HTTP client.
+- react and react-dom: React UI runtime.
+- react-router-dom: client-side routing.
+- react-toastify: toast notifications.
+- tailwindcss: utility CSS framework.
+- zustand: lightweight client state stores.
+
+Main dev dependencies:
+- @eslint/js
+- @types/react
+- @types/react-dom
+- @vitejs/plugin-react
+- eslint
+- eslint-plugin-react-hooks
+- eslint-plugin-react-refresh
+- globals
+- vite
+
+Frontend feature folders:
+- auth: login/register API, form components, auth hook, auth store, AuthPage.
+- cart: cart page, cart item component, cart store.
+- home: product detail page and product card.
+- institutions: institutions API client.
+- lostItems: LostAndFound page.
+- products: product API, hook, product store.
+- sell: seller pages including add product, create shop, my products, sell home.
+- settings: settings page.
+- thriftStore: thrift store page.
+- wishlist: wishlist page and wishlist store.
+
+Frontend routes:
+- / -> AuthPage inside PublicLayout.
+- /products -> HomePage.
+- /cart -> Cart.
+- /sell -> SellItemHomePage.
+- /wishlist -> WishlistPage.
+- /products/:id -> Product.
+- /lost-found -> LostAndFound.
+- /thrift-store -> ThriftStore.
+- /settings -> Settings.
+- /auth -> AuthPage.
+
+4. ADMIN APPLICATION
+
+Path: admin
+Type: Vite React single-page application.
+API base URL: http://localhost:5000/api
+Entry files:
+- src/main.jsx
+- src/App.jsx
+- src/app/router.jsx
+- src/lib/axios.js
+
+Scripts:
+- npm run dev: start Vite development server.
+- npm run build: build production assets.
+- npm run lint: run ESLint.
+- npm run preview: preview production build.
+
+Main runtime dependencies:
+- @fontsource/lexend
+- @tailwindcss/vite
+- @tanstack/react-query
+- axios
+- react
+- react-dom
+- react-router-dom
+- react-toastify
+- tailwindcss
+- zustand
+
+Main dev dependencies:
+- @eslint/js
+- @types/react
+- @types/react-dom
+- @vitejs/plugin-react
+- eslint
+- eslint-plugin-react-hooks
+- eslint-plugin-react-refresh
+- globals
+- vite
+
+Admin feature folders:
+- auth: admin auth API, auth page, auth store, auth hook.
+- components: shared LoginForm.
+- institutions: institutions API client.
+- ItemManagement: lost-and-found/item management pages and components.
+- product: product API, hook, product store.
+- registerUsers: admin registration flows for staff, school, parent, university, and student.
+
+Admin routes:
+- / -> AuthPage.
+- /admin -> AdminHome inside AdminLayout.
+- /admin/lost-and-found-management -> ItemManagementHomePage.
+- /admin/lost-and-found-management/add-items -> AddItems.
+- /admin/register-users -> RegisterUsersHomePage.
+- /admin/register-users/staff -> RegisterStaff.
+- /admin/register-users/school -> RegisterSchool.
+- /admin/register-users/parent -> RegisterParent.
+- /admin/register-users/university -> RegisterUniversity.
+- /admin/register-users/student -> RegisterStudent.
+- * -> AdminNotFoundPage.
+
+5. BACKEND APPLICATION
+
+Path: backend
+Type: Express API server using ES modules.
+Entry file: backend/server.js
+Default port: process.env.PORT or 5000.
+
+Scripts:
+- npm start: run node server.js.
+- npm run dev: run nodemon server.js.
+
+Main runtime dependencies:
+- bcrypt: password hashing.
+- cloudinary: image upload hosting.
+- cors: API CORS middleware.
+- dotenv: environment variable loading.
+- express: HTTP API framework.
+- jsonwebtoken: JWT creation and validation.
+- multer: multipart/form-data file uploads.
+- nodemon: development server auto-reload.
+- openai: OpenAI API client for product image analysis.
+- pg: PostgreSQL client.
+- validator: validation helper library.
+
+Backend folders:
+- config: database pool and Cloudinary configuration.
+- controllers: request handlers and database logic.
+- middleware: JWT role protection and multer upload config.
+- routes: Express routers for auth, institutions, parents, products, and students.
+
+Backend mounted routes:
+- /api/auth
+- /api/institutions
+- /api/parents
+- /api/products
+- /api/students
+
+Backend route details:
+- POST /api/auth/register/student-parent
+- POST /api/auth/register/institution
+- POST /api/auth/login
+- POST /api/auth/admin/login
+- POST /api/auth/admin/register/staff
+- GET /api/institutions
+- POST /api/institutions/admin/register/institution
+- POST /api/parents/register
+- POST /api/products/analyze
+- POST /api/products
+- GET /api/products
+- POST /api/students/admin/register/student
+
+Backend environment variables used:
+- PORT
+- DATABASE_URL
+- JWT_SECRET
+- CLOUDINARY_NAME
+- CLOUDINARY_API_KEY
+- CLOUDINARY_SECRET_KEY
+- OPENAI_API_KEY
+
+Backend data stores and external services:
+- PostgreSQL via pg Pool, using DATABASE_URL.
+- Cloudinary for uploaded product images.
+- OpenAI Responses API for product image analysis.
+
+6. API CONNECTIONS FROM CLIENTS
+
+Both frontend and admin create an Axios instance pointed at:
+
+http://localhost:5000/api
+
+Frontend API usage:
+- POST /auth/register/student-parent
+- POST /auth/register/institution
+- POST /auth/login
+- GET /institutions
+- GET /products with Bearer token.
+
+Admin API usage:
+- POST /auth/admin/login
+- POST /auth/admin/register/staff with Bearer token.
+- POST /institutions/admin/register/institution with Bearer token.
+- POST /parents/register with Bearer token.
+- POST /students/admin/register/student with Bearer token.
+- POST /products/analyze with multipart images and Bearer token.
+- POST /products with multipart form data/images and Bearer token.
+- GET /institutions
+
+7. DATABASE TABLES REFERENCED BY CODE
+
+The backend code references these PostgreSQL tables:
+- users
+- institutions
+- products
+- product_images
+
+The repository scan did not find migration files or SQL schema files. The database must be created outside this repository or added later.
+
+8. AUTHORIZATION MODEL
+
+JWT tokens are generated in backend/controllers/authController.js.
+The token payload includes:
+- id
+- role
+- institution_id
+- status
+
+Middleware:
+- protect: requires Authorization: Bearer <token>.
+- allowRoles(...roles): restricts protected routes by req.user.role.
+
+Admin-only examples:
+- Register staff.
+- Register institution from admin.
+- Register parent.
+- Register student.
+- Analyze product images.
+- Create products.
+
+9. STATIC ASSETS
+
+Frontend assets:
+- src/assets/icon: PNG icons for navigation, cart, products, settings, wishlist, etc.
+- src/assets/images: product/auth/home images.
+
+Admin assets:
+- public: favicon.svg and icons.svg.
+- src/assets/icons: admin dashboard and item-management icons.
+- src/assets/images: upload placeholder images.
+
+10. LOCKFILES AND PACKAGE MANAGEMENT
+
+Each subproject has its own package-lock.json:
+- frontend/package-lock.json
+- admin/package-lock.json
+- backend/package-lock.json
+
+This indicates npm is the expected package manager for all three parts.
+
+No pnpm-lock.yaml or yarn.lock was found in the tracked source scan.
+
+11. NOTABLE OBSERVATIONS
+
+- There is no root workspace setup, so frontend, admin, and backend must be installed and run separately.
+- The root .gitignore currently ignores .idea, .vscode, .env, and AGENTS.md, but it does not list node_modules. If node_modules is not globally ignored, it can accidentally be committed.
+- The backend uses environment variables but no .env.example file is present.
+- The backend references PostgreSQL tables, but no schema or migration directory was found.
+- backend/controllers/authController.js uses institution_id in registerStudentParent without destructuring it from req.body, which can break student/parent registration.
+- frontend/src/features/auth/api/authApi.js defines registerInstitution without a formData parameter but uses formData inside the function.
+- Product image uploads are handled by multer disk storage and uploaded to Cloudinary, but temporary local upload cleanup is not visible in the scanned code.
+- backend/package.json lists nodemon under dependencies instead of devDependencies.
+- Both frontend and admin hard-code http://localhost:5000/api instead of reading the API URL from environment configuration.
+
+12. HOW TO RUN LOCALLY
+
+Install dependencies separately:
+
+cd backend
+npm install
+
+cd ../frontend
+npm install
+
+cd ../admin
+npm install
+
+Run backend:
+
+cd backend
+npm run dev
+
+Run frontend:
+
+cd frontend
+npm run dev
+
+Run admin:
+
+cd admin
+npm run dev
+
+Required backend .env values:
+
+PORT=5000
+DATABASE_URL=<postgres connection string>
+JWT_SECRET=<jwt secret>
+CLOUDINARY_NAME=<cloudinary cloud name>
+CLOUDINARY_API_KEY=<cloudinary api key>
+CLOUDINARY_SECRET_KEY=<cloudinary secret key>
+OPENAI_API_KEY=<openai api key>
+
+13. SUMMARY
+
+The project is organized as a split full-stack ecommerce/thrift platform:
+
+- frontend serves students, parents, and general users.
+- admin serves administrators managing users, institutions, products, and lost/found items.
+- backend exposes the shared API, handles authentication, connects to PostgreSQL, uploads images through Cloudinary, and uses OpenAI to analyze product photos.
+
+The folder layout is understandable and feature-based in both React apps. The main missing project-level pieces are root orchestration, database schema/migrations, environment documentation, and a few small API implementation fixes.

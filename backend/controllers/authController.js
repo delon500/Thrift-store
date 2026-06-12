@@ -1,0 +1,378 @@
+import pool from "../config/db.js";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+
+const generateToken = (user) => {
+  return jwt.sign(
+    {
+      id: user.id,
+      role: user.role,
+      institution_id: user.institution_id,
+      status: user.status,
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: "1d" },
+  );
+};
+
+const registerStudentParent = async (req, res) => {
+  try {
+    const {
+      full_name,
+      email,
+      contact_number,
+      password,
+      confirm_password,
+      role,
+    } = req.body;
+
+    if (
+      !full_name ||
+      !email ||
+      !contact_number ||
+      !institution_id ||
+      !password ||
+      !confirm_password ||
+      !role
+    ) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    if (!["student", "parent"].includes(role)) {
+      return res.status(400).json({ message: "Invalid role" });
+    }
+
+    if (password !== confirm_password) {
+      return res.status(400).json({ message: "Passwords do not match" });
+    }
+
+    const existingUser = await pool.query(
+      "SELECT * FROM users WHERE email = $1",
+      [email],
+    );
+
+    if (existingUser.rows.length > 0) {
+      return res.status(400).json({ message: "Email already exists" });
+    }
+
+    const institutionCheck = await pool.query(
+      "SELECT * FROM institutions WHERE id = $1",
+      [institution_id],
+    );
+    if (institutionCheck.rows.length === 0) {
+      return res.status(404).json({ message: "Institution not found" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const password_hash = await bcrypt.hash(password, salt);
+
+    const newUser = await pool.query(
+      `INSERT INTO users (role, full_name, email, contact_number, password_hash, institution_id, status) VALUES ($1, $2, $3, $4, $5, $6, 'pending') RETURNING id, role, full_name, email, contact_number, institution_id, status`,
+      [role, full_name, email, contact_number, password_hash, institution_id],
+    );
+
+    res.status(201).json({
+      message: "Registration successful. Awaiting admin approval.",
+      user: newUser.rows[0],
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+const registerInstitution = async (req, res) => {
+  try {
+    const {
+      contact_person_name,
+      contact_email,
+      contact_number,
+      institution_name,
+      registration_number,
+      institution_phone,
+      institution_type,
+      password,
+      confirm_password,
+      role,
+    } = req.body;
+
+    if (
+      !contact_person_name ||
+      !contact_email ||
+      !contact_number ||
+      !institution_name ||
+      !institution_phone ||
+      !institution_type ||
+      !password ||
+      !confirm_password ||
+      !role
+    ) {
+      return res
+        .status(400)
+        .json({ message: "All required fields must be filled" });
+    }
+
+    if (!["school", "university"].includes(role)) {
+      return res.status(400).json({ message: "Invalid role" });
+    }
+
+    if (password !== confirm_password) {
+      return res.status(400).json({ message: "Passwords do not match" });
+    }
+
+    const existingInstitution = await pool.query(
+      "SELECT * FROM institutions WHERE contact_email = $1",
+      [contact_email],
+    );
+
+    if (existingInstitution.rows.length > 0) {
+      return res
+        .status(400)
+        .json({ message: "Institution email already exists" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const password_hash = await bcrypt.hash(password, salt);
+
+    const institutionResult = await pool.query(
+      `INSERT INTO institutions (
+        institution_name, institution_type, registration_number,
+        contact_person_name, contact_email, contact_number, institution_phone, status
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending')
+      RETURNING *`,
+      [
+        institution_name,
+        institution_type,
+        registration_number || null,
+        contact_person_name,
+        contact_email,
+        contact_number,
+        institution_phone,
+      ],
+    );
+
+    const institution = institutionResult.rows[0];
+
+    const userResult = await pool.query(
+      `INSERT INTO users (
+        role, full_name, email, contact_number, password_hash, institution_id, status
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, 'pending')
+      RETURNING id, role, full_name, email, contact_number, institution_id, status`,
+      [
+        role,
+        contact_person_name,
+        contact_email,
+        contact_number,
+        password_hash,
+        institution.id,
+      ],
+    );
+    res.status(201).json({
+      message: "Institution registration successful. Awaiting admin approval.",
+      institution,
+      user: userResult.rows[0],
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res
+        .status(400)
+        .json({ message: "Email and password are required" });
+    }
+
+    const userResult = await pool.query(
+      `
+  SELECT 
+    users.id,
+    users.role,
+    users.full_name,
+    users.email,
+    users.password_hash,
+    users.institution_id,
+    users.status,
+    institutions.institution_name
+  FROM users
+  LEFT JOIN institutions 
+    ON users.institution_id = institutions.id
+  WHERE users.email = $1
+  `,
+      [email],
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    const user = userResult.rows[0];
+    const isMatch = await bcrypt.compare(password, user.password_hash);
+
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    if (user.status !== "approved" && user.role !== "admin") {
+      return res.status(403).json({ message: "Account not yet approved" });
+    }
+
+    const token = generateToken(user);
+
+    res.json({
+      message: "Login successful",
+      token,
+      user: {
+        id: user.id,
+        role: user.role,
+        full_name: user.full_name,
+        email: user.email,
+        institution_id: user.institution_id,
+        institution_name: user.institution_name,
+        status: user.status,
+      },
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const registerAdmin = async (req, res) => {
+  try {
+    const {
+      full_name,
+      email,
+      contact_number,
+      password,
+      confirm_password,
+      role = "admin",
+      institution_id,
+    } = req.body;
+
+    if (
+      !full_name ||
+      !email ||
+      !contact_number ||
+      !password ||
+      !confirm_password
+    ) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    if (role !== "admin") {
+      return res
+        .status(400)
+        .json({ message: "Only admin role can be created here" });
+    }
+
+    if (password !== confirm_password) {
+      return res.status(400).json({ message: "Passwords do not match" });
+    }
+
+    const existingUser = await pool.query(
+      "SELECT * FROM users WHERE email = $1",
+      [email],
+    );
+
+    if (existingUser.rows.length > 0) {
+      return res.status(400).json({ message: "Email already exists" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const password_hash = await bcrypt.hash(password, salt);
+
+    const newAdmin = await pool.query(
+      `INSERT INTO users (
+        role,
+        full_name,
+        email,
+        contact_number,
+        password_hash,
+        institution_id,
+        status
+      )
+      VALUES (
+        'admin',
+        $1,
+        $2,
+        $3,
+        $4,
+        NULL,
+        'approved'
+      )
+      RETURNING id, role, full_name, email, contact_number, status`,
+      [full_name, email, contact_number, password_hash],
+    );
+
+    return res.status(201).json({
+      message: "Admin registered successfully",
+      user: newAdmin.rows[0],
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Server error", error: error.message });
+  }
+};
+
+const adminLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res
+        .status(400)
+        .json({ message: "Email and password are required" });
+    }
+
+    const userResult = await pool.query(
+      "SELECT * FROM users WHERE email = $1 AND role = 'admin'",
+      [email],
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(401).json({ message: "Invalid admin credentials" });
+    }
+
+    const admin = userResult.rows[0];
+    const isMatch = await bcrypt.compare(password, admin.password_hash);
+
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid admin credentials" });
+    }
+
+    if (admin.status !== "approved") {
+      return res.status(403).json({ message: "Admin account not approved" });
+    }
+
+    const token = generateToken(admin);
+
+    return res.json({
+      message: "Admin login successful",
+      token,
+      user: {
+        id: admin.id,
+        role: admin.role,
+        full_name: admin.full_name,
+        email: admin.email,
+        institution_id: admin.institution_id,
+        status: admin.status,
+      },
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Server error", error: error.message });
+  }
+};
+export {
+  registerStudentParent,
+  registerInstitution,
+  login,
+  adminLogin,
+  registerAdmin,
+};
