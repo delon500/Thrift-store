@@ -11,15 +11,17 @@ const normalizeMode = () =>
 const encodePayFastValue = (value) =>
   encodeURIComponent(String(value).trim()).replace(/%20/g, "+");
 
-const buildSignatureString = (fields, passphrase = "") => {
+const buildSignatureString = (fields, passphrase = "", { skipEmpty = true } = {}) => {
   const pairs = Object.entries(fields)
-    .filter(
-      ([key, value]) =>
-        key !== "signature" &&
-        value !== undefined &&
-        value !== null &&
-        String(value).trim() !== "",
-    )
+    .filter(([key, value]) => {
+      if (key === "signature") return false;
+      if (value === undefined || value === null) return false;
+      // Outgoing payment requests omit blank fields (skipEmpty), but PayFast
+      // signs every posted field — including blank ones — when it sends an ITN,
+      // so signature verification must keep them.
+      if (skipEmpty && String(value).trim() === "") return false;
+      return true;
+    })
     .map(([key, value]) => `${key}=${encodePayFastValue(value)}`);
 
   if (passphrase) {
@@ -29,10 +31,10 @@ const buildSignatureString = (fields, passphrase = "") => {
   return pairs.join("&");
 };
 
-const generatePayFastSignature = (fields, passphrase = "") =>
+const generatePayFastSignature = (fields, passphrase = "", options) =>
   crypto
     .createHash("md5")
-    .update(buildSignatureString(fields, passphrase))
+    .update(buildSignatureString(fields, passphrase, options))
     .digest("hex");
 
 const getPayFastConfig = () => {
@@ -106,7 +108,11 @@ const createPayFastPayment = ({ order, user, summary, method, req }) => {
 
 const verifyPayFastSignature = (payload) => {
   const config = getPayFastConfig();
-  const expectedSignature = generatePayFastSignature(payload, config.passphrase);
+  // PayFast signs every posted field, including blanks, so do not skip empty
+  // values when recomputing the signature for an incoming ITN.
+  const expectedSignature = generatePayFastSignature(payload, config.passphrase, {
+    skipEmpty: false,
+  });
 
   return payload.signature === expectedSignature;
 };

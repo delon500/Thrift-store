@@ -1,6 +1,14 @@
 import pool from "../config/db.js";
 import { calculateCartSummary } from "./cartController.js";
 import { createPayFastPayment } from "../services/payfastService.js";
+import {
+  releaseCollectionOrder,
+  releaseExpiredOrders,
+} from "./paymentController.js";
+
+// How long a checkout holds its items as "Pending" before the hold lapses and
+// the items are returned to the store.
+const CHECKOUT_EXPIRY_MINUTES = 30;
 
 const PAYMENT_METHODS = [
   { id: "card", label: "Card", provider: "payfast", type: "gateway" },
@@ -80,6 +88,10 @@ const createCheckout = async (req, res) => {
   try {
     const method = getPaymentMethod(req.body.payment_method);
 
+    // Reclaim items from abandoned/expired holds before reading availability,
+    // so a previous lapsed checkout never blocks a fresh one.
+    await releaseExpiredOrders();
+
     await client.query("BEGIN");
 
     const rows = await getActiveCartRows(client, req.user.id);
@@ -124,9 +136,13 @@ const createCheckout = async (req, res) => {
         subtotal,
         service_fee,
         total,
-        collection_note
+        collection_note,
+        expires_at
       )
-      VALUES ($1, $2, 'payment_pending', $3, $4, $5, $6, $7, $8)
+      VALUES (
+        $1, $2, 'payment_pending', $3, $4, $5, $6, $7, $8,
+        now() + make_interval(mins => $9)
+      )
       RETURNING *`,
       [
         req.user.id,
@@ -137,6 +153,7 @@ const createCheckout = async (req, res) => {
         summary.service_fee,
         summary.total,
         req.body.collection_note || null,
+        CHECKOUT_EXPIRY_MINUTES,
       ],
     );
     const order = orderResult.rows[0];
@@ -241,7 +258,46 @@ const createCheckout = async (req, res) => {
   }
 };
 
+// Releases a pending checkout when the user returns from a cancelled payment,
+// so the held items go straight back to the store instead of waiting to expire.
+const cancelCheckout = async (req, res) => {
+  try {
+    const result = await releaseCollectionOrder({
+      orderReference: req.params.orderReference,
+      userId: req.user.id,
+      toStatus: "cancelled",
+    });
+
+    if (!result.released) {
+      if (result.reason === "not_found") {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      if (result.reason === "forbidden") {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      // Already paid, cancelled, or expired — nothing to release.
+      return res.status(200).json({
+        message: "Order is no longer pending payment",
+        status: result.status,
+      });
+    }
+
+    return res.json({
+      message: "Checkout cancelled and items released",
+      order_reference: req.params.orderReference,
+      status: result.status,
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Failed to cancel checkout", error: error.message });
+  }
+};
+
 export {
+  cancelCheckout,
   createCheckout,
   getPaymentMethod,
   getPaymentMethods,

@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useServerCart } from "../../cart/hooks/useCart";
 import { useProductStore } from "../../products/store/productStore";
 import {
+  useCancelCheckout,
   useCreateCheckout,
   usePaymentMethods,
 } from "../hooks/useCheckout";
@@ -29,11 +30,13 @@ const Checkout = () => {
   const { data: paymentMethods = [], isLoading: methodsLoading } =
     usePaymentMethods();
   const createCheckoutMutation = useCreateCheckout();
+  const cancelCheckoutMutation = useCancelCheckout();
   const [formData, setFormData] = useState({
     payment_method: "card",
     collection_note: "",
   });
   const [checkout, setCheckout] = useState(null);
+  const cancelTriggeredRef = useRef(false);
 
   const items = cart?.items || [];
   const summary = cart?.summary || {};
@@ -41,6 +44,21 @@ const Checkout = () => {
   const returnedOrderReference = searchParams.get("order_reference");
   const gateway = checkout?.payment_gateway;
   const gatewayFields = gateway?.form_fields || {};
+
+  // When the user returns from a cancelled PayFast payment, release the held
+  // items immediately instead of waiting for the checkout hold to expire.
+  const { mutate: cancelCheckout } = cancelCheckoutMutation;
+
+  useEffect(() => {
+    if (
+      paymentState === "cancelled" &&
+      returnedOrderReference &&
+      !cancelTriggeredRef.current
+    ) {
+      cancelTriggeredRef.current = true;
+      cancelCheckout(returnedOrderReference);
+    }
+  }, [paymentState, returnedOrderReference, cancelCheckout]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -71,20 +89,29 @@ const Checkout = () => {
         <p className="mt-3 text-on-surface-variant">
           {paymentState === "success"
             ? "PayFast will confirm the payment through the ITN webhook. Once confirmed, the order moves to ready for collection."
-            : "The PayFast payment was cancelled before completion. The order reference below can be checked by the admin team."}
+            : "The PayFast payment was cancelled before completion. Your reserved items have been released back to the store, so you can start a new checkout whenever you're ready."}
         </p>
         {returnedOrderReference ? (
           <p className="mt-4 rounded-lg bg-surface-container-low p-4 font-bold text-primary">
             Order reference: {returnedOrderReference}
           </p>
         ) : null}
-        <button
-          type="button"
-          onClick={() => navigate("/products")}
-          className="mt-6 rounded-full bg-primary px-5 py-3 font-bold text-on-primary"
-        >
-          Back to products
-        </button>
+        <div className="mt-6 flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() => navigate("/orders")}
+            className="rounded-full bg-primary px-5 py-3 font-bold text-on-primary"
+          >
+            View my orders
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate("/products")}
+            className="rounded-full border border-outline-variant px-5 py-3 font-bold text-on-surface"
+          >
+            Back to products
+          </button>
+        </div>
       </div>
     );
   }

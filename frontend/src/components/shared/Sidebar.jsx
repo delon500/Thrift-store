@@ -53,6 +53,14 @@ const Sidebar = () => {
             </>
           )}
         </NavLink>
+        <NavLink to="/orders" className={linkClass}>
+          {() => (
+            <>
+              <img src={icons.order_icon} alt="My Orders" className="w-6 h-6" />
+              My Orders
+            </>
+          )}
+        </NavLink>
         <NavLink to="/lost-found" className={linkClass}>
           {({ isActive }) => (
             <>

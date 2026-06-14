@@ -70,6 +70,32 @@ test("verifyPayFastSignature accepts matching PayFast payload signatures", () =>
   });
 });
 
+test("verifyPayFastSignature accepts ITN payloads that include blank fields", () => {
+  withPayFastEnv(() => {
+    // PayFast posts blank custom_* fields in its ITN and signs them. The
+    // verification must keep these blanks or every real ITN is rejected.
+    const payload = {
+      m_payment_id: "ORD-2026-000018",
+      pf_payment_id: "3221275",
+      payment_status: "COMPLETE",
+      amount_gross: "46.50",
+      custom_str1: "card",
+      custom_str2: "",
+      custom_str3: "",
+      name_last: "",
+      email_address: "test@gmail.com",
+    };
+
+    const signature = generatePayFastSignature(
+      payload,
+      process.env.PAYFAST_PASSPHRASE,
+      { skipEmpty: false },
+    );
+
+    assert.equal(verifyPayFastSignature({ ...payload, signature }), true);
+  });
+});
+
 test("isMatchingAmount compares payment amounts to two decimals", () => {
   assert.equal(isMatchingAmount("150", "150.00"), true);
   assert.equal(isMatchingAmount("150.01", "150.00"), false);
