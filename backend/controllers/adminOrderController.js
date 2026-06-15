@@ -1,4 +1,5 @@
 import pool from "../config/db.js";
+import { logActivity } from "../services/activityLog.js";
 
 const listOrders = async (_req, res) => {
   try {
@@ -107,6 +108,15 @@ const markCollected = async (req, res) => {
     );
 
     await client.query("COMMIT");
+
+    logActivity({
+      action: "order.collected",
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      entityType: "order",
+      entityRef: order.order_reference,
+      description: `Order ${order.order_reference} marked collected`,
+    });
 
     return res.json({
       message: "Order marked as collected",

@@ -81,6 +81,46 @@ export const register_user_action_card = [
   },
 ];
 
+// `to` is relative — CardActions prepends "/admin/". The last path segment is
+// the backend user role (admin = staff).
+export const registered_user_action_card = [
+  {
+    name: "Registered Schools",
+    description: "View every school registered on the platform.",
+    color: "#dbf0ee",
+    icons: icons.admin_school_icon,
+    to: "registered-users/school",
+  },
+  {
+    name: "Registered Universities",
+    description: "View every university registered on the platform.",
+    color: "#d4e6e5",
+    icons: icons.admin_university_icon,
+    to: "registered-users/university",
+  },
+  {
+    name: "Staff Members",
+    description: "View platform staff and administrators.",
+    color: "#d4e6e5",
+    icons: icons.admin_staff_icon,
+    to: "registered-users/admin",
+  },
+  {
+    name: "Registered Students",
+    description: "View every registered student.",
+    color: "#ffe6e4",
+    icons: icons.admin_student_icon,
+    to: "registered-users/student",
+  },
+  {
+    name: "Registered Parents",
+    description: "View every registered parent.",
+    color: "#dbf0ee",
+    icons: icons.admin_parent_icon,
+    to: "registered-users/parent",
+  },
+];
+
 export const condition_card = [
   { key: "Excellent", name: "Excellent", icon: icons.excellent_condition_icon },
   { key: "Good", name: "Good", icon: icons.good_condition_icon },

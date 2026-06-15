@@ -1,4 +1,5 @@
 import pool from "../config/db.js";
+import { logActivity } from "../services/activityLog.js";
 
 // Every query here is scoped to the authenticated staff member's institution,
 // so a school only ever sees and acts on its own collections.
@@ -175,6 +176,16 @@ const markCollected = async (req, res) => {
     );
 
     await client.query("COMMIT");
+
+    logActivity({
+      action: "order.collected",
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      institutionId: req.user.institution_id,
+      entityType: "order",
+      entityRef: req.params.orderReference,
+      description: `Order ${req.params.orderReference} collected`,
+    });
 
     return res.json({
       message: "Order marked as collected",

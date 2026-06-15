@@ -3,6 +3,7 @@ import {
   isMatchingAmount,
   verifyPayFastSignature,
 } from "../services/payfastService.js";
+import { logActivity } from "../services/activityLog.js";
 
 const markOrderPaid = async ({ orderReference, providerPaymentId, rawPayload }) => {
   const client = await pool.connect();
@@ -79,6 +80,15 @@ const markOrderPaid = async ({ orderReference, providerPaymentId, rawPayload }) 
     );
 
     await client.query("COMMIT");
+
+    logActivity({
+      action: "order.paid",
+      actorId: order.user_id,
+      entityType: "order",
+      entityId: order.id,
+      entityRef: order.order_reference,
+      description: `Payment received for ${order.order_reference}`,
+    });
 
     return order;
   } catch (error) {
@@ -233,6 +243,15 @@ const releaseCollectionOrder = async ({
     );
 
     await client.query("COMMIT");
+
+    logActivity({
+      action: toStatus === "expired" ? "order.expired" : "order.cancelled",
+      actorId: order.user_id,
+      entityType: "order",
+      entityId: order.id,
+      entityRef: orderReference,
+      description: `Order ${orderReference} ${toStatus}`,
+    });
 
     return { released: true, status: toStatus, productIds };
   } catch (error) {

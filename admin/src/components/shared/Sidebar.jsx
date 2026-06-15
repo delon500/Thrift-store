@@ -33,6 +33,17 @@ const Sidebar = () => {
         <p className="hidden md:block text-gray-500">Registration Requests</p>
       </NavLink>
       <NavLink
+        to={"/admin/registered-users"}
+        className="flex items-center gap-3 px-3 py-2"
+      >
+        <img
+          src={icons.admin_register_users_icon}
+          alt=""
+          className="w-5 h-5"
+        />
+        <p className="hidden md:block text-gray-500">Registered Users</p>
+      </NavLink>
+      <NavLink
         to={"/admin/lost-and-found-management"}
         className="flex items-center gap-3 px-3 py-2"
       >
@@ -64,6 +75,47 @@ const Sidebar = () => {
           className="w-5 h-5"
         />
         <p className="hidden md:block text-gray-500">Orders & Collections</p>
+      </NavLink>
+
+      <NavLink
+        to={"/admin/reports"}
+        className="flex items-center gap-3 px-3 py-2"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-5 h-5 text-gray-500"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M9 17v-6m3 6V7m3 10v-3M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"
+          />
+        </svg>
+        <p className="hidden md:block text-gray-500">Reports</p>
+      </NavLink>
+      <NavLink
+        to={"/admin/account"}
+        className="flex items-center gap-3 px-3 py-2"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-5 h-5 text-gray-500"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+          />
+        </svg>
+        <p className="hidden md:block text-gray-500">Account</p>
       </NavLink>
 
       <button
