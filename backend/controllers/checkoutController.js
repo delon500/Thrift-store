@@ -5,6 +5,7 @@ import {
   releaseCollectionOrder,
   releaseExpiredOrders,
 } from "./paymentController.js";
+import { logActivity } from "../services/activityLog.js";
 
 // How long a checkout holds its items as "Pending" before the hold lapses and
 // the items are returned to the store.
@@ -219,6 +220,18 @@ const createCheckout = async (req, res) => {
       rows[0].cart_id,
     ]);
     await client.query("COMMIT");
+
+    logActivity({
+      action: "order.created",
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      institutionId: order.institution_id,
+      entityType: "order",
+      entityId: order.id,
+      entityRef: order.order_reference,
+      description: `Order ${order.order_reference} created (R${Number(summary.total).toFixed(2)})`,
+      metadata: { total: summary.total },
+    });
 
     return res.status(201).json({
       message: "Checkout created",

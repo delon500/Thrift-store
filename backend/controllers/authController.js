@@ -1,6 +1,7 @@
 import pool from "../config/db.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { logActivity } from "../services/activityLog.js";
 
 const generateToken = (user) => {
   return jwt.sign(
@@ -72,9 +73,23 @@ const registerStudentParent = async (req, res) => {
       [role, full_name, email, contact_number, password_hash, institution_id],
     );
 
+    const createdUser = newUser.rows[0];
+
+    logActivity({
+      action: "user.register",
+      actorId: createdUser.id,
+      actorRole: createdUser.role,
+      actorName: createdUser.full_name,
+      institutionId: createdUser.institution_id,
+      entityType: "user",
+      entityId: createdUser.id,
+      entityRef: createdUser.email,
+      description: `${createdUser.full_name} registered as ${createdUser.role}`,
+    });
+
     res.status(201).json({
       message: "Registration successful. Awaiting admin approval.",
-      user: newUser.rows[0],
+      user: createdUser,
     });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
@@ -169,10 +184,24 @@ const registerInstitution = async (req, res) => {
         institution.id,
       ],
     );
+    const createdUser = userResult.rows[0];
+
+    logActivity({
+      action: "user.register",
+      actorId: createdUser.id,
+      actorRole: role,
+      actorName: contact_person_name,
+      institutionId: institution.id,
+      entityType: "user",
+      entityId: createdUser.id,
+      entityRef: contact_email,
+      description: `${institution_name} registered as ${role}`,
+    });
+
     res.status(201).json({
       message: "Institution registration successful. Awaiting admin approval.",
       institution,
-      user: userResult.rows[0],
+      user: createdUser,
     });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
@@ -223,6 +252,15 @@ const login = async (req, res) => {
     }
 
     const token = generateToken(user);
+
+    logActivity({
+      action: "user.login",
+      actorId: user.id,
+      actorRole: user.role,
+      actorName: user.full_name,
+      institutionId: user.institution_id,
+      description: `${user.full_name} signed in`,
+    });
 
     res.json({
       message: "Login successful",
@@ -351,6 +389,15 @@ const adminLogin = async (req, res) => {
     }
 
     const token = generateToken(admin);
+
+    logActivity({
+      action: "user.login",
+      actorId: admin.id,
+      actorRole: admin.role,
+      actorName: admin.full_name,
+      institutionId: admin.institution_id,
+      description: `${admin.full_name} signed in (admin)`,
+    });
 
     return res.json({
       message: "Admin login successful",

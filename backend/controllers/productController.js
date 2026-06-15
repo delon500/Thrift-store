@@ -2,6 +2,7 @@ import { v2 as cloudinary } from "cloudinary";
 import pool from "../config/db.js";
 import fs from "node:fs";
 import OpenAI from "openai";
+import { logActivity } from "../services/activityLog.js";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -239,6 +240,17 @@ const createProduct = async (req, res) => {
       image: imageResult.rows.map((row) => row.image_url),
     };
 
+    logActivity({
+      action: "product.created",
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      institutionId: finalProduct.schoolId,
+      entityType: "product",
+      entityId: finalProduct.id,
+      entityRef: finalProduct.reference_number,
+      description: `Added product ${finalProduct.name}`,
+    });
+
     return res.status(201).json({
       message: "Product created successfully",
       product: finalProduct,
@@ -461,6 +473,18 @@ const updateProduct = async (req, res) => {
     }
 
     const product = await fetchAdminProduct(req.params.id);
+
+    logActivity({
+      action: "product.updated",
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      institutionId: product?.schoolId,
+      entityType: "product",
+      entityId: product?.id,
+      entityRef: product?.reference_number,
+      description: `Updated product ${product?.name}`,
+    });
+
     return res.json({ message: "Product updated", product });
   } catch (error) {
     console.error("Update product error:", error);
@@ -491,6 +515,17 @@ const deleteProduct = async (req, res) => {
     }
 
     await pool.query("DELETE FROM products WHERE id = $1", [req.params.id]);
+
+    logActivity({
+      action: "product.deleted",
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      entityType: "product",
+      entityId: req.params.id,
+      entityRef: existing.rows[0].name,
+      description: `Deleted product ${existing.rows[0].name}`,
+    });
+
     return res.json({ message: "Product deleted", id: req.params.id });
   } catch (error) {
     console.error("Delete product error:", error);

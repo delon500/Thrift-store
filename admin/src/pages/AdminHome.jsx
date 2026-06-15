@@ -1,8 +1,23 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
-import { useOrders } from "../features/orders/hooks/useOrders";
-import { useInventory } from "../features/inventory/hooks/useInventory";
-import { useRegistrations } from "../features/registrations/hooks/useRegistrations";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import { useLogs, useStats } from "../features/dashboard/hooks/useDashboard";
+
+const PIE_COLORS = ["#0d9488", "#0ea5e9", "#f59e0b", "#8b5cf6", "#ef4444", "#64748b"];
 
 const money = (amount) =>
   Number(amount || 0).toLocaleString(undefined, {
@@ -10,184 +25,249 @@ const money = (amount) =>
     maximumFractionDigits: 2,
   });
 
-const statusStyles = {
-  payment_pending: "bg-yellow-100 text-yellow-800",
-  ready_for_collection: "bg-teal-100 text-teal-800",
-  collected: "bg-green-100 text-green-800",
-  payment_failed: "bg-red-100 text-red-800",
-  cancelled: "bg-gray-100 text-gray-700",
+const ACTION_LABELS = {
+  "user.login": { label: "Login", cls: "bg-sky-100 text-sky-700" },
+  "user.register": { label: "Registration", cls: "bg-teal-100 text-teal-700" },
+  "registration.approved": { label: "Approved", cls: "bg-green-100 text-green-700" },
+  "registration.rejected": { label: "Rejected", cls: "bg-red-100 text-red-700" },
+  "order.created": { label: "Order created", cls: "bg-amber-100 text-amber-700" },
+  "order.paid": { label: "Order paid", cls: "bg-emerald-100 text-emerald-700" },
+  "order.cancelled": { label: "Order cancelled", cls: "bg-gray-100 text-gray-600" },
+  "order.expired": { label: "Order expired", cls: "bg-gray-100 text-gray-600" },
+  "order.collected": { label: "Collected", cls: "bg-green-100 text-green-700" },
+  "product.created": { label: "Product added", cls: "bg-teal-100 text-teal-700" },
+  "product.updated": { label: "Product updated", cls: "bg-sky-100 text-sky-700" },
+  "product.deleted": { label: "Product deleted", cls: "bg-red-100 text-red-700" },
 };
 
-const formatStatus = (status) =>
-  status
-    ? status
-        .split("_")
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(" ")
-    : "Unknown";
+const formatTime = (value) =>
+  value
+    ? new Date(value).toLocaleString(undefined, {
+        dateStyle: "short",
+        timeStyle: "short",
+      })
+    : "";
 
-const StatCard = ({ label, value, hint, to, accent }) => {
+const StatCard = ({ label, value, accent, to }) => {
   const card = (
-    <div className="flex flex-col gap-1 rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-md">
-      <span className="text-xs font-bold uppercase tracking-wide text-gray-400">
+    <div className="rounded-2xl border border-gray-200 bg-white p-4 transition-shadow hover:shadow-sm">
+      <p className="text-xs font-bold uppercase tracking-wide text-gray-400">
         {label}
-      </span>
-      <span className={`text-3xl font-black ${accent || "text-gray-800"}`}>
+      </p>
+      <p className={`mt-1 text-2xl font-black ${accent || "text-gray-800"}`}>
         {value}
-      </span>
-      {hint ? <span className="text-xs text-gray-500">{hint}</span> : null}
+      </p>
     </div>
   );
 
   return to ? <Link to={to}>{card}</Link> : card;
 };
 
-const Breakdown = ({ title, counts }) => {
-  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-
-  return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5">
-      <h2 className="text-sm font-black text-gray-700">{title}</h2>
-      <div className="mt-4 grid gap-2">
-        {entries.length === 0 ? (
-          <p className="text-sm text-gray-400">No data yet.</p>
-        ) : (
-          entries.map(([key, count]) => (
-            <div key={key} className="flex items-center justify-between text-sm">
-              <span className="text-gray-600">{formatStatus(key)}</span>
-              <span className="font-bold text-gray-800">{count}</span>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-  );
-};
+const Panel = ({ title, children, className = "" }) => (
+  <div className={`rounded-2xl border border-gray-200 bg-white p-5 ${className}`}>
+    <h2 className="mb-4 text-sm font-black text-gray-700">{title}</h2>
+    {children}
+  </div>
+);
 
 const AdminHome = () => {
-  const { data: orders = [], isLoading: ordersLoading } = useOrders();
-  const { data: products = [], isLoading: productsLoading } = useInventory();
-  const { data: registrations = [] } = useRegistrations();
+  const { data: stats, isLoading } = useStats();
+  const { data: logsData } = useLogs(15);
+  const logs = logsData?.logs || [];
 
-  const stats = useMemo(() => {
-    const revenue = orders
-      .filter((order) => order.payment_status === "paid")
-      .reduce((sum, order) => sum + Number(order.total || 0), 0);
+  const activityData = useMemo(
+    () =>
+      (stats?.timeseries || []).map((d) => ({
+        day: d.day.slice(5),
+        Orders: d.orders,
+        Registrations: d.registrations,
+        Logins: d.logins,
+        Revenue: Number(d.revenue),
+      })),
+    [stats],
+  );
 
-    const ordersByStatus = orders.reduce((acc, order) => {
-      acc[order.status] = (acc[order.status] || 0) + 1;
-      return acc;
-    }, {});
+  const usersPie = useMemo(
+    () =>
+      Object.entries(stats?.users?.by_role || {}).map(([role, value]) => ({
+        name: role,
+        value,
+      })),
+    [stats],
+  );
 
-    const inventoryByStatus = products.reduce((acc, product) => {
-      acc[product.status] = (acc[product.status] || 0) + 1;
-      return acc;
-    }, {});
+  const ordersBar = useMemo(
+    () =>
+      Object.entries(stats?.orders?.by_status || {}).map(([status, count]) => ({
+        status: status.replace(/_/g, " "),
+        count,
+      })),
+    [stats],
+  );
 
-    return {
-      revenue,
-      readyForCollection: ordersByStatus.ready_for_collection || 0,
-      availableItems: inventoryByStatus.Available || 0,
-      ordersByStatus,
-      inventoryByStatus,
-    };
-  }, [orders, products]);
+  if (isLoading) {
+    return <div className="p-6 text-gray-500">Loading dashboard...</div>;
+  }
 
-  const recentOrders = orders.slice(0, 5);
+  const users = stats?.users || {};
+  const activity = stats?.activity || {};
 
   return (
     <div className="p-6">
       <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-black text-teal-600">Dashboard</h1>
         <p className="text-sm font-medium text-gray-500">
-          An overview of sales, collections, inventory, and sign-ups.
+          Users, activity, sales, and a live feed of everything happening.
         </p>
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* KPIs */}
+      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
         <StatCard
-          label="Revenue (paid)"
-          value={`R${money(stats.revenue)}`}
-          hint="From paid orders"
-          to="/admin/orders"
+          label="Total users"
+          value={users.total || 0}
+          to="/admin/registered-users"
           accent="text-teal-600"
         />
         <StatCard
-          label="Ready for collection"
-          value={ordersLoading ? "…" : stats.readyForCollection}
-          hint="Awaiting pickup"
+          label="Schools"
+          value={users.schools || 0}
+          to="/admin/registered-users/school"
+        />
+        <StatCard
+          label="Universities"
+          value={users.universities || 0}
+          to="/admin/registered-users/university"
+        />
+        <StatCard
+          label="Parents"
+          value={users.parents || 0}
+          to="/admin/registered-users/parent"
+        />
+        <StatCard
+          label="Students"
+          value={users.students || 0}
+          to="/admin/registered-users/student"
+        />
+        <StatCard label="Logins" value={activity.logins || 0} />
+        <StatCard
+          label="Public registrations"
+          value={activity.registrations || 0}
+        />
+        <StatCard
+          label="Revenue (paid)"
+          value={`R${money(stats?.orders?.revenue)}`}
+          accent="text-teal-600"
           to="/admin/orders"
-        />
-        <StatCard
-          label="Pending approvals"
-          value={registrations.length}
-          hint="Sign-ups to review"
-          to="/admin/registrations"
-          accent={registrations.length > 0 ? "text-amber-600" : "text-gray-800"}
-        />
-        <StatCard
-          label="Available items"
-          value={productsLoading ? "…" : stats.availableItems}
-          hint="Live in the store"
-          to="/admin/inventory"
         />
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.6fr)]">
-        <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
-          <div className="flex items-center justify-between px-5 py-4">
-            <h2 className="text-sm font-black text-gray-700">Recent orders</h2>
-            <Link
-              to="/admin/orders"
-              className="text-xs font-bold text-teal-600 hover:underline"
-            >
-              View all
-            </Link>
+      {/* Charts */}
+      <div className="mt-6 grid gap-4 lg:grid-cols-3">
+        <Panel title="Activity (last 14 days)" className="lg:col-span-2">
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={activityData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="day" fontSize={11} />
+                <YAxis allowDecimals={false} fontSize={11} />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="Orders" stroke="#0d9488" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="Registrations" stroke="#0ea5e9" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="Logins" stroke="#f59e0b" strokeWidth={2} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
-          {ordersLoading ? (
-            <p className="px-5 pb-5 text-sm text-gray-500">Loading orders...</p>
-          ) : recentOrders.length === 0 ? (
-            <p className="px-5 pb-5 text-sm text-gray-500">No orders yet.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[560px] text-left text-sm">
-                <thead className="bg-gray-50 text-xs uppercase text-gray-500">
-                  <tr>
-                    <th className="px-5 py-2">Reference</th>
-                    <th className="px-5 py-2">Customer</th>
-                    <th className="px-5 py-2">Status</th>
-                    <th className="px-5 py-2">Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentOrders.map((order) => (
-                    <tr key={order.order_reference} className="border-t border-gray-100">
-                      <td className="px-5 py-3 font-bold text-teal-700">
-                        {order.order_reference}
-                      </td>
-                      <td className="px-5 py-3">{order.user_full_name}</td>
-                      <td className="px-5 py-3">
-                        <span
-                          className={`rounded-full px-2.5 py-1 text-xs font-bold ${
-                            statusStyles[order.status] || "bg-gray-100 text-gray-700"
-                          }`}
-                        >
-                          {formatStatus(order.status)}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3 font-bold">R{order.total}</td>
-                    </tr>
+        </Panel>
+
+        <Panel title="Users by type">
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={usersPie}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius={50}
+                  outerRadius={80}
+                  paddingAngle={2}
+                >
+                  {usersPie.map((entry, index) => (
+                    <Cell key={entry.name} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                   ))}
-                </tbody>
-              </table>
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </Panel>
+
+        <Panel title="Revenue (last 14 days)" className="lg:col-span-2">
+          <div className="h-56">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={activityData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="day" fontSize={11} />
+                <YAxis fontSize={11} />
+                <Tooltip formatter={(value) => `R${money(value)}`} />
+                <Bar dataKey="Revenue" fill="#0d9488" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Panel>
+
+        <Panel title="Orders by status">
+          <div className="h-56">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={ordersBar} layout="vertical">
+                <XAxis type="number" allowDecimals={false} fontSize={11} />
+                <YAxis type="category" dataKey="status" width={110} fontSize={11} />
+                <Tooltip />
+                <Bar dataKey="count" fill="#0ea5e9" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Panel>
+      </div>
+
+      {/* Activity feed */}
+      <div className="mt-6">
+        <Panel title="Activity log">
+          {logs.length === 0 ? (
+            <p className="text-sm text-gray-500">No activity recorded yet.</p>
+          ) : (
+            <div className="grid gap-1">
+              {logs.map((log) => {
+                const meta =
+                  ACTION_LABELS[log.action] || {
+                    label: log.action,
+                    cls: "bg-gray-100 text-gray-600",
+                  };
+
+                return (
+                  <div
+                    key={log.id}
+                    className="flex flex-wrap items-center gap-3 border-b border-gray-50 py-2 text-sm last:border-b-0"
+                  >
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-xs font-bold ${meta.cls}`}
+                    >
+                      {meta.label}
+                    </span>
+                    <span className="flex-grow text-gray-700">
+                      {log.description || log.entity_ref || "—"}
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      {formatTime(log.created_at)}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           )}
-        </section>
-
-        <div className="grid gap-4">
-          <Breakdown title="Orders by status" counts={stats.ordersByStatus} />
-          <Breakdown title="Inventory by status" counts={stats.inventoryByStatus} />
-        </div>
+        </Panel>
       </div>
     </div>
   );

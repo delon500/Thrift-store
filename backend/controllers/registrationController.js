@@ -3,6 +3,7 @@ import {
   sendApprovalEmail,
   sendRejectionEmail,
 } from "../services/emailService.js";
+import { logActivity } from "../services/activityLog.js";
 
 const INSTITUTION_ROLES = ["school", "university"];
 
@@ -107,6 +108,17 @@ const approveRegistration = async (req, res) => {
     // Email failures are swallowed inside the service so approval still succeeds.
     await sendApprovalEmail(result.user);
 
+    logActivity({
+      action: "registration.approved",
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      institutionId: result.user.institution_id,
+      entityType: "user",
+      entityId: result.user.id,
+      entityRef: result.user.email,
+      description: `Approved ${result.user.full_name} (${result.user.role})`,
+    });
+
     return res.json({ message: "Registration approved", user: result.user });
   } catch (error) {
     return res
@@ -123,6 +135,17 @@ const rejectRegistration = async (req, res) => {
     if (!result.ok) return respondToResult(res, result);
 
     await sendRejectionEmail(result.user);
+
+    logActivity({
+      action: "registration.rejected",
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      institutionId: result.user.institution_id,
+      entityType: "user",
+      entityId: result.user.id,
+      entityRef: result.user.email,
+      description: `Rejected ${result.user.full_name} (${result.user.role})`,
+    });
 
     return res.json({ message: "Registration rejected", user: result.user });
   } catch (error) {

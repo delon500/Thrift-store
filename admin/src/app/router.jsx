@@ -15,6 +15,10 @@ import OrdersAndCollections from "../features/orders/pages/OrdersAndCollections"
 import InventoryPage from "../features/inventory/pages/InventoryPage";
 import ViewStore from "../features/inventory/pages/ViewStore";
 import RegistrationRequests from "../features/registrations/pages/RegistrationRequests";
+import RegisteredUsersHomePage from "../features/registeredUsers/pages/RegisteredUsersHomePage";
+import RegisteredUsersList from "../features/registeredUsers/pages/RegisteredUsersList";
+import ReportsPage from "../features/reports/pages/ReportsPage";
+import AccountPage from "../features/account/pages/AccountPage";
 
 const router = createBrowserRouter([
   {
@@ -73,6 +77,22 @@ const router = createBrowserRouter([
       {
         path: "/admin/registrations",
         element: <RegistrationRequests />,
+      },
+      {
+        path: "/admin/registered-users",
+        element: <RegisteredUsersHomePage />,
+      },
+      {
+        path: "/admin/registered-users/:role",
+        element: <RegisteredUsersList />,
+      },
+      {
+        path: "/admin/reports",
+        element: <ReportsPage />,
+      },
+      {
+        path: "/admin/account",
+        element: <AccountPage />,
       },
       {
         path: "*",
