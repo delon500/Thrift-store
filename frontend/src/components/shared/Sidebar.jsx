@@ -27,19 +27,35 @@ const Sidebar = () => {
             </>
           )}
         </NavLink>
-        {/* <NavLink to="/sell" className={linkClass}>
+        <NavLink to="/thrift-store" className={linkClass}>
           {({ isActive }) => (
             <>
               <img
                 src={
-                  isActive ? icons.active_sell_icon : icons.inactive_sell_icon
+                  isActive ? icons.active_lost_icon : icons.inactive_lost_icon
                 }
-                alt="Sell Items"
+                alt="Thrift Store"
               />
-              Sell Items
+              Thrift Store
             </>
           )}
-        </NavLink> */}
+        </NavLink>
+        <NavLink to="/lost-found" className={linkClass}>
+          {({ isActive }) => (
+            <>
+              <img
+                src={
+                  isActive
+                    ? icons.lost_and_found_active_icon
+                    : icons.lost_and_found_inactive_icon
+                }
+                alt="Lost and Found"
+                className="w-6 h-6"
+              />
+              Lost and Found
+            </>
+          )}
+        </NavLink>
         <NavLink to="/cart" className={linkClass}>
           {({ isActive }) => (
             <>
@@ -53,29 +69,11 @@ const Sidebar = () => {
             </>
           )}
         </NavLink>
-        <NavLink to="/lost-found" className={linkClass}>
-          {({ isActive }) => (
+        <NavLink to="/orders" className={linkClass}>
+          {() => (
             <>
-              <img
-                src={
-                  isActive ? icons.active_lost_icon : icons.inactive_lost_icon
-                }
-                alt="Lost and Found"
-              />
-              Lost and Found
-            </>
-          )}
-        </NavLink>
-        <NavLink to="/thrift-store" className={linkClass}>
-          {({ isActive }) => (
-            <>
-              <img
-                src={
-                  isActive ? icons.active_lost_icon : icons.inactive_lost_icon
-                }
-                alt="Thrift Store"
-              />
-              Thrift Store
+              <img src={icons.order_icon} alt="My Orders" className="w-6 h-6" />
+              My Orders
             </>
           )}
         </NavLink>

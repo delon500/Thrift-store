@@ -24,3 +24,13 @@ export const createCheckout = async ({ formData, token }) => {
 
   return response.data.checkout;
 };
+
+export const cancelCheckout = async ({ orderReference, token }) => {
+  const response = await api.post(
+    `/checkout/${orderReference}/cancel`,
+    {},
+    authHeaders(token),
+  );
+
+  return response.data;
+};

@@ -15,6 +15,7 @@ import ThriftStore from "../features/thriftStore/pages/ThriftStore";
 import Settings from "../features/settings/pages/Settings";
 import ProtectedRoute from "../features/auth/components/ProtectedRoute";
 import Checkout from "../features/checkout/pages/Checkout";
+import Orders from "../features/orders/pages/Orders";
 
 const router = createBrowserRouter([
   {
@@ -39,6 +40,7 @@ const router = createBrowserRouter([
           { path: "thrift-store", element: <ThriftStore /> },
           { path: "settings", element: <Settings /> },
           { path: "checkout", element: <Checkout /> },
+          { path: "orders", element: <Orders /> },
           // { path: "sell/my-products", element: <MyProductsPage /> },
           // { path: "sell/add-product", element: <AddProductPage /> },
           // { path: "sell/create", element: <CreateShop /> },

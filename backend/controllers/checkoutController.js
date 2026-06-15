@@ -1,6 +1,14 @@
 import pool from "../config/db.js";
 import { calculateCartSummary } from "./cartController.js";
 import { createPayFastPayment } from "../services/payfastService.js";
+import {
+  releaseCollectionOrder,
+  releaseExpiredOrders,
+} from "./paymentController.js";
+
+// How long a checkout holds its items as "Pending" before the hold lapses and
+// the items are returned to the store.
+const CHECKOUT_EXPIRY_MINUTES = 30;
 
 const PAYMENT_METHODS = [
   { id: "card", label: "Card", provider: "payfast", type: "gateway" },
@@ -80,6 +88,10 @@ const createCheckout = async (req, res) => {
   try {
     const method = getPaymentMethod(req.body.payment_method);
 
+    // Reclaim items from abandoned/expired holds before reading availability,
+    // so a previous lapsed checkout never blocks a fresh one.
+    await releaseExpiredOrders();
+
     await client.query("BEGIN");
 
     const rows = await getActiveCartRows(client, req.user.id);
@@ -124,9 +136,13 @@ const createCheckout = async (req, res) => {
         subtotal,
         service_fee,
         total,
-        collection_note
+        collection_note,
+        expires_at
       )
-      VALUES ($1, $2, 'payment_pending', $3, $4, $5, $6, $7, $8)
+      VALUES (
+        $1, $2, 'payment_pending', $3, $4, $5, $6, $7, $8,
+        now() + make_interval(mins => $9)
+      )
       RETURNING *`,
       [
         req.user.id,
@@ -137,6 +153,7 @@ const createCheckout = async (req, res) => {
         summary.service_fee,
         summary.total,
         req.body.collection_note || null,
+        CHECKOUT_EXPIRY_MINUTES,
       ],
     );
     const order = orderResult.rows[0];
@@ -241,10 +258,113 @@ const createCheckout = async (req, res) => {
   }
 };
 
+// Releases a pending checkout when the user returns from a cancelled payment,
+// so the held items go straight back to the store instead of waiting to expire.
+const cancelCheckout = async (req, res) => {
+  try {
+    const result = await releaseCollectionOrder({
+      orderReference: req.params.orderReference,
+      userId: req.user.id,
+      toStatus: "cancelled",
+    });
+
+    if (!result.released) {
+      if (result.reason === "not_found") {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      if (result.reason === "forbidden") {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      // Already paid, cancelled, or expired — nothing to release.
+      return res.status(200).json({
+        message: "Order is no longer pending payment",
+        status: result.status,
+      });
+    }
+
+    return res.json({
+      message: "Checkout cancelled and items released",
+      order_reference: req.params.orderReference,
+      status: result.status,
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Failed to cancel checkout", error: error.message });
+  }
+};
+
+// Regenerates the PayFast form for an existing still-pending order so a user who
+// backed out of payment can continue it from "My orders" (same order reference).
+const resumeCheckout = async (req, res) => {
+  try {
+    const orderResult = await pool.query(
+      `SELECT
+        co.order_reference,
+        co.status,
+        co.user_full_name,
+        co.user_email,
+        co.subtotal::text AS subtotal,
+        co.service_fee::text AS service_fee,
+        co.total::text AS total,
+        pay.payment_method
+       FROM collection_orders co
+       LEFT JOIN payments pay ON pay.collection_order_id = co.id
+       WHERE co.order_reference = $1 AND co.user_id = $2`,
+      [req.params.orderReference, req.user.id],
+    );
+
+    if (orderResult.rows.length === 0) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const order = orderResult.rows[0];
+
+    if (order.status !== "payment_pending") {
+      return res.status(409).json({
+        message: `Order is ${order.status} and can no longer be paid`,
+      });
+    }
+
+    const method = normalizePaymentMethod(order.payment_method) || PAYMENT_METHODS[0];
+    const summary = {
+      subtotal: Number(order.subtotal),
+      service_fee: Number(order.service_fee),
+      total: Number(order.total),
+    };
+    const user = { full_name: order.user_full_name, email: order.user_email };
+
+    const paymentGateway = createPayFastPayment({
+      order,
+      user,
+      summary,
+      method,
+      req,
+    });
+
+    return res.json({
+      checkout: {
+        order_reference: order.order_reference,
+        status: order.status,
+        total: order.total,
+        payment_gateway: paymentGateway,
+      },
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Could not resume payment", error: error.message });
+  }
+};
+
 export {
+  cancelCheckout,
   createCheckout,
   getPaymentMethod,
   getPaymentMethods,
   normalizePaymentMethod,
   PAYMENT_METHODS,
+  resumeCheckout,
 };

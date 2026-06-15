@@ -1,7 +1,6 @@
-import React from "react";
 import { Link } from "react-router-dom";
 import { icons } from "../../../assets/icon/icons";
-import { useCartStore } from "../../cart/store/cartStore";
+import { useAddCartItem } from "../../cart/hooks/useCart";
 import { useWishlistStore } from "../../wishlist/store/wishlistStore";
 import { useProductStore } from "../../products/store/productStore";
 
@@ -14,7 +13,7 @@ const ProductCard = ({
   schoolId,
   listing_type = "Thrift Store",
 }) => {
-  const addToCart = useCartStore((state) => state.addToCart);
+  const addCartItemMutation = useAddCartItem();
   const addToWishlist = useWishlistStore((state) => state.addToWishlist);
   const removeFromWishlist = useWishlistStore(
     (state) => state.removeFromWishlist,
@@ -44,11 +43,15 @@ const ProductCard = ({
     }
   };
 
-  const handleAddToCart = (e) => {
+  const handleAddToCart = async (e) => {
     e.preventDefault();
     e.stopPropagation();
 
-    addToCart(productData);
+    try {
+      await addCartItemMutation.mutateAsync(id);
+    } catch (error) {
+      alert(error?.response?.data?.message || "Could not add item to cart");
+    }
   };
 
   return (
@@ -97,15 +100,16 @@ const ProductCard = ({
         </div>
 
         <button
-          className="w-full bg-primary text-on-primary py-3 rounded-xl font-label-caps text-xs sm:text-sm chunky-button flex items-center justify-center gap-3 cursor-pointer hover:bg-primary/90 active:bg-primary/80 transition-colors mt-auto"
+          className="w-full bg-primary text-on-primary py-3 rounded-xl font-label-caps text-xs sm:text-sm chunky-button flex items-center justify-center gap-3 cursor-pointer hover:bg-primary/90 active:bg-primary/80 transition-colors mt-auto disabled:opacity-60"
           onClick={handleAddToCart}
+          disabled={addCartItemMutation.isPending}
         >
           <img
             src={icons.add_to_cart_icon}
             alt="Add to Cart"
             className="md:hidden lg:inline-block"
           />
-          Add to Backpack
+          {addCartItemMutation.isPending ? "Adding..." : "Add to Backpack"}
         </button>
       </div>
     </Link>

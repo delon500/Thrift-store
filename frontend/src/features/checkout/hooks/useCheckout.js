@@ -1,6 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import useAuthStore from "../../auth/store/authStore";
-import { createCheckout, getPaymentMethods } from "../api/checkoutApi";
+import {
+  cancelCheckout,
+  createCheckout,
+  getPaymentMethods,
+} from "../api/checkoutApi";
 
 export const usePaymentMethods = () => {
   const token = useAuthStore((state) => state.token);
@@ -18,6 +22,19 @@ export const useCreateCheckout = () => {
 
   return useMutation({
     mutationFn: (formData) => createCheckout({ formData, token }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
+};
+
+export const useCancelCheckout = () => {
+  const token = useAuthStore((state) => state.token);
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (orderReference) => cancelCheckout({ orderReference, token }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cart"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });

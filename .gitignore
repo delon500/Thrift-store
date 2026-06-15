@@ -2,3 +2,6 @@
 .vscode
 .env
 AGENTS.md
+cloudflared.log
+cloudflared.log.out
+node_modules

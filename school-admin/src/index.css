@@ -1,0 +1,27 @@
+@import "@fontsource/lexend";
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #006a63;
+  --color-primary-container: #4db6ac;
+  --color-on-primary: #ffffff;
+  --color-on-primary-container: #00433f;
+  --color-background: #ebfdfc;
+  --color-surface: #ebfdfc;
+  --color-on-surface: #0e1e1e;
+  --color-on-surface-variant: #3d4947;
+  --color-outline-variant: #bdc9c6;
+  --color-error: #ba1a1a;
+
+  --font-body-md: "Lexend", sans-serif;
+}
+
+body {
+  color: var(--color-on-background);
+  font-family: var(--font-body-md);
+}
+
+.notebook-grid {
+  background-image: radial-gradient(#bdc9c6 0.5px, transparent 0.5px);
+  background-size: 24px 24px;
+}

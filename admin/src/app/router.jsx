@@ -12,6 +12,9 @@ import RegisterParent from "../features/registerUsers/pages/RegisterParent";
 import RegisterUniversity from "../features/registerUsers/pages/RegisterUniveristy";
 import RegisterStudent from "../features/registerUsers/pages/RegisterStudent";
 import OrdersAndCollections from "../features/orders/pages/OrdersAndCollections";
+import InventoryPage from "../features/inventory/pages/InventoryPage";
+import ViewStore from "../features/inventory/pages/ViewStore";
+import RegistrationRequests from "../features/registrations/pages/RegistrationRequests";
 
 const router = createBrowserRouter([
   {
@@ -58,6 +61,18 @@ const router = createBrowserRouter([
       {
         path: "/admin/orders",
         element: <OrdersAndCollections />,
+      },
+      {
+        path: "/admin/inventory",
+        element: <InventoryPage />,
+      },
+      {
+        path: "/admin/view-store",
+        element: <ViewStore />,
+      },
+      {
+        path: "/admin/registrations",
+        element: <RegistrationRequests />,
       },
       {
         path: "*",

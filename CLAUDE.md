@@ -1,0 +1,108 @@
+# CLAUDE.md
+
+Guidance for working in this repository.
+
+## What this is
+
+A **school thrift-store & lost-and-found collection platform**. Parents and students buy
+second-hand or lost-and-found items from the institution (school/university) they are registered to,
+pay online (ZAR via **PayFast**), receive a **reference number**, and present it at the school to
+collect the physical item.
+
+## Architecture
+
+Four independently-run apps. **There is no root `package.json`** — install and run each separately.
+
+| Folder         | App                        | Stack                         | Dev URL                |
+|----------------|----------------------------|-------------------------------|------------------------|
+| `backend/`     | REST API                   | Node, Express 5 (ESM), pg     | http://localhost:5000  |
+| `frontend/`    | Customer app (parents/students) | React 19 + Vite          | http://localhost:5173  |
+| `admin/`       | Platform admin app         | React 19 + Vite               | http://localhost:5174  |
+| `school-admin/`| School staff app (collections) | React 19 + Vite           | http://localhost:5175  |
+
+All three React apps talk to the API at `http://localhost:5000/api` (hardcoded in each app's
+`src/lib/axios.js`).
+
+## Running locally
+
+```bash
+# Backend (port 5000) — nodemon auto-reloads on .js changes (NOT on .env changes)
+cd backend && npm install && npm run dev      # or: npm start
+
+# Each React app (separate terminals)
+cd frontend && npm install && npm run dev      # 5173
+cd admin && npm install && npm run dev         # 5174
+cd school-admin && npm install && npm run dev  # 5175
+```
+
+Backend env: copy `backend/.env.example` to `backend/.env` and fill it in. `.env` is git-ignored.
+
+## Backend
+
+ES modules. Entry: `backend/server.js`. Layout:
+
+- `config/` — `db.js` (pg `Pool` from `DATABASE_URL`), `cloudinary.js`
+- `controllers/` — request handlers + SQL. Unit tests live beside them as `*.test.js`.
+- `middleware/` — `authMiddleware.js` (`protect` = JWT required; `allowRoles(...roles)`), `multer.js`
+- `routes/` — one Express router per resource, mounted in `server.js`
+- `services/` — `payfastService.js` (signature build/verify), `emailService.js` (nodemailer)
+- `db/migrations/` — SQL migrations, **applied manually, in filename order** (no migration runner)
+
+Route groups (all under `/api`): `auth`, `institutions`, `parents`, `students`, `users`,
+`products`, `cart`, `checkout`, `payments`, `orders` (a user's own orders), `admin/orders`,
+`admin/registrations`, `school`.
+
+Run backend tests: `cd backend && npm test` (Node's built-in runner; tests are pure functions —
+no DB).
+
+### Auth model
+
+JWT payload: `{ id, role, institution_id, status }`. Roles: `admin`, `student`, `parent`,
+`school`, `university`. Most data is **scoped by `institution_id`** — when adding endpoints for a
+specific role, scope queries to `req.user.institution_id` (see `controllers/schoolController.js`).
+Admins have `institution_id = null` and are not institution-scoped.
+
+## React apps — conventions
+
+All three apps share the same structure and libraries:
+
+- **Feature-folder layout:** `src/features/<feature>/{api,hooks,pages,components,store}`.
+- **Server state:** TanStack Query (`useQuery` / `useMutation`); keep `queryKey`s stable and
+  `invalidateQueries` after mutations.
+- **Client/UI state:** Zustand stores (e.g. `authStore`). Auth token is kept in the store and
+  mirrored to `localStorage`.
+- **HTTP:** the shared `src/lib/axios.js` instance; pass the token via an
+  `authHeaders(token)` helper (`Authorization: Bearer <token>`).
+- **Styling:** Tailwind CSS v4 (via `@tailwindcss/vite`), Lexend font. The customer/admin apps use
+  custom theme tokens (e.g. `text-on-surface`, `bg-primary`); standard palette utilities
+  (`teal-600`, etc.) are also available.
+- **Routing:** `react-router-dom` with a central `src/app/router.jsx`; protected areas use a
+  `ProtectedRoute`.
+- Show user-facing errors **inline**, not via `alert()`.
+
+## Domain model
+
+- **Registration & approval:** public sign-ups are created with `status = 'pending'` and **cannot
+  log in** until an admin approves them (`login` returns `403` otherwise). Admin approves/rejects in
+  the admin app; approval can send an email (`emailService`, graceful — logs if SMTP unset). The
+  `approval_status` enum is `pending | approved | rejected`.
+- **Buying & collection:** items live in `products` (per institution, with a permanent
+  `reference_number` like `ITEM-2026-000123`). A checkout creates a `collection_orders` row
+  (`ORD-2026-000123`) + `collection_order_items`, and a PayFast payment. On a verified PayFast ITN
+  the order becomes `ready_for_collection` and products become `Reserved`.
+- **Claiming:** at the school, staff (school-admin app) verify the order/item reference and mark the
+  order `collected` → items `collected`, products `Claimed`.
+- **Key enums (values must match exactly):** `product_status` = Available, Sold, Pending, Reserved,
+  Claimed, Cancelled · `listing_type` = "Thrift Store", "Lost and Found" · `collection_order_status`
+  includes payment_pending, ready_for_collection, collected, cancelled, expired, payment_failed.
+
+## Gotchas
+
+- **`backend/.env` changes need a full backend restart** — nodemon watches `.js`, not `.env`.
+- **`node_modules` is not in the root `.gitignore`** — be careful not to commit dependencies or
+  build output (`dist/`).
+- **DB migrations are manual** — apply `backend/db/migrations/*.sql` in order against the existing
+  base schema.
+- **PayFast ITN signatures must include blank fields** when verifying (PayFast signs every posted
+  field); outgoing payment requests omit them. See `services/payfastService.js`.
+- Verify changes against the running app/DB where practical; the backend has no integration tests.

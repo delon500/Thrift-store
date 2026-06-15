@@ -97,7 +97,6 @@ const createProduct = async (req, res) => {
   try {
     const {
       name,
-      slug,
       description = "",
       gender,
       price,
@@ -135,7 +134,6 @@ const createProduct = async (req, res) => {
 
     if (
       !name ||
-      !slug ||
       !gender ||
       !price ||
       !category ||
@@ -146,15 +144,6 @@ const createProduct = async (req, res) => {
       return res
         .status(400)
         .json({ message: "Please fill all required fields" });
-    }
-
-    const slugCheck = await pool.query(
-      "SELECT id FROM products WHERE slug = $1",
-      [slug],
-    );
-
-    if (slugCheck.rows.length > 0) {
-      return res.status(400).json({ message: "Slug already exists" });
     }
 
     const finalInstitutionId =
@@ -189,9 +178,8 @@ const createProduct = async (req, res) => {
     await client.query("BEGIN");
 
     const productResult = await client.query(
-      `INSERT INTO products (slug, name, description, gender, price, status, category, institution_id, age, "condition", listing_type) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
+      `INSERT INTO products (name, description, gender, price, status, category, institution_id, age, "condition", listing_type) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
       [
-        slug,
         name,
         description,
         gender,
@@ -216,9 +204,8 @@ const createProduct = async (req, res) => {
     }
 
     const finalProductResult = await client.query(
-      `SELECT 
+      `SELECT
         p.id,
-        p.slug,
         p.name,
         p.description,
         p.gender,
@@ -293,7 +280,7 @@ const getProducts = async (req, res) => {
         p.listing_type
        FROM products p
        JOIN institutions i ON i.id = p.institution_id
-       WHERE p.institution_id = $1`,
+       WHERE p.institution_id = $1 AND p.status = 'Available'`,
       [user.institution_id],
     );
 
@@ -318,4 +305,206 @@ const getProducts = async (req, res) => {
     return res.status(500).json({ message: "Failed to fetch products" });
   }
 };
-export { createProduct, analyseProduct, getProducts };
+const PRODUCT_STATUSES = [
+  "Available",
+  "Sold",
+  "Pending",
+  "Reserved",
+  "Claimed",
+  "Cancelled",
+];
+const LISTING_TYPES = ["Thrift Store", "Lost and Found"];
+// A product tied to a live order/reservation must not be hard-deleted.
+const DELETE_BLOCKED_STATUSES = ["Pending", "Reserved", "Claimed"];
+const EDITABLE_FIELDS = [
+  "name",
+  "description",
+  "gender",
+  "age",
+  "category",
+  "condition",
+  "listing_type",
+  "price",
+  "status",
+];
+
+const ADMIN_PRODUCT_SELECT = `
+  SELECT
+    p.id,
+    p.name,
+    p.description,
+    p.gender,
+    p.price::text AS price,
+    p.status,
+    p.reference_number,
+    p.category,
+    p.institution_id AS "schoolId",
+    i.institution_name AS "schoolName",
+    p.age,
+    p."condition",
+    p.listing_type,
+    p.created_at
+  FROM products p
+  JOIN institutions i ON i.id = p.institution_id`;
+
+const attachImages = async (rows) => {
+  if (rows.length === 0) return [];
+
+  const ids = rows.map((row) => row.id);
+  const images = await pool.query(
+    `SELECT product_id, image_url
+     FROM product_images
+     WHERE product_id = ANY($1::uuid[])
+     ORDER BY sort_order ASC`,
+    [ids],
+  );
+
+  const grouped = images.rows.reduce((acc, img) => {
+    (acc[img.product_id] ||= []).push(img.image_url);
+    return acc;
+  }, {});
+
+  return rows.map((row) => ({ ...row, image: grouped[row.id] || [] }));
+};
+
+const fetchAdminProduct = async (id) => {
+  const result = await pool.query(`${ADMIN_PRODUCT_SELECT} WHERE p.id = $1`, [id]);
+
+  if (result.rows.length === 0) return null;
+
+  const [product] = await attachImages(result.rows);
+  return product;
+};
+
+// GET /api/products/admin — full catalogue for admins, with optional filters
+// (institution_id, status, listing_type, q). Not scoped to one institution.
+const listAdminProducts = async (req, res) => {
+  try {
+    const { institution_id, status, listing_type, q } = req.query;
+    const conditions = [];
+    const values = [];
+
+    if (institution_id) {
+      values.push(institution_id);
+      conditions.push(`p.institution_id = $${values.length}`);
+    }
+    if (status) {
+      values.push(status);
+      conditions.push(`p.status = $${values.length}`);
+    }
+    if (listing_type) {
+      values.push(listing_type);
+      conditions.push(`p.listing_type = $${values.length}`);
+    }
+    if (q) {
+      values.push(`%${q}%`);
+      conditions.push(
+        `(p.name ILIKE $${values.length} OR p.reference_number ILIKE $${values.length})`,
+      );
+    }
+
+    const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+    const result = await pool.query(
+      `${ADMIN_PRODUCT_SELECT} ${where} ORDER BY p.created_at DESC NULLS LAST`,
+      values,
+    );
+
+    const products = await attachImages(result.rows);
+    return res.json({ products });
+  } catch (error) {
+    console.error("List admin products error:", error);
+    return res
+      .status(500)
+      .json({ message: "Failed to fetch products", error: error.message });
+  }
+};
+
+// PATCH /api/products/:id — update editable product fields (admin only).
+const updateProduct = async (req, res) => {
+  try {
+    if (req.body.status && !PRODUCT_STATUSES.includes(req.body.status)) {
+      return res.status(400).json({ message: "Invalid product status" });
+    }
+    if (req.body.listing_type && !LISTING_TYPES.includes(req.body.listing_type)) {
+      return res.status(400).json({ message: "Invalid listing type" });
+    }
+    if (
+      req.body.price !== undefined &&
+      (Number.isNaN(Number(req.body.price)) || Number(req.body.price) < 0)
+    ) {
+      return res.status(400).json({ message: "Invalid price" });
+    }
+
+    const updates = [];
+    const values = [];
+
+    for (const field of EDITABLE_FIELDS) {
+      if (req.body[field] === undefined) continue;
+      values.push(req.body[field]);
+      // "condition" is a reserved word and must stay quoted.
+      const column = field === "condition" ? '"condition"' : field;
+      updates.push(`${column} = $${values.length}`);
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ message: "No valid fields to update" });
+    }
+
+    values.push(req.params.id);
+    const result = await pool.query(
+      `UPDATE products SET ${updates.join(", ")} WHERE id = $${values.length} RETURNING id`,
+      values,
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    const product = await fetchAdminProduct(req.params.id);
+    return res.json({ message: "Product updated", product });
+  } catch (error) {
+    console.error("Update product error:", error);
+    return res
+      .status(500)
+      .json({ message: "Failed to update product", error: error.message });
+  }
+};
+
+// DELETE /api/products/:id — remove a product (admin only). Blocked while the
+// product is reserved/pending/claimed so live orders are never orphaned.
+// product_images rows cascade; collection_order_items keep history (FK SET NULL).
+const deleteProduct = async (req, res) => {
+  try {
+    const existing = await pool.query(
+      "SELECT id, name, status FROM products WHERE id = $1",
+      [req.params.id],
+    );
+
+    if (existing.rows.length === 0) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    if (DELETE_BLOCKED_STATUSES.includes(existing.rows[0].status)) {
+      return res.status(409).json({
+        message: `Cannot delete "${existing.rows[0].name}" while it is ${existing.rows[0].status.toLowerCase()} in an order.`,
+      });
+    }
+
+    await pool.query("DELETE FROM products WHERE id = $1", [req.params.id]);
+    return res.json({ message: "Product deleted", id: req.params.id });
+  } catch (error) {
+    console.error("Delete product error:", error);
+    return res
+      .status(500)
+      .json({ message: "Failed to delete product", error: error.message });
+  }
+};
+
+export {
+  createProduct,
+  analyseProduct,
+  getProducts,
+  listAdminProducts,
+  updateProduct,
+  deleteProduct,
+};

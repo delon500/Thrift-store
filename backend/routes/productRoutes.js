@@ -4,6 +4,9 @@ import {
   createProduct,
   analyseProduct,
   getProducts,
+  listAdminProducts,
+  updateProduct,
+  deleteProduct,
 } from "../controllers/productController.js";
 import upload from "../middleware/multer.js";
 
@@ -36,5 +39,10 @@ productRouter.post(
   createProduct,
 );
 productRouter.get("/", protect, getProducts);
+
+// Admin inventory management
+productRouter.get("/admin", protect, allowRoles("admin"), listAdminProducts);
+productRouter.patch("/:id", protect, allowRoles("admin"), updateProduct);
+productRouter.delete("/:id", protect, allowRoles("admin"), deleteProduct);
 
 export default productRouter;
