@@ -85,6 +85,14 @@ export const register_user_action_card = [
 // the backend user role (admin = staff).
 export const registered_user_action_card = [
   {
+    name: "Registration Requests",
+    description:
+      "Review pending school, university, staff, parent, and student registration requests.",
+    color: "#dbf0ee",
+    icons: icons.admin_register_users_icon,
+    to: "registrations",
+  },
+  {
     name: "Registered Schools",
     description: "View every school registered on the platform.",
     color: "#dbf0ee",

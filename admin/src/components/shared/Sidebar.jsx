@@ -1,6 +1,113 @@
-import { NavLink } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { NavLink, useLocation } from "react-router-dom";
 import useAuthStore from "../../features/auth/store/authStore";
 import { icons } from "../../assets/icons/icons";
+import {
+  action_card,
+  registered_user_action_card,
+  register_user_action_card,
+} from "../../data/data";
+
+const toAdminPath = (path) =>
+  path.startsWith("/") ? `/admin${path}` : `/admin/${path}`;
+
+const isPathActive = (pathname, path) =>
+  pathname === path || pathname.startsWith(`${path}/`);
+
+const sidebarGroups = [
+  {
+    label: "Register Users",
+    to: "/admin/register-users",
+    icon: icons.admin_register_users_icon,
+    items: register_user_action_card,
+  },
+  {
+    label: "Registered Users",
+    to: "/admin/registered-users",
+    icon: icons.admin_register_users_icon,
+    items: registered_user_action_card,
+  },
+  {
+    label: "Item Management Center",
+    to: "/admin/lost-and-found-management",
+    icon: icons.admin_item_management_icon,
+    items: action_card,
+  },
+];
+
+const SidebarGroup = ({ group }) => {
+  const { pathname } = useLocation();
+  const childPaths = group.items.map((item) => toAdminPath(item.to));
+  const active =
+    isPathActive(pathname, group.to) ||
+    childPaths.some((path) => isPathActive(pathname, path));
+  const [isOpen, setIsOpen] = useState(active);
+
+  useEffect(() => {
+    if (active) {
+      setIsOpen(true);
+    }
+  }, [active]);
+
+  return (
+    <div>
+      <div className="flex items-center">
+        <NavLink
+          to={group.to}
+          className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2"
+          onClick={() => setIsOpen(true)}
+        >
+          <img src={group.icon} alt="" className="h-5 w-5 shrink-0" />
+          <p className="hidden truncate text-gray-500 md:block">{group.label}</p>
+        </NavLink>
+        <button
+          type="button"
+          onClick={() => setIsOpen((current) => !current)}
+          className="hidden px-2 py-2 text-gray-500 md:block"
+          aria-label={`${isOpen ? "Collapse" : "Expand"} ${group.label}`}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className={`h-4 w-4 transition-transform ${
+              isOpen ? "rotate-180" : ""
+            }`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
+        </button>
+      </div>
+
+      {isOpen ? (
+        <div className="ml-6 border-l border-gray-200 py-1">
+          {group.items.map((item) => (
+            <NavLink
+              key={item.name}
+              to={toAdminPath(item.to)}
+              className={({ isActive }) =>
+                `flex items-center gap-2 px-3 py-2 text-xs font-medium transition-colors ${
+                  isActive
+                    ? "text-teal-700"
+                    : "text-gray-500 hover:text-teal-700"
+                }`
+              }
+            >
+              <img src={item.icons} alt="" className="h-4 w-4 shrink-0" />
+              <span className="hidden truncate md:block">{item.name}</span>
+            </NavLink>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+};
 
 const Sidebar = () => {
   const logout = useAuthStore((state) => state.logout);
@@ -14,69 +121,9 @@ const Sidebar = () => {
         <img src={icons.admin_home_icon} alt="" className="w-5 h-5" />
         <p className="hidden md:block text-gray-500">Dashboard</p>
       </NavLink>
-      <NavLink
-        to={"/admin/register-users"}
-        className="flex items-center gap-3 px-3 py-2"
-      >
-        <img src={icons.admin_register_users_icon} alt="" className="w-5 h-5" />
-        <p className="hidden md:block text-gray-500">Register Users</p>
-      </NavLink>
-      <NavLink
-        to={"/admin/registrations"}
-        className="flex items-center gap-3 px-3 py-2"
-      >
-        <img
-          src={icons.admin_register_users_icon}
-          alt=""
-          className="w-5 h-5"
-        />
-        <p className="hidden md:block text-gray-500">Registration Requests</p>
-      </NavLink>
-      <NavLink
-        to={"/admin/registered-users"}
-        className="flex items-center gap-3 px-3 py-2"
-      >
-        <img
-          src={icons.admin_register_users_icon}
-          alt=""
-          className="w-5 h-5"
-        />
-        <p className="hidden md:block text-gray-500">Registered Users</p>
-      </NavLink>
-      <NavLink
-        to={"/admin/lost-and-found-management"}
-        className="flex items-center gap-3 px-3 py-2"
-      >
-        <img
-          src={icons.admin_item_management_icon}
-          alt=""
-          className="w-5 h-5"
-        />
-        <p className="hidden md:block text-gray-500">Item Management Center</p>
-      </NavLink>
-      <NavLink
-        to={"/admin/inventory"}
-        className="flex items-center gap-3 px-3 py-2"
-      >
-        <img
-          src={icons.admin_item_management_icon}
-          alt=""
-          className="w-5 h-5"
-        />
-        <p className="hidden md:block text-gray-500">Inventory</p>
-      </NavLink>
-      <NavLink
-        to={"/admin/orders"}
-        className="flex items-center gap-3 px-3 py-2"
-      >
-        <img
-          src={icons.payment_verification}
-          alt=""
-          className="w-5 h-5"
-        />
-        <p className="hidden md:block text-gray-500">Orders & Collections</p>
-      </NavLink>
-
+      {sidebarGroups.map((group) => (
+        <SidebarGroup key={group.label} group={group} />
+      ))}
       <NavLink
         to={"/admin/reports"}
         className="flex items-center gap-3 px-3 py-2"
