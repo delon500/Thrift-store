@@ -21,6 +21,7 @@ const registerStudentParent = async (req, res) => {
       full_name,
       email,
       contact_number,
+      institution_id,
       password,
       confirm_password,
       role,

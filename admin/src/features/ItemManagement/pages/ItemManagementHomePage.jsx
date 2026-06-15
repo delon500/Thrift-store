@@ -1,4 +1,3 @@
-import React from "react";
 import CardActions from "../../../components/shared/CardActions";
 import { action_card } from "../../../data/data";
 const ItemManagementHomePage = () => {
@@ -25,6 +24,7 @@ const ItemManagementHomePage = () => {
               color={action.color}
               icon={action.icons}
               to={action.to}
+              comingSoon={action.comingSoon}
             />
           );
         })}

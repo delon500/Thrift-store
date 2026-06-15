@@ -14,6 +14,7 @@ const LoginForm = () => {
     email: "",
     password: "",
   });
+  const [message, setMessage] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -25,19 +26,43 @@ const LoginForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setMessage(null);
 
     try {
       const data = await loginMutation.mutateAsync(formData);
       setAuth(data);
-      alert("Login successful");
       navigate(redirectTo, { replace: true });
     } catch (error) {
-      alert(error?.response?.data?.message || "Login failed");
+      const status = error?.response?.status;
+      const text = error?.response?.data?.message || "Login failed";
+
+      // A 403 here means the account is registered but not yet approved —
+      // that's expected, so present it as friendly info rather than an error.
+      if (status === 403) {
+        setMessage({
+          type: "info",
+          text: `${text}. You'll be able to log in once an admin approves your registration.`,
+        });
+      } else {
+        setMessage({ type: "error", text });
+      }
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {message ? (
+        <div
+          className={`rounded-2xl border px-4 py-3 text-sm font-medium ${
+            message.type === "info"
+              ? "border-amber-200 bg-amber-50 text-amber-800"
+              : "border-red-200 bg-red-50 text-red-700"
+          }`}
+        >
+          {message.text}
+        </div>
+      ) : null}
+
       <div className="space-y-1">
         <label className="block text-sm font-semibold text-slate-600 mb-2 ml-1">
           EMAIL

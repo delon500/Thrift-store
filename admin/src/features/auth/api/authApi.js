@@ -9,4 +9,12 @@ const login = async (formData) => {
   return response.data;
 };
 
-export { login };
+const getMe = async (token) => {
+  const response = await api.get("/users/me", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  return response.data.user;
+};
+
+export { getMe, login };

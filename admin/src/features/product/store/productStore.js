@@ -3,7 +3,6 @@ import { create } from "zustand";
 export const useProductStore = create((set) => ({
   formData: {
     name: "",
-    slug: "",
     description: "",
     gender: "",
     price: "",

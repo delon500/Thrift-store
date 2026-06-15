@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Input from "../../../components/ui/Input";
 import { roleCards } from "../../../data/data.js";
 import RoleCard from "./RoleCard";
@@ -30,12 +30,13 @@ const RegisterForm = () => {
     confirmPassword: "",
   });
 
-  const { data: institutions = [], isLoading } = useQuery({
+  const { data: institutions = [] } = useQuery({
     queryKey: ["institutions"],
     queryFn: getInstitutions,
   });
 
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [message, setMessage] = useState(null);
 
   const filteredInstitutions = useMemo(() => {
     const query = formData.institutionSearch.trim().toLowerCase();
@@ -87,19 +88,24 @@ const RegisterForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setMessage(null);
 
     try {
-      if (isInstitutionAccount) {
-        await institutionMutation.mutateAsync(formData);
-      } else {
-        await parentStudentMutation.mutateAsync(formData);
-      }
+      const result = isInstitutionAccount
+        ? await institutionMutation.mutateAsync(formData)
+        : await parentStudentMutation.mutateAsync(formData);
 
-      alert("Registration successful");
+      setMessage({
+        type: "success",
+        text:
+          result?.message ||
+          "Registration submitted. You'll be able to log in once an admin approves it.",
+      });
     } catch (error) {
-      console.log(error);
-
-      alert(error?.response?.data?.message || "Something went wrong");
+      setMessage({
+        type: "error",
+        text: error?.response?.data?.message || "Something went wrong",
+      });
     }
   };
 
@@ -345,6 +351,18 @@ const RegisterForm = () => {
           />
         </div>
       </div>
+
+      {message ? (
+        <div
+          className={`rounded-2xl border px-4 py-3 text-sm font-medium ${
+            message.type === "success"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+              : "border-red-200 bg-red-50 text-red-700"
+          }`}
+        >
+          {message.text}
+        </div>
+      ) : null}
 
       <button
         type="submit"

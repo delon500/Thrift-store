@@ -2,45 +2,39 @@
 
 import { icons } from "../assets/icons/icons";
 
+// `to` is relative — CardActions prepends "/admin/".
 export const action_card = [
   {
     name: "Add Items",
     description:
-      "Upload items into the thrift store. Staff can add items details, photos, categories, descounts and many more information",
+      "Upload a new lost-and-found or thrift item with photos and details, with AI auto-fill to speed things up.",
     color: "#dbf0ee",
     icons: icons.add_items,
-    to: "/lost-and-found-management/add-items",
+    to: "lost-and-found-management/add-items",
+  },
+  {
+    name: "Manage Inventory",
+    description:
+      "View, edit, and remove items across all schools, and update prices or availability.",
+    color: "#d4e6e5",
+    icons: icons.manage_shop_icon,
+    to: "inventory",
+  },
+  {
+    name: "Pickup & Collections",
+    description:
+      "Verify reference numbers, track payments, and mark items as collected at the school.",
+    color: "#d4e6e5",
+    icons: icons.payment_verification,
+    to: "orders",
   },
   {
     name: "View Store",
     description:
-      "Preview the live marketplace from a student's and parent perspective.",
+      "Preview the live marketplace the way students and parents see it.",
     color: "#d4e6e5",
     icons: icons.manage_shop_icon,
-    to: "/lost-and-found-management/add-items",
-  },
-  {
-    name: "Payment &amp; Pickup confirmations",
-    description: "12 pending pickups requiring verification.",
-    color: "#d4e6e5",
-    icons: icons.payment_verification,
-    to: "/lost-and-found-management/add-items",
-  },
-  {
-    name: "Public Registration Request",
-    description:
-      "View parent, student, school. and university users who submitted public registration requests and are waiting be approved",
-    color: "#ffe6e4",
-    icons: icons.fees,
-    to: "/lost-and-found-management/add-items",
-  },
-  {
-    name: "Manage Store",
-    description:
-      "Manage lost and found fees and Thrift Store category prices for each school and university.",
-    color: "#d4e6e5",
-    icons: icons.manage_shop_icon,
-    to: "/lost-and-found-management/add-items",
+    to: "view-store",
   },
 ];
 

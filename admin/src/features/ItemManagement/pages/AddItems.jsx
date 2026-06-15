@@ -1,4 +1,3 @@
-import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { images as uiImages } from "../../../assets/images/images";
 import { icons } from "../../../assets/icons/icons";
@@ -9,6 +8,16 @@ import {
   useCreateProduct,
 } from "../../product/hooks/useProduct";
 import useAuthStore from "../../auth/store/authStore";
+
+// listing_type is a DB enum — values must match exactly.
+const LISTING_TYPES = ["Thrift Store", "Lost and Found"];
+const CONDITIONS = ["Excellent", "Good", "Fair", "Poor"];
+
+// Map a free-form (e.g. AI-suggested) value onto a known option, or "" if none.
+const matchOption = (value, options) =>
+  options.find(
+    (option) => option.toLowerCase() === String(value || "").toLowerCase(),
+  ) || "";
 
 const AddItems = () => {
   const token = useAuthStore((state) => state.token);
@@ -48,8 +57,8 @@ const AddItems = () => {
           setField("gender", ai.gender || "");
           setField("price", ai.price || "");
           setField("age", ai.age || "");
-          setField("listing_type", ai.listing_type || "");
-          setField("condition", ai.condition || "");
+          setField("listing_type", matchOption(ai.listing_type, LISTING_TYPES));
+          setField("condition", matchOption(ai.condition, CONDITIONS) || "Excellent");
         },
       },
     );
@@ -267,13 +276,18 @@ const AddItems = () => {
             <div className="flex justify-between w-full items-center gap-6 mt-3">
               <div className="flex flex-col gap-2 w-full">
                 <p>Listing Type</p>
-                <input
-                  type="text"
+                <select
                   className="w-full border-2 border-gray-300 rounded-md p-2"
-                  placeholder="e.g. Thrift Store"
                   value={formData.listing_type}
                   onChange={(e) => setField("listing_type", e.target.value)}
-                />
+                >
+                  <option value="">Select type</option>
+                  {LISTING_TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="flex flex-col gap-2 w-full">
@@ -290,13 +304,17 @@ const AddItems = () => {
 
             <div className="flex flex-col gap-2 mt-3">
               <p>Condition</p>
-              <input
-                type="text"
+              <select
                 className="w-full border-2 border-gray-300 rounded-md p-2"
-                placeholder="e.g. Excellent"
                 value={formData.condition}
                 onChange={(e) => setField("condition", e.target.value)}
-              />
+              >
+                {CONDITIONS.map((conditionOption) => (
+                  <option key={conditionOption} value={conditionOption}>
+                    {conditionOption}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
