@@ -11,3 +11,13 @@ export const getMyOrders = async (token) => {
 
   return response.data.orders;
 };
+
+export const resumeOrderPayment = async ({ orderReference, token }) => {
+  const response = await api.post(
+    `/checkout/${orderReference}/resume`,
+    {},
+    authHeaders(token),
+  );
+
+  return response.data.checkout;
+};

@@ -296,6 +296,69 @@ const cancelCheckout = async (req, res) => {
   }
 };
 
+// Regenerates the PayFast form for an existing still-pending order so a user who
+// backed out of payment can continue it from "My orders" (same order reference).
+const resumeCheckout = async (req, res) => {
+  try {
+    const orderResult = await pool.query(
+      `SELECT
+        co.order_reference,
+        co.status,
+        co.user_full_name,
+        co.user_email,
+        co.subtotal::text AS subtotal,
+        co.service_fee::text AS service_fee,
+        co.total::text AS total,
+        pay.payment_method
+       FROM collection_orders co
+       LEFT JOIN payments pay ON pay.collection_order_id = co.id
+       WHERE co.order_reference = $1 AND co.user_id = $2`,
+      [req.params.orderReference, req.user.id],
+    );
+
+    if (orderResult.rows.length === 0) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const order = orderResult.rows[0];
+
+    if (order.status !== "payment_pending") {
+      return res.status(409).json({
+        message: `Order is ${order.status} and can no longer be paid`,
+      });
+    }
+
+    const method = normalizePaymentMethod(order.payment_method) || PAYMENT_METHODS[0];
+    const summary = {
+      subtotal: Number(order.subtotal),
+      service_fee: Number(order.service_fee),
+      total: Number(order.total),
+    };
+    const user = { full_name: order.user_full_name, email: order.user_email };
+
+    const paymentGateway = createPayFastPayment({
+      order,
+      user,
+      summary,
+      method,
+      req,
+    });
+
+    return res.json({
+      checkout: {
+        order_reference: order.order_reference,
+        status: order.status,
+        total: order.total,
+        payment_gateway: paymentGateway,
+      },
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Could not resume payment", error: error.message });
+  }
+};
+
 export {
   cancelCheckout,
   createCheckout,
@@ -303,4 +366,5 @@ export {
   getPaymentMethods,
   normalizePaymentMethod,
   PAYMENT_METHODS,
+  resumeCheckout,
 };

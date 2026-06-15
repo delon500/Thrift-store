@@ -48,16 +48,23 @@ const getOrderItems = async (orderIds) => {
 
   const result = await pool.query(
     `SELECT
-      collection_order_id,
-      product_name,
-      product_reference_number,
-      listing_type,
-      institution_name,
-      unit_price::text AS unit_price,
-      item_status
-     FROM collection_order_items
-     WHERE collection_order_id = ANY($1::uuid[])
-     ORDER BY created_at ASC`,
+      it.collection_order_id,
+      it.product_name,
+      it.product_reference_number,
+      it.listing_type,
+      it.institution_name,
+      it.unit_price::text AS unit_price,
+      it.item_status,
+      (
+        SELECT image_url
+        FROM product_images pi
+        WHERE pi.product_id = it.product_id
+        ORDER BY pi.sort_order ASC
+        LIMIT 1
+      ) AS image
+     FROM collection_order_items it
+     WHERE it.collection_order_id = ANY($1::uuid[])
+     ORDER BY it.created_at ASC`,
     [orderIds],
   );
 
@@ -71,6 +78,7 @@ const getOrderItems = async (orderIds) => {
       institution_name: item.institution_name,
       unit_price: item.unit_price,
       item_status: item.item_status,
+      image: item.image,
     });
     byOrder.set(item.collection_order_id, list);
   }

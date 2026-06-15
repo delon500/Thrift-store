@@ -1,6 +1,26 @@
 import { useNavigate } from "react-router-dom";
 import { useProductStore } from "../../products/store/productStore";
-import { useMyOrders } from "../hooks/useOrders";
+import { useMyOrders, useResumeOrder } from "../hooks/useOrders";
+
+// Build and submit a hidden form to PayFast, exactly like the checkout page does.
+const submitToPayfast = (gateway) => {
+  if (!gateway?.process_url) return;
+
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = gateway.process_url;
+
+  Object.entries(gateway.form_fields || {}).forEach(([key, value]) => {
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = key;
+    input.value = value;
+    form.appendChild(input);
+  });
+
+  document.body.appendChild(form);
+  form.submit();
+};
 
 const STATUS = {
   payment_pending: { label: "Awaiting payment", cls: "bg-amber-100 text-amber-800" },
@@ -42,6 +62,18 @@ const Orders = () => {
   const navigate = useNavigate();
   const currency = useProductStore((state) => state.currency);
   const { data: orders = [], isLoading, isError, error } = useMyOrders();
+  const resumeMutation = useResumeOrder();
+
+  const handleResume = async (orderReference) => {
+    try {
+      const checkout = await resumeMutation.mutateAsync(orderReference);
+      submitToPayfast(checkout.payment_gateway);
+    } catch (resumeError) {
+      alert(
+        resumeError?.response?.data?.message || "Could not resume payment",
+      );
+    }
+  };
 
   if (isLoading) {
     return <div className="m-6 text-on-surface-variant">Loading your orders...</div>;
@@ -112,19 +144,42 @@ const Orders = () => {
                 </p>
               ) : null}
 
+              {order.status === "payment_pending" ? (
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-amber-50 p-3">
+                  <p className="text-sm font-medium text-amber-800">
+                    This order is awaiting payment.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => handleResume(order.order_reference)}
+                    disabled={resumeMutation.isPending}
+                    className="rounded-full bg-primary px-4 py-2 text-sm font-bold text-on-primary disabled:opacity-60"
+                  >
+                    {resumeMutation.isPending
+                      ? "Loading..."
+                      : "Continue to payment"}
+                  </button>
+                </div>
+              ) : null}
+
               <div className="mt-5 grid gap-3">
                 {order.items.map((item) => (
                   <div
                     key={item.reference_number}
-                    className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-surface-container-low p-3 text-sm"
+                    className="flex items-center gap-3 rounded-lg bg-surface-container-low p-3 text-sm"
                   >
-                    <div>
+                    <img
+                      src={item.image || ""}
+                      alt={item.product_name}
+                      className="h-14 w-14 flex-shrink-0 rounded-lg bg-white object-cover"
+                    />
+                    <div className="min-w-0 flex-grow">
                       <p className="font-bold text-on-surface">{item.product_name}</p>
                       <p className="text-on-surface-variant">
                         {item.listing_type} · Ref {item.reference_number}
                       </p>
                     </div>
-                    <p className="font-bold text-on-surface">
+                    <p className="flex-shrink-0 font-bold text-on-surface">
                       {currency}
                       {formatMoney(item.unit_price)}
                     </p>

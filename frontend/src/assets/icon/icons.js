@@ -25,6 +25,8 @@ import condtion_icon from "./condition_icon.png";
 import forward_arrow_icon from "./forward_arrow_icon.png";
 import profile_icon from "./profile_icon.png";
 import product_description_icon from "./product_description_icon.png";
+import lost_and_found_active_icon from "./lostandfound_active_icon.png";
+import lost_and_found_inactive_icon from "./lostandfound_inactive_icon.png";
 
 export const icons = {
   search_icon,
@@ -54,4 +56,6 @@ export const icons = {
   forward_arrow_icon,
   profile_icon,
   product_description_icon,
+  lost_and_found_active_icon,
+  lost_and_found_inactive_icon,
 };

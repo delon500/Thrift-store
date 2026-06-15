@@ -179,7 +179,7 @@ const Product = () => {
           </h3>
           <Link
             className="text-primary font-bold hover:underline flex items-center gap-1"
-            to="/"
+            to="/products"
           >
             View All
             <img src={icons.forward_arrow_icon} alt="Forward" />
@@ -188,7 +188,7 @@ const Product = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 gap-x-6 place-items-center sm:place-items-start">
           {relatedProducts.length > 0 ? (
-            relatedProducts.map((item) => (
+            relatedProducts.slice(0, 3).map((item) => (
               <Link
                 key={item.id}
                 to={`/products/${item.id}`}

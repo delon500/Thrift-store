@@ -15,6 +15,7 @@ import checkoutRouter from "./routes/checkoutRoute.js";
 import paymentRouter from "./routes/paymentRoute.js";
 import adminOrderRouter from "./routes/adminOrderRoute.js";
 import registrationRouter from "./routes/registrationRoute.js";
+import schoolRouter from "./routes/schoolRoute.js";
 
 connectCloudinary();
 
@@ -39,6 +40,7 @@ app.use("/api/checkout", checkoutRouter);
 app.use("/api/payments", paymentRouter);
 app.use("/api/admin/orders", adminOrderRouter);
 app.use("/api/admin/registrations", registrationRouter);
+app.use("/api/school", schoolRouter);
 
 app.listen(port, () => {
   console.log(`Server started on port: http://localhost:${port}`);

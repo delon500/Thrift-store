@@ -280,7 +280,7 @@ const getProducts = async (req, res) => {
         p.listing_type
        FROM products p
        JOIN institutions i ON i.id = p.institution_id
-       WHERE p.institution_id = $1`,
+       WHERE p.institution_id = $1 AND p.status = 'Available'`,
       [user.institution_id],
     );
 
