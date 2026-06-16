@@ -416,13 +416,25 @@ const listAdminProducts = async (req, res) => {
     }
 
     const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
-    const result = await pool.query(
-      `${ADMIN_PRODUCT_SELECT} ${where} ORDER BY p.created_at DESC NULLS LAST`,
+
+    const totalResult = await pool.query(
+      `SELECT count(*)::int AS total FROM products p ${where}`,
       values,
     );
 
+    const listValues = [...values];
+    let listQuery = `${ADMIN_PRODUCT_SELECT} ${where} ORDER BY p.created_at DESC NULLS LAST`;
+    const limit = Number(req.query.limit);
+    if (limit) {
+      listValues.push(limit);
+      listQuery += ` LIMIT $${listValues.length}`;
+      listValues.push(Number(req.query.offset) || 0);
+      listQuery += ` OFFSET $${listValues.length}`;
+    }
+
+    const result = await pool.query(listQuery, listValues);
     const products = await attachImages(result.rows);
-    return res.json({ products });
+    return res.json({ products, total: totalResult.rows[0].total });
   } catch (error) {
     console.error("List admin products error:", error);
     return res

@@ -1,3 +1,4 @@
+import { toast } from "react-toastify";
 import {
   useApproveRegistration,
   useRegistrations,
@@ -25,8 +26,9 @@ const RegistrationRequests = () => {
   const handleApprove = async (registration) => {
     try {
       await approveMutation.mutateAsync(registration.id);
+      toast.success(`${registration.full_name} approved`);
     } catch (actionError) {
-      alert(actionError?.response?.data?.message || "Could not approve");
+      toast.error(actionError?.response?.data?.message || "Could not approve");
     }
   };
 
@@ -35,8 +37,9 @@ const RegistrationRequests = () => {
 
     try {
       await rejectMutation.mutateAsync(registration.id);
+      toast.success(`${registration.full_name} rejected`);
     } catch (actionError) {
-      alert(actionError?.response?.data?.message || "Could not reject");
+      toast.error(actionError?.response?.data?.message || "Could not reject");
     }
   };
 

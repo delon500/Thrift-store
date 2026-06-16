@@ -1,4 +1,8 @@
+import bcrypt from "bcrypt";
 import pool from "../config/db.js";
+import { logActivity } from "../services/activityLog.js";
+
+const USER_STATUSES = ["pending", "approved", "rejected", "suspended"];
 
 const toCountMap = (rows, keyField, valueField = "count") =>
   rows.reduce((acc, row) => {
@@ -150,18 +154,30 @@ const listUsersByRole = async (req, res) => {
     }
 
     const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
-    const result = await pool.query(
-      `SELECT
+
+    const totalResult = await pool.query(
+      `SELECT count(*)::int AS total FROM users u ${where}`,
+      values,
+    );
+
+    const listValues = [...values];
+    let listQuery = `SELECT
         u.id, u.full_name, u.email, u.contact_number, u.role, u.status,
         u.created_at, i.institution_name
        FROM users u
        LEFT JOIN institutions i ON i.id = u.institution_id
        ${where}
-       ORDER BY u.created_at DESC`,
-      values,
-    );
+       ORDER BY u.created_at DESC`;
+    const limit = Number(req.query.limit);
+    if (limit) {
+      listValues.push(limit);
+      listQuery += ` LIMIT $${listValues.length}`;
+      listValues.push(Number(req.query.offset) || 0);
+      listQuery += ` OFFSET $${listValues.length}`;
+    }
 
-    return res.json({ users: result.rows });
+    const result = await pool.query(listQuery, listValues);
+    return res.json({ users: result.rows, total: totalResult.rows[0].total });
   } catch (error) {
     return res
       .status(500)
@@ -169,4 +185,172 @@ const listUsersByRole = async (req, res) => {
   }
 };
 
-export { getDashboardStats, listActivityLogs, listUsersByRole };
+// PATCH /api/admin/users/:id — edit a user and/or change their status
+// (approved <-> suspended, etc.).
+const updateUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { full_name, contact_number, status } = req.body;
+
+    if (status && !USER_STATUSES.includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+    if (status && status !== "approved" && id === req.user.id) {
+      return res
+        .status(400)
+        .json({ message: "You cannot deactivate your own account" });
+    }
+
+    const updates = [];
+    const values = [];
+
+    if (typeof full_name === "string" && full_name.trim()) {
+      values.push(full_name.trim());
+      updates.push(`full_name = $${values.length}`);
+    }
+    if (typeof contact_number === "string") {
+      values.push(contact_number.trim());
+      updates.push(`contact_number = $${values.length}`);
+    }
+    if (status) {
+      values.push(status);
+      updates.push(`status = $${values.length}`);
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ message: "Nothing to update" });
+    }
+
+    values.push(id);
+    const result = await pool.query(
+      `UPDATE users SET ${updates.join(", ")}, updated_at = now()
+       WHERE id = $${values.length}
+       RETURNING id, full_name, email, contact_number, role, status`,
+      values,
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const user = result.rows[0];
+
+    logActivity({
+      action: status === "suspended" ? "user.suspended" : "user.updated",
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      entityType: "user",
+      entityId: user.id,
+      entityRef: user.email,
+      description: `Updated ${user.full_name}${status ? ` → ${status}` : ""}`,
+    });
+
+    return res.json({ message: "User updated", user });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Failed to update user", error: error.message });
+  }
+};
+
+// POST /api/admin/users/:id/reset-password — set a new password for a user.
+const resetUserPassword = async (req, res) => {
+  try {
+    const { new_password } = req.body;
+
+    if (!new_password || new_password.length < 8) {
+      return res
+        .status(400)
+        .json({ message: "New password must be at least 8 characters" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(new_password, salt);
+    const result = await pool.query(
+      `UPDATE users SET password_hash = $1, updated_at = now()
+       WHERE id = $2 RETURNING id, full_name, email`,
+      [passwordHash, req.params.id],
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    logActivity({
+      action: "user.password_reset",
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      entityType: "user",
+      entityId: result.rows[0].id,
+      entityRef: result.rows[0].email,
+      description: `Reset password for ${result.rows[0].full_name}`,
+    });
+
+    return res.json({ message: "Password reset" });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Failed to reset password", error: error.message });
+  }
+};
+
+// DELETE /api/admin/users/:id — hard-delete a user (blocked if they have orders;
+// suspend those instead so order history is preserved).
+const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (id === req.user.id) {
+      return res
+        .status(400)
+        .json({ message: "You cannot delete your own account" });
+    }
+
+    const userResult = await pool.query(
+      "SELECT id, full_name, email FROM users WHERE id = $1",
+      [id],
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const orders = await pool.query(
+      "SELECT 1 FROM collection_orders WHERE user_id = $1 LIMIT 1",
+      [id],
+    );
+
+    if (orders.rows.length > 0) {
+      return res.status(409).json({
+        message: "This user has orders. Suspend them instead of deleting.",
+      });
+    }
+
+    await pool.query("DELETE FROM users WHERE id = $1", [id]);
+
+    logActivity({
+      action: "user.deleted",
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      entityType: "user",
+      entityId: id,
+      entityRef: userResult.rows[0].email,
+      description: `Deleted ${userResult.rows[0].full_name}`,
+    });
+
+    return res.json({ message: "User deleted", id });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Failed to delete user", error: error.message });
+  }
+};
+
+export {
+  deleteUser,
+  getDashboardStats,
+  listActivityLogs,
+  listUsersByRole,
+  resetUserPassword,
+  updateUser,
+};

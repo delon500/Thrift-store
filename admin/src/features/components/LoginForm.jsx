@@ -1,5 +1,6 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import useAuthStore from "../auth/store/authStore";
 import { useLogin } from "../auth/hook/useAuth";
 
@@ -27,11 +28,10 @@ const LoginForm = () => {
       const data = await loginMutation.mutateAsync(formData);
       setAuth(data);
 
-      console.log(data);
+      toast.success("Login successful");
       navigate("/admin");
-      alert("Login successful");
     } catch (error) {
-      alert(error?.response?.data?.message || "Login failed");
+      toast.error(error?.response?.data?.message || "Login failed");
     }
   };
   return (
