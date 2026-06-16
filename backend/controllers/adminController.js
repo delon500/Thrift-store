@@ -1,8 +1,11 @@
 import bcrypt from "bcrypt";
 import pool from "../config/db.js";
 import { logActivity } from "../services/activityLog.js";
-
-const USER_STATUSES = ["pending", "approved", "rejected", "suspended"];
+import {
+  parsePagination,
+  userDeleteError,
+  userUpdateError,
+} from "../lib/adminRules.js";
 
 const toCountMap = (rows, keyField, valueField = "count") =>
   rows.reduce((acc, row) => {
@@ -168,11 +171,11 @@ const listUsersByRole = async (req, res) => {
        LEFT JOIN institutions i ON i.id = u.institution_id
        ${where}
        ORDER BY u.created_at DESC`;
-    const limit = Number(req.query.limit);
+    const { limit, offset } = parsePagination(req.query);
     if (limit) {
       listValues.push(limit);
       listQuery += ` LIMIT $${listValues.length}`;
-      listValues.push(Number(req.query.offset) || 0);
+      listValues.push(offset);
       listQuery += ` OFFSET $${listValues.length}`;
     }
 
@@ -192,13 +195,9 @@ const updateUser = async (req, res) => {
     const { id } = req.params;
     const { full_name, contact_number, status } = req.body;
 
-    if (status && !USER_STATUSES.includes(status)) {
-      return res.status(400).json({ message: "Invalid status" });
-    }
-    if (status && status !== "approved" && id === req.user.id) {
-      return res
-        .status(400)
-        .json({ message: "You cannot deactivate your own account" });
+    const ruleError = userUpdateError({ status, isSelf: id === req.user.id });
+    if (ruleError) {
+      return res.status(ruleError.status).json({ message: ruleError.message });
     }
 
     const updates = [];
@@ -300,12 +299,6 @@ const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (id === req.user.id) {
-      return res
-        .status(400)
-        .json({ message: "You cannot delete your own account" });
-    }
-
     const userResult = await pool.query(
       "SELECT id, full_name, email FROM users WHERE id = $1",
       [id],
@@ -320,10 +313,12 @@ const deleteUser = async (req, res) => {
       [id],
     );
 
-    if (orders.rows.length > 0) {
-      return res.status(409).json({
-        message: "This user has orders. Suspend them instead of deleting.",
-      });
+    const ruleError = userDeleteError({
+      isSelf: id === req.user.id,
+      hasOrders: orders.rows.length > 0,
+    });
+    if (ruleError) {
+      return res.status(ruleError.status).json({ message: ruleError.message });
     }
 
     await pool.query("DELETE FROM users WHERE id = $1", [id]);

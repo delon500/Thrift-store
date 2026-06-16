@@ -3,6 +3,7 @@ import pool from "../config/db.js";
 import fs from "node:fs";
 import OpenAI from "openai";
 import { logActivity } from "../services/activityLog.js";
+import { parsePagination } from "../lib/adminRules.js";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -424,11 +425,11 @@ const listAdminProducts = async (req, res) => {
 
     const listValues = [...values];
     let listQuery = `${ADMIN_PRODUCT_SELECT} ${where} ORDER BY p.created_at DESC NULLS LAST`;
-    const limit = Number(req.query.limit);
+    const { limit, offset } = parsePagination(req.query);
     if (limit) {
       listValues.push(limit);
       listQuery += ` LIMIT $${listValues.length}`;
-      listValues.push(Number(req.query.offset) || 0);
+      listValues.push(offset);
       listQuery += ` OFFSET $${listValues.length}`;
     }
 

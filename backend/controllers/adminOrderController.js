@@ -1,5 +1,10 @@
 import pool from "../config/db.js";
 import { logActivity } from "../services/activityLog.js";
+import {
+  orderCancelError,
+  orderRefundError,
+  parsePagination,
+} from "../lib/adminRules.js";
 
 const listOrders = async (req, res) => {
   try {
@@ -41,11 +46,11 @@ const listOrders = async (req, res) => {
        LEFT JOIN payments p ON p.collection_order_id = co.id
        ${where}
        ORDER BY co.created_at DESC`;
-    const limit = Number(req.query.limit);
+    const { limit, offset } = parsePagination(req.query);
     if (limit) {
       listValues.push(limit);
       listQuery += ` LIMIT $${listValues.length}`;
-      listValues.push(Number(req.query.offset) || 0);
+      listValues.push(offset);
       listQuery += ` OFFSET $${listValues.length}`;
     }
 
@@ -182,15 +187,10 @@ const cancelOrder = async (req, res) => {
 
     const order = orderResult.rows[0];
 
-    if (order.status === "collected") {
+    const ruleError = orderCancelError(order.status);
+    if (ruleError) {
       await client.query("ROLLBACK");
-      return res
-        .status(409)
-        .json({ message: "A collected order cannot be cancelled" });
-    }
-    if (["cancelled", "expired"].includes(order.status)) {
-      await client.query("ROLLBACK");
-      return res.status(409).json({ message: `Order is already ${order.status}` });
+      return res.status(ruleError.status).json({ message: ruleError.message });
     }
 
     await client.query(
@@ -261,17 +261,13 @@ const refundOrder = async (req, res) => {
 
     const order = orderResult.rows[0];
 
-    if (order.payment_status !== "paid") {
+    const ruleError = orderRefundError({
+      status: order.status,
+      paymentStatus: order.payment_status,
+    });
+    if (ruleError) {
       await client.query("ROLLBACK");
-      return res
-        .status(400)
-        .json({ message: "Only paid orders can be refunded" });
-    }
-    if (order.status === "collected") {
-      await client.query("ROLLBACK");
-      return res.status(409).json({
-        message: "Order was already collected; handle this as a manual dispute",
-      });
+      return res.status(ruleError.status).json({ message: ruleError.message });
     }
 
     await client.query(
