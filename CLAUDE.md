@@ -52,8 +52,14 @@ Route groups (all under `/api`): `auth`, `institutions`, `parents`, `students`, 
 `products`, `cart`, `checkout`, `payments`, `orders` (a user's own orders), `admin/orders`,
 `admin/registrations`, `school`.
 
-Run backend tests: `cd backend && npm test` (Node's built-in runner; tests are pure functions —
-no DB).
+Tests (`cd backend`):
+- `npm test` — fast pure-function unit tests (Node's built-in runner, no DB). Lives in `*.test.js`.
+- `npm run test:integration` — integration tests (`test-int/*.int.js`) that run the real
+  controllers against a **throwaway test database**. The runner (`test-int/run.js`) creates
+  `thriftstore_test` (derived from `DATABASE_URL`, or set `TEST_DATABASE_URL`), applies
+  `db/schema.sql` (a `pg_dump --schema-only` of the full schema), and truncates between tests.
+  `config/db.js` points the pool at the test DB only when `NODE_ENV=test`. Plain `npm test` never
+  touches a DB (it doesn't discover `test-int/`).
 
 ### Auth model
 
