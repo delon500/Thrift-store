@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  institutionDeleteError,
   orderCancelError,
   orderRefundError,
   parsePagination,
@@ -75,6 +76,26 @@ test("orderCancelError allows active orders and blocks terminal ones", () => {
     status: 409,
     message: "Order is already expired",
   });
+});
+
+test("institutionDeleteError blocks institutions with users or products", () => {
+  assert.equal(
+    institutionDeleteError({ hasUsers: false, hasProducts: false }),
+    null,
+  );
+  assert.equal(
+    institutionDeleteError({ hasUsers: true, hasProducts: false }).status,
+    409,
+  );
+  assert.equal(
+    institutionDeleteError({ hasUsers: false, hasProducts: true }).status,
+    409,
+  );
+  // users take precedence in the message
+  assert.match(
+    institutionDeleteError({ hasUsers: true, hasProducts: true }).message,
+    /has users/,
+  );
 });
 
 test("orderRefundError only allows paid, uncollected orders", () => {

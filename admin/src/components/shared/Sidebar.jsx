@@ -134,6 +134,13 @@ const Sidebar = () => {
         <SidebarGroup key={group.label} group={group} />
       ))}
       <NavLink
+        to={"/admin/institutions"}
+        className="flex items-center gap-3 px-3 py-2"
+      >
+        <img src={icons.admin_school_icon} alt="" className="w-5 h-5" />
+        <p className="hidden md:block text-gray-500">Institutions</p>
+      </NavLink>
+      <NavLink
         to={"/admin/reports"}
         className="flex items-center gap-3 px-3 py-2"
       >

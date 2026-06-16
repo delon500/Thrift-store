@@ -18,6 +18,7 @@ import adminOrderRouter from "./routes/adminOrderRoute.js";
 import registrationRouter from "./routes/registrationRoute.js";
 import schoolRouter from "./routes/schoolRoute.js";
 import adminRouter from "./routes/adminRoute.js";
+import adminInstitutionRouter from "./routes/adminInstitutionRoute.js";
 
 connectCloudinary();
 
@@ -62,6 +63,7 @@ app.use("/api/payments", paymentRouter);
 app.use("/api/admin/orders", adminOrderRouter);
 app.use("/api/admin/registrations", registrationRouter);
 app.use("/api/school", schoolRouter);
+app.use("/api/admin/institutions", adminInstitutionRouter);
 app.use("/api/admin", adminRouter);
 
 app.listen(port, () => {

@@ -19,6 +19,7 @@ import RegisteredUsersHomePage from "../features/registeredUsers/pages/Registere
 import RegisteredUsersList from "../features/registeredUsers/pages/RegisteredUsersList";
 import ReportsPage from "../features/reports/pages/ReportsPage";
 import AccountPage from "../features/account/pages/AccountPage";
+import InstitutionsPage from "../features/institutions/pages/InstitutionsPage";
 
 const router = createBrowserRouter([
   {
@@ -93,6 +94,10 @@ const router = createBrowserRouter([
       {
         path: "/admin/account",
         element: <AccountPage />,
+      },
+      {
+        path: "/admin/institutions",
+        element: <InstitutionsPage />,
       },
       {
         path: "*",

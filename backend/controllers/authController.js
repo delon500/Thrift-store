@@ -227,9 +227,10 @@ const login = async (req, res) => {
     users.password_hash,
     users.institution_id,
     users.status,
-    institutions.institution_name
+    institutions.institution_name,
+    institutions.status AS institution_status
   FROM users
-  LEFT JOIN institutions 
+  LEFT JOIN institutions
     ON users.institution_id = institutions.id
   WHERE users.email = $1
   `,
@@ -247,8 +248,19 @@ const login = async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    if (user.status !== "approved" && user.role !== "admin") {
+    if (
+      user.status !== "approved" &&
+      !["admin", "super_admin"].includes(user.role)
+    ) {
       return res.status(403).json({ message: "Account not yet approved" });
+    }
+
+    // A suspended/rejected institution shuts out all of its users.
+    if (["suspended", "rejected"].includes(user.institution_status)) {
+      return res.status(403).json({
+        message:
+          "Your institution's account is not active. Please contact support.",
+      });
     }
 
     const token = generateToken(user);

@@ -43,6 +43,9 @@ const ACTION_LABELS = {
   "user.password_reset": { label: "Password reset", cls: "bg-gray-100 text-gray-600" },
   "user.deleted": { label: "User deleted", cls: "bg-red-100 text-red-700" },
   "order.refunded": { label: "Order refunded", cls: "bg-red-100 text-red-700" },
+  "institution.updated": { label: "Institution updated", cls: "bg-sky-100 text-sky-700" },
+  "institution.suspended": { label: "Institution suspended", cls: "bg-orange-100 text-orange-700" },
+  "institution.deleted": { label: "Institution deleted", cls: "bg-red-100 text-red-700" },
 };
 
 const formatTime = (value) =>
