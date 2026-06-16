@@ -12,7 +12,7 @@ export const getAdminProducts = async ({ token, params = {} }) => {
     params,
   });
 
-  return response.data.products;
+  return response.data; // { products, total }
 };
 
 export const updateProduct = async ({ id, updates, token }) => {

@@ -76,4 +76,35 @@ Thank you for registering with ${appName()}. Unfortunately your registration was
 The ${appName()} team`,
   });
 
-export { sendApprovalEmail, sendEmail, sendRejectionEmail };
+// Sent to the buyer once payment is confirmed: their order is paid and they can
+// present the reference(s) at the school to collect.
+const sendCollectionReadyEmail = (order) => {
+  const itemLines = (order.items || [])
+    .map(
+      (item) => `  • ${item.product_name} — ${item.product_reference_number}`,
+    )
+    .join("\n");
+
+  return sendEmail({
+    to: order.user_email,
+    subject: `Your ${appName()} order ${order.order_reference} is ready to collect`,
+    text: `Hi ${order.user_full_name || "there"},
+
+Your payment for order ${order.order_reference} has been received.
+
+Bring this order reference to ${order.institution_name} to collect your item(s):
+${itemLines}
+
+Order reference: ${order.order_reference}
+
+Thanks,
+The ${appName()} team`,
+  });
+};
+
+export {
+  sendApprovalEmail,
+  sendCollectionReadyEmail,
+  sendEmail,
+  sendRejectionEmail,
+};

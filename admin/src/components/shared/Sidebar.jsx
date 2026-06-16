@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import useAuthStore from "../../features/auth/store/authStore";
 import { icons } from "../../assets/icons/icons";
@@ -42,12 +42,14 @@ const SidebarGroup = ({ group }) => {
     isPathActive(pathname, group.to) ||
     childPaths.some((path) => isPathActive(pathname, path));
   const [isOpen, setIsOpen] = useState(active);
+  const [wasActive, setWasActive] = useState(active);
 
-  useEffect(() => {
-    if (active) {
-      setIsOpen(true);
-    }
-  }, [active]);
+  // Auto-expand a group when navigation makes it active (render-time pattern,
+  // no effect / cascading renders).
+  if (active !== wasActive) {
+    setWasActive(active);
+    if (active) setIsOpen(true);
+  }
 
   return (
     <div>

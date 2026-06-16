@@ -1,9 +1,14 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import { toast } from "react-toastify";
 import {
   useDeleteProduct,
   useInventory,
   useUpdateProduct,
 } from "../hooks/useInventory";
+import { useDebouncedValue } from "../../../lib/useDebouncedValue";
+import Pagination from "../../../components/shared/Pagination";
+
+const PAGE_SIZE = 10;
 
 const PRODUCT_STATUSES = [
   "Available",
@@ -52,9 +57,10 @@ const EditModal = ({ product, onClose }) => {
   const handleSave = async () => {
     try {
       await updateMutation.mutateAsync({ id: product.id, updates: form });
+      toast.success("Product updated");
       onClose();
     } catch (error) {
-      alert(error?.response?.data?.message || "Could not update product");
+      toast.error(error?.response?.data?.message || "Could not update product");
     }
   };
 
@@ -198,34 +204,40 @@ const EditModal = ({ product, onClose }) => {
 };
 
 const InventoryPage = () => {
-  const { data: products = [], isLoading, isError, error } = useInventory();
   const deleteMutation = useDeleteProduct();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [page, setPage] = useState(1);
   const [editing, setEditing] = useState(null);
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
+  const debouncedQuery = useDebouncedValue(query);
 
-    return products.filter((product) => {
-      const matchesStatus = !statusFilter || product.status === statusFilter;
-      const matchesQuery =
-        !q ||
-        [product.name, product.reference_number, product.schoolName, product.category]
-          .filter(Boolean)
-          .some((value) => value.toLowerCase().includes(q));
+  // reset to the first page whenever the search/filter changes
+  const filterKey = `${debouncedQuery}|${statusFilter}`;
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
+  if (filterKey !== prevFilterKey) {
+    setPrevFilterKey(filterKey);
+    setPage(1);
+  }
 
-      return matchesStatus && matchesQuery;
-    });
-  }, [products, query, statusFilter]);
+  const { data, isLoading, isError, error } = useInventory({
+    q: debouncedQuery || undefined,
+    status: statusFilter || undefined,
+    limit: PAGE_SIZE,
+    offset: (page - 1) * PAGE_SIZE,
+  });
+  const products = data?.products || [];
+  const total = data?.total || 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const handleDelete = async (product) => {
     if (!window.confirm(`Delete "${product.name}"? This cannot be undone.`)) return;
 
     try {
       await deleteMutation.mutateAsync(product.id);
+      toast.success(`${product.name} deleted`);
     } catch (deleteError) {
-      alert(deleteError?.response?.data?.message || "Could not delete product");
+      toast.error(deleteError?.response?.data?.message || "Could not delete product");
     }
   };
 
@@ -268,7 +280,7 @@ const InventoryPage = () => {
       <section className="mt-6 overflow-hidden rounded-xl border border-gray-200 bg-white">
         {isLoading ? (
           <p className="p-5 text-gray-500">Loading inventory...</p>
-        ) : filtered.length === 0 ? (
+        ) : products.length === 0 ? (
           <p className="p-5 text-gray-500">No products found.</p>
         ) : (
           <div className="overflow-x-auto">
@@ -284,7 +296,7 @@ const InventoryPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((product) => (
+                {products.map((product) => (
                   <tr key={product.id} className="border-t border-gray-100">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
@@ -341,6 +353,8 @@ const InventoryPage = () => {
           </div>
         )}
       </section>
+
+      <Pagination page={page} totalPages={totalPages} onPage={setPage} />
 
       {editing ? (
         <EditModal product={editing} onClose={() => setEditing(null)} />

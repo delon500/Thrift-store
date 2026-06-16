@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
 import "dotenv/config";
 import authRouter from "./routes/authRoute.js";
 import pool from "./config/db.js";
@@ -24,9 +25,28 @@ connectCloudinary();
 const app = express();
 const port = process.env.PORT || 5000;
 
+// Browser origins allowed to call the API. Non-browser clients (no Origin
+// header) — curl, server-to-server, and the PayFast ITN — are always allowed.
+const allowedOrigins = (
+  process.env.CORS_ORIGINS ||
+  "http://localhost:5173,http://localhost:5174,http://localhost:5175"
+)
+  .split(",")
+  .map((origin) => origin.trim());
+
 //middlewares
+app.use(helmet());
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error("Not allowed by CORS"));
+    },
+  }),
+);
 app.use(express.json());
-app.use(cors());
 
 // api endpoint
 app.use("/api/auth", authRouter);

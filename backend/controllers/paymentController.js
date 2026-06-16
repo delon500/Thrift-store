@@ -4,6 +4,7 @@ import {
   verifyPayFastSignature,
 } from "../services/payfastService.js";
 import { logActivity } from "../services/activityLog.js";
+import { sendCollectionReadyEmail } from "../services/emailService.js";
 
 const markOrderPaid = async ({ orderReference, providerPaymentId, rawPayload }) => {
   const client = await pool.connect();
@@ -89,6 +90,30 @@ const markOrderPaid = async ({ orderReference, providerPaymentId, rawPayload }) 
       entityRef: order.order_reference,
       description: `Payment received for ${order.order_reference}`,
     });
+
+    // Notify the buyer their order is paid and ready to collect (graceful).
+    try {
+      const detail = await pool.query(
+        `SELECT co.order_reference, co.user_email, co.user_full_name,
+                i.institution_name
+         FROM collection_orders co
+         JOIN institutions i ON i.id = co.institution_id
+         WHERE co.id = $1`,
+        [order.id],
+      );
+      const items = await pool.query(
+        `SELECT product_name, product_reference_number
+         FROM collection_order_items WHERE collection_order_id = $1`,
+        [order.id],
+      );
+      if (detail.rows[0]) {
+        sendCollectionReadyEmail({ ...detail.rows[0], items: items.rows });
+      }
+    } catch (mailError) {
+      console.error(
+        `[email] could not send collection-ready email: ${mailError.message}`,
+      );
+    }
 
     return order;
   } catch (error) {

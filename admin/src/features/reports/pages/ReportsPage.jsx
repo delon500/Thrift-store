@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "react-toastify";
 import useAuthStore from "../../auth/store/authStore";
 import { getOrders } from "../../orders/api/orderApi";
 import { getUsersByRole } from "../../registeredUsers/api/registeredUsersApi";
@@ -11,7 +12,7 @@ const REPORTS = [
     name: "Orders report",
     description:
       "Every collection order with customer, school, status, payment, and total.",
-    fetcher: (token) => getOrders(token),
+    fetcher: (token) => getOrders({ token }).then((data) => data.orders),
     columns: [
       { label: "Order Reference", get: (o) => o.order_reference },
       { label: "Customer", get: (o) => o.user_full_name },
@@ -28,7 +29,8 @@ const REPORTS = [
     name: "Users report",
     description:
       "All registered users with role, status, institution, and contact details.",
-    fetcher: (token) => getUsersByRole({ role: undefined, token }),
+    fetcher: (token) =>
+      getUsersByRole({ role: undefined, token }).then((data) => data.users),
     columns: [
       { label: "Name", get: (u) => u.full_name },
       { label: "Email", get: (u) => u.email },
@@ -43,7 +45,8 @@ const REPORTS = [
     key: "inventory",
     name: "Inventory report",
     description: "All products across schools with status, price, and condition.",
-    fetcher: (token) => getAdminProducts({ token }),
+    fetcher: (token) =>
+      getAdminProducts({ token }).then((data) => data.products),
     columns: [
       { label: "Name", get: (p) => p.name },
       { label: "Reference", get: (p) => p.reference_number },
@@ -70,7 +73,7 @@ const ReportsPage = () => {
       const date = new Date().toISOString().slice(0, 10);
       downloadCsv(`${report.key}-report-${date}.csv`, csv);
     } catch (error) {
-      alert(error?.response?.data?.message || "Could not generate the report");
+      toast.error(error?.response?.data?.message || "Could not generate the report");
     } finally {
       setBusy(null);
     }

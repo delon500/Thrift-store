@@ -38,6 +38,11 @@ const ACTION_LABELS = {
   "product.created": { label: "Product added", cls: "bg-teal-100 text-teal-700" },
   "product.updated": { label: "Product updated", cls: "bg-sky-100 text-sky-700" },
   "product.deleted": { label: "Product deleted", cls: "bg-red-100 text-red-700" },
+  "user.updated": { label: "User updated", cls: "bg-sky-100 text-sky-700" },
+  "user.suspended": { label: "User suspended", cls: "bg-orange-100 text-orange-700" },
+  "user.password_reset": { label: "Password reset", cls: "bg-gray-100 text-gray-600" },
+  "user.deleted": { label: "User deleted", cls: "bg-red-100 text-red-700" },
+  "order.refunded": { label: "Order refunded", cls: "bg-red-100 text-red-700" },
 };
 
 const formatTime = (value) =>

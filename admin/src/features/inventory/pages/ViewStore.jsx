@@ -4,7 +4,8 @@ import { useInventory } from "../hooks/useInventory";
 const LISTING_TYPES = ["Thrift Store", "Lost and Found"];
 
 const ViewStore = () => {
-  const { data: products = [], isLoading, isError, error } = useInventory();
+  const { data, isLoading, isError, error } = useInventory();
+  const products = useMemo(() => data?.products || [], [data]);
   const [school, setSchool] = useState("");
   const [listingType, setListingType] = useState("");
 

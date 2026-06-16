@@ -13,6 +13,7 @@ export const useInventory = (params = {}) => {
     queryKey: ["admin-products", params],
     queryFn: () => getAdminProducts({ token, params }),
     enabled: !!token,
+    placeholderData: (previous) => previous,
   });
 };
 

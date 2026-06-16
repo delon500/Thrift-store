@@ -1,9 +1,16 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import { toast } from "react-toastify";
 import {
+  useCancelOrder,
   useMarkOrderCollected,
   useOrder,
   useOrders,
+  useRefundOrder,
 } from "../hooks/useOrders";
+import { useDebouncedValue } from "../../../lib/useDebouncedValue";
+import Pagination from "../../../components/shared/Pagination";
+
+const PAGE_SIZE = 10;
 
 const statusStyles = {
   payment_pending: "bg-yellow-100 text-yellow-800",
@@ -22,40 +29,77 @@ const formatStatus = (status) =>
     : "Unknown";
 
 const OrdersAndCollections = () => {
-  const { data: orders = [], isLoading, isError, error } = useOrders();
   const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
   const [selectedReference, setSelectedReference] = useState("");
   const { data: selectedOrder } = useOrder(selectedReference);
   const markCollectedMutation = useMarkOrderCollected();
+  const cancelMutation = useCancelOrder();
+  const refundMutation = useRefundOrder();
 
-  const filteredOrders = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
+  const debouncedQuery = useDebouncedValue(query);
 
-    if (!normalizedQuery) return orders;
+  // reset to the first page when the search changes
+  const [prevQuery, setPrevQuery] = useState(debouncedQuery);
+  if (debouncedQuery !== prevQuery) {
+    setPrevQuery(debouncedQuery);
+    setPage(1);
+  }
 
-    return orders.filter((order) =>
-      [
-        order.order_reference,
-        order.user_full_name,
-        order.user_email,
-        order.institution_name,
-        order.payment_method,
-        order.status,
-      ]
-        .filter(Boolean)
-        .some((value) => value.toLowerCase().includes(normalizedQuery)),
-    );
-  }, [orders, query]);
+  const { data, isLoading, isError, error } = useOrders({
+    q: debouncedQuery || undefined,
+    limit: PAGE_SIZE,
+    offset: (page - 1) * PAGE_SIZE,
+  });
+  const orders = data?.orders || [];
+  const total = data?.total || 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const handleCollect = async () => {
     try {
       await markCollectedMutation.mutateAsync(selectedOrder.order_reference);
-      alert("Order marked as collected");
+      toast.success("Order marked as collected");
     } catch (collectError) {
-      alert(
+      toast.error(
         collectError?.response?.data?.message ||
           "Could not mark order as collected",
       );
+    }
+  };
+
+  const handleCancel = async () => {
+    if (
+      !window.confirm(
+        `Cancel ${selectedOrder.order_reference}? Held items will be released.`,
+      )
+    ) {
+      return;
+    }
+    try {
+      const result = await cancelMutation.mutateAsync(
+        selectedOrder.order_reference,
+      );
+      toast.success(result.message || "Order cancelled");
+    } catch (cancelError) {
+      toast.error(cancelError?.response?.data?.message || "Could not cancel order");
+    }
+  };
+
+  const handleRefund = async () => {
+    if (
+      !window.confirm(
+        `Refund ${selectedOrder.order_reference}? Process the money refund in PayFast separately.`,
+      )
+    ) {
+      return;
+    }
+    try {
+      const result = await refundMutation.mutateAsync(
+        selectedOrder.order_reference,
+      );
+      toast.success(result.message || "Order refunded");
+    } catch (refundError) {
+      toast.error(refundError?.response?.data?.message || "Could not refund order");
     }
   };
 
@@ -84,10 +128,11 @@ const OrdersAndCollections = () => {
       ) : null}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(340px,0.75fr)]">
+        <div>
         <section className="overflow-hidden rounded-xl border border-gray-200 bg-white">
           {isLoading ? (
             <p className="p-5 text-gray-500">Loading orders...</p>
-          ) : filteredOrders.length === 0 ? (
+          ) : orders.length === 0 ? (
             <p className="p-5 text-gray-500">No orders found.</p>
           ) : (
             <div className="overflow-x-auto">
@@ -103,7 +148,7 @@ const OrdersAndCollections = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredOrders.map((order) => (
+                  {orders.map((order) => (
                     <tr
                       key={order.order_reference}
                       onClick={() => setSelectedReference(order.order_reference)}
@@ -143,6 +188,8 @@ const OrdersAndCollections = () => {
             </div>
           )}
         </section>
+        <Pagination page={page} totalPages={totalPages} onPage={setPage} />
+        </div>
 
         <aside className="h-fit rounded-xl border border-gray-200 bg-white p-5">
           {selectedOrder ? (
@@ -198,6 +245,32 @@ const OrdersAndCollections = () => {
                   ? "Updating..."
                   : "Mark as collected"}
               </button>
+
+              <div className="mt-3 flex gap-2">
+                {!["collected", "cancelled", "expired"].includes(
+                  selectedOrder.status,
+                ) ? (
+                  <button
+                    type="button"
+                    onClick={handleCancel}
+                    disabled={cancelMutation.isPending}
+                    className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+                  >
+                    {cancelMutation.isPending ? "..." : "Cancel order"}
+                  </button>
+                ) : null}
+                {selectedOrder.payment_status === "paid" &&
+                selectedOrder.status !== "collected" ? (
+                  <button
+                    type="button"
+                    onClick={handleRefund}
+                    disabled={refundMutation.isPending}
+                    className="flex-1 rounded-lg border border-red-300 px-4 py-2 text-sm font-bold text-red-600 hover:bg-red-50 disabled:opacity-60"
+                  >
+                    {refundMutation.isPending ? "..." : "Refund"}
+                  </button>
+                ) : null}
+              </div>
             </>
           ) : (
             <p className="text-sm text-gray-500">
