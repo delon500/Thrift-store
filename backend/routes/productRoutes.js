@@ -15,7 +15,7 @@ const productRouter = express.Router();
 productRouter.post(
   "/analyze",
   protect,
-  allowRoles("admin"),
+  allowRoles("admin", "super_admin"),
   upload.fields([
     { name: "image1", maxCount: 1 },
     { name: "image2", maxCount: 1 },
@@ -28,7 +28,7 @@ productRouter.post(
 productRouter.post(
   "/",
   protect,
-  allowRoles("admin"),
+  allowRoles("admin", "super_admin"),
   upload.fields([
     { name: "image1", maxCount: 1 },
     { name: "image2", maxCount: 1 },
@@ -41,8 +41,8 @@ productRouter.post(
 productRouter.get("/", protect, getProducts);
 
 // Admin inventory management
-productRouter.get("/admin", protect, allowRoles("admin"), listAdminProducts);
-productRouter.patch("/:id", protect, allowRoles("admin"), updateProduct);
-productRouter.delete("/:id", protect, allowRoles("admin"), deleteProduct);
+productRouter.get("/admin", protect, allowRoles("admin", "super_admin"), listAdminProducts);
+productRouter.patch("/:id", protect, allowRoles("admin", "super_admin"), updateProduct);
+productRouter.delete("/:id", protect, allowRoles("admin", "super_admin"), deleteProduct);
 
 export default productRouter;

@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict gikPMu3kIXTls0dJ4aFh8a1oPu5yg8cDEdtjdHiugt5DOcKhZ2czxWWrBlqQmMt
+\restrict KybutTN0mpDEC96HAuPHv3oygzd04arrYbdIk2rYvgZnCojLd2mB5ilrKyyZb1u
 
 -- Dumped from database version 18.4
 -- Dumped by pg_dump version 18.4
@@ -152,7 +152,8 @@ CREATE TYPE public.user_role AS ENUM (
     'parent',
     'school',
     'university',
-    'admin'
+    'admin',
+    'super_admin'
 );
 
 
@@ -816,5 +817,5 @@ ALTER TABLE ONLY public.users
 -- PostgreSQL database dump complete
 --
 
-\unrestrict gikPMu3kIXTls0dJ4aFh8a1oPu5yg8cDEdtjdHiugt5DOcKhZ2czxWWrBlqQmMt
+\unrestrict KybutTN0mpDEC96HAuPHv3oygzd04arrYbdIk2rYvgZnCojLd2mB5ilrKyyZb1u
 

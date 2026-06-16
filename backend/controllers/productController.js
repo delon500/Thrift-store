@@ -149,7 +149,9 @@ const createProduct = async (req, res) => {
     }
 
     const finalInstitutionId =
-      req.user.role === "admin" ? schoolId : req.user.institution_id;
+      ["admin", "super_admin"].includes(req.user.role)
+        ? schoolId
+        : req.user.institution_id;
 
     if (!finalInstitutionId) {
       return res

@@ -73,7 +73,9 @@ const registerInstitution = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(password, salt);
 
-    const status = req.user?.role === "admin" ? "approved" : "pending";
+    const status = ["admin", "super_admin"].includes(req.user?.role)
+      ? "approved"
+      : "pending";
 
     const institutionResult = await pool.query(
       `INSERT INTO institutions (

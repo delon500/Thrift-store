@@ -12,7 +12,7 @@ institutionRouter.get("/", getInstitutions);
 institutionRouter.post(
   "/admin/register/institution",
   protect,
-  allowRoles("admin"),
+  allowRoles("super_admin"),
   registerInstitution,
 );
 

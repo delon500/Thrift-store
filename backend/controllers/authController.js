@@ -369,7 +369,7 @@ const adminLogin = async (req, res) => {
     }
 
     const userResult = await pool.query(
-      "SELECT * FROM users WHERE email = $1 AND role = 'admin'",
+      "SELECT * FROM users WHERE email = $1 AND role IN ('admin', 'super_admin')",
       [email],
     );
 

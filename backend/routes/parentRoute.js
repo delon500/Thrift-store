@@ -4,6 +4,6 @@ import { allowRoles, protect } from "../middleware/authMiddleware.js";
 
 const parentRouter = express.Router();
 
-parentRouter.post("/register", protect, allowRoles("admin"), registerParent);
+parentRouter.post("/register", protect, allowRoles("super_admin"), registerParent);
 
 export default parentRouter;

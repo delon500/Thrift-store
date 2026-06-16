@@ -9,6 +9,7 @@ import {
 } from "../hooks/useOrders";
 import { useDebouncedValue } from "../../../lib/useDebouncedValue";
 import Pagination from "../../../components/shared/Pagination";
+import { useMe } from "../../auth/hook/useAuth";
 
 const PAGE_SIZE = 10;
 
@@ -33,6 +34,8 @@ const OrdersAndCollections = () => {
   const [page, setPage] = useState(1);
   const [selectedReference, setSelectedReference] = useState("");
   const { data: selectedOrder } = useOrder(selectedReference);
+  const { data: me } = useMe();
+  const canRefund = me?.role === "super_admin";
   const markCollectedMutation = useMarkOrderCollected();
   const cancelMutation = useCancelOrder();
   const refundMutation = useRefundOrder();
@@ -259,7 +262,8 @@ const OrdersAndCollections = () => {
                     {cancelMutation.isPending ? "..." : "Cancel order"}
                   </button>
                 ) : null}
-                {selectedOrder.payment_status === "paid" &&
+                {canRefund &&
+                selectedOrder.payment_status === "paid" &&
                 selectedOrder.status !== "collected" ? (
                   <button
                     type="button"

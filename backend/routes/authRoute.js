@@ -18,7 +18,7 @@ authRouter.post("/admin/login", loginLimiter, adminLogin);
 authRouter.post(
   "/admin/register/staff",
   protect,
-  allowRoles("admin"),
+  allowRoles("super_admin"),
   registerAdmin,
 );
 
