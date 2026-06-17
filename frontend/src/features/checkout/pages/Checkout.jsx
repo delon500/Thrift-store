@@ -7,6 +7,7 @@ import {
   useCreateCheckout,
   usePaymentMethods,
 } from "../hooks/useCheckout";
+import { useOrderStatus } from "../../orders/hooks/useOrders";
 
 const methodDescriptions = {
   card: "Pay securely by debit or credit card.",
@@ -45,6 +46,21 @@ const Checkout = () => {
   const gateway = checkout?.payment_gateway;
   const gatewayFields = gateway?.form_fields || {};
 
+  // After returning from PayFast, poll the order until the ITN resolves it so
+  // the page reflects the real outcome instead of a static "submitted" message.
+  const isReturningSuccess =
+    paymentState === "success" && !!returnedOrderReference && !checkout;
+  const { data: polledOrder } = useOrderStatus(
+    returnedOrderReference,
+    isReturningSuccess,
+  );
+  const polledStatus = polledOrder?.status;
+  const paymentConfirmed =
+    polledStatus === "ready_for_collection" || polledStatus === "paid";
+  const paymentFailed = ["payment_failed", "cancelled", "expired"].includes(
+    polledStatus,
+  );
+
   // When the user returns from a cancelled PayFast payment, release the held
   // items immediately instead of waiting for the checkout hold to expire.
   const { mutate: cancelCheckout } = cancelCheckoutMutation;
@@ -76,21 +92,36 @@ const Checkout = () => {
   }
 
   if ((paymentState === "success" || paymentState === "cancelled") && !checkout) {
+    const isSuccess = paymentState === "success";
+    let heading = "Payment cancelled";
+    let body =
+      "The PayFast payment was cancelled before completion. Your reserved items have been released back to the store, so you can start a new checkout whenever you are ready.";
+    let tone = "border-outline-variant";
+
+    if (isSuccess && paymentConfirmed) {
+      heading = "Payment confirmed";
+      body =
+        "Your payment is confirmed and your order is ready for collection. Present your order reference at the school to collect your items.";
+      tone = "border-green-400";
+    } else if (isSuccess && paymentFailed) {
+      heading = "Payment not completed";
+      body =
+        "We could not confirm this payment. If money was deducted, please contact support; otherwise you can start a new checkout.";
+      tone = "border-red-400";
+    } else if (isSuccess) {
+      heading = "Confirming your payment…";
+      body =
+        "We are waiting for PayFast to confirm the payment — this usually takes a few seconds. You can also track it under My orders.";
+      tone = "border-amber-400";
+    }
+
     return (
-      <div className="m-6 max-w-3xl rounded-lg border border-outline-variant bg-white p-6">
+      <div className={`m-6 max-w-3xl rounded-lg border-2 ${tone} bg-white p-6`}>
         <p className="text-sm font-bold uppercase text-primary">
           PayFast sandbox
         </p>
-        <h1 className="mt-2 text-3xl font-bold text-on-surface">
-          {paymentState === "success"
-            ? "Payment submitted"
-            : "Payment cancelled"}
-        </h1>
-        <p className="mt-3 text-on-surface-variant">
-          {paymentState === "success"
-            ? "PayFast will confirm the payment through the ITN webhook. Once confirmed, the order moves to ready for collection."
-            : "The PayFast payment was cancelled before completion. Your reserved items have been released back to the store, so you can start a new checkout whenever you're ready."}
-        </p>
+        <h1 className="mt-2 text-3xl font-bold text-on-surface">{heading}</h1>
+        <p className="mt-3 text-on-surface-variant">{body}</p>
         {returnedOrderReference ? (
           <p className="mt-4 rounded-lg bg-surface-container-low p-4 font-bold text-primary">
             Order reference: {returnedOrderReference}
