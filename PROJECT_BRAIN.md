@@ -174,7 +174,11 @@ a dead tunnel).
   **Per-school** fees/pricing is still not built (would need per-institution settings).
 - ~17 **pre-existing lint errors** in untouched admin files (unused `React` imports).
 - Mobile polish: fixed-width (`w-[15%]`) admin sidebar.
-- Buyer/approval emails only log until SMTP is set in `backend/.env`.
+- **SMTP wired for Gmail** (`.env`: SMTP_HOST=smtp.gmail.com, PORT 587, USER/FROM=
+  izyizy4good@gmail.com). **Pending:** paste a Gmail **App Password** into `SMTP_PASS`
+  (needs 2-Step Verification on first), restart backend, verify with
+  `npm run mail:test [recipient]`. Until then emails still just log. `emailService` has
+  `verifyEmailTransport()`; test script at `scripts/send-test-email.js`.
 - **Dev-data note:** a test parent user was accidentally hard-deleted during role
   testing (dev DB 2→1 parents); ORD-2026-000002 was wrongly cancelled then reverted.
 - The backend dev server is currently run via a Claude-started background process

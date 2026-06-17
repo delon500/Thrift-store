@@ -25,6 +25,20 @@ const getTransporter = () => {
   return cachedTransporter;
 };
 
+// Checks the SMTP connection/credentials without sending anything. Returns
+// { configured:false } when SMTP isn't set, otherwise { ok } / { ok:false, error }.
+const verifyEmailTransport = async () => {
+  const transporter = getTransporter();
+  if (!transporter) return { configured: false };
+
+  try {
+    await transporter.verify();
+    return { configured: true, ok: true };
+  } catch (error) {
+    return { configured: true, ok: false, error: error.message };
+  }
+};
+
 const sendEmail = async ({ to, subject, text }) => {
   const transporter = getTransporter();
 
@@ -107,4 +121,5 @@ export {
   sendCollectionReadyEmail,
   sendEmail,
   sendRejectionEmail,
+  verifyEmailTransport,
 };
