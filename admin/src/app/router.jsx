@@ -22,6 +22,7 @@ import AccountPage from "../features/account/pages/AccountPage";
 import InstitutionsPage from "../features/institutions/pages/InstitutionsPage";
 import PaymentsPage from "../features/payments/pages/PaymentsPage";
 import NotificationsPage from "../features/notifications/pages/NotificationsPage";
+import SettingsPage from "../features/settings/pages/SettingsPage";
 
 const router = createBrowserRouter([
   {
@@ -108,6 +109,10 @@ const router = createBrowserRouter([
       {
         path: "/admin/notifications",
         element: <NotificationsPage />,
+      },
+      {
+        path: "/admin/settings",
+        element: <SettingsPage />,
       },
       {
         path: "*",

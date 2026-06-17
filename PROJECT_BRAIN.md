@@ -101,7 +101,29 @@ Four independently-run apps (no root `package.json` — install/run each separat
   `~/.claude/skills/persistent-project-memory-system/`.
 
 ## 6. Active work / status
-**Active feature: Notification Center — DONE for BOTH customer + admin, uncommitted.**
+**Active feature: Admin Settings — DONE (backend + admin frontend), uncommitted.**
+Makes 3 previously-hardcoded values configurable platform-wide from the admin app:
+service fee (was R1.50 in cartController), checkout expiry minutes (was 30 in
+checkoutController), and the enabled subset of the 9 PayFast payment methods. Backend:
+migration `009` (`app_settings` key→jsonb table, seeded with current defaults);
+`services/settingsService.js` — `PAYMENT_METHOD_CATALOG` (moved here as the single source),
+`SETTINGS_DEFAULTS`, cached read-through `getSettings()` (60s TTL + `invalidateSettingsCache`
+on write) + `getServiceFee/getCheckoutExpiryMinutes/getEnabledPaymentMethods`;
+`lib/settingsRules.js` pure validation (+ unit tests); `controllers/adminSettingsController.js`
+(GET settings+catalog, PUT super-admin only); routes mounted `/api/admin/settings` (GET
+admin+super, PUT super). **Consumption:** `calculateCartSummary(items, serviceFee)` and
+`serializeCart({…serviceFee})` now take the fee (default 1.5 keeps pure-fn unit tests green);
+cart + checkout controllers pass `await getServiceFee()`; checkout uses
+`await getCheckoutExpiryMinutes()` and rejects a disabled method. `getPaymentMethod`/
+`normalizePaymentMethod` stay **sync** (catalog lookup — unit tests use `assert.throws`);
+`getPaymentMethods` (GET) returns only enabled. **Customer app needs NO changes** — it
+already pulls payment methods + the fee-bearing summary from the backend. Admin frontend:
+`admin/src/features/settings/{api,hooks,pages}` `SettingsPage` (`/admin/settings`, super-admin
+sidebar link; read-only for plain admin). Verified live end-to-end (fee 1.5→7.5 reflected in a
+cart immediately; methods filtered; disabled/unknown method rejected at checkout) then
+**restored to defaults**; **27 unit + 14 integration tests pass**; admin lint clean + builds.
+
+**Prior feature: Notification Center — DONE for BOTH customer + admin, committed (`b53fd8e`).**
 The `notifications` table is per-user and admins ARE users, so the **same
 `/api/notifications` endpoints serve both apps** — no per-app routes. Admin side adds
 `notificationService.notifyAdmins(...)` which fans an operational alert out to every
@@ -148,7 +170,8 @@ Earlier (also uncommitted): PayFast ITN tunnel fix + customer checkout status po
 a dead tunnel).
 
 ## 7. Known issues / blockers / debt
-- Per-school **fees/pricing** not built — service fee hardcoded **R1.50** in cart.
+- The service fee is now a **global** configurable setting (Admin Settings), default R1.50.
+  **Per-school** fees/pricing is still not built (would need per-institution settings).
 - ~17 **pre-existing lint errors** in untouched admin files (unused `React` imports).
 - Mobile polish: fixed-width (`w-[15%]`) admin sidebar.
 - Buyer/approval emails only log until SMTP is set in `backend/.env`.
@@ -173,33 +196,29 @@ a dead tunnel).
   `PROJECT_BRAIN.md`, the `CLAUDE.md` project-memory note, and the `TaskCompleted` hook
   in `.claude/settings.local.json` (personal, gitignored).
 
-## 8. Next actions — Notification Center DONE; commit + (optional) browser smoke-test
-Backend + frontend built and verified (API-level live test + 10 integration tests; lint
-clean + builds pass). **Remaining for this feature:**
-1. Commit it (branch `payments-collection-flow`). Apply migration `008_notifications.sql`
-   to any other env. Schema.sql re-dumped (11 tables).
-2. Optional: browser smoke-test the bell in the customer app (5173) — log in as an
-   approved parent/student with a notification, confirm badge + dropdown + mark-read +
-   "View all" → `/notifications`. (API path already verified end-to-end.)
+## 8. Next actions — Admin Settings DONE; commit
+Backend + admin frontend built and verified (live e2e fee/method change + restore;
+27 unit + 14 integration tests; lint clean + builds). **Remaining: commit it** (branch
+`payments-collection-flow`). Apply migrations `008` + `009` to any other env; schema.sql
+re-dumped (12 tables).
 
-Notification endpoints (all `protect`, own user — serve customer AND admin apps):
-`GET /api/notifications?unread=&limit=&offset=` → `{notifications,total,unread}`;
-`GET /api/notifications/unread-count`; `PATCH /api/notifications/:id/read`;
-`PATCH /api/notifications/read-all`. Types: customer `order_ready`, `payment_failed`,
-`registration_approved`; admin `registration_pending`, `payment_failed`.
+Settings endpoints: `GET /api/admin/settings` → `{settings, payment_method_catalog}`
+(admin+super); `PUT /api/admin/settings` (super only) — keys `service_fee`,
+`checkout_expiry_minutes`, `enabled_payment_methods`. Reads go through cached
+`settingsService.getSettings()` (defaults fallback). Notification types so far: customer
+`order_ready`/`payment_failed`/`registration_approved`; admin `registration_pending`/
+`payment_failed`.
 
-**Next feature (user's plan): Admin Settings** — hardcoded R1.50 service fee (cartController)
-+ 30-min `CHECKOUT_EXPIRY` + `PAYMENT_METHODS`; make them configurable from the admin app.
-
-**Deferred:** a **school-staff** notifications surface (school-admin app — would reuse the
-same table + an institution-scoped fan-out); lint-clean ~17 pre-existing admin errors;
-SMTP; open the PR (`github.com/delon500/Thrift-store` → `payments-collection-flow`, base
-`main`).
+**Deferred / candidate next features:** per-**institution** settings (current Admin Settings
+is global); a **school-staff** notifications surface (school-admin app — reuse the
+notifications table + an institution-scoped fan-out); lint-clean ~17 pre-existing admin
+errors; SMTP; **open the PR** (`github.com/delon500/Thrift-store` →
+`payments-collection-flow`, base `main`).
 
 ## 9. Conventions & constraints (do NOT break)
 - Don't re-add the dropped `collection_order_items` unique index (decision above).
 - Keep ITN signature blank-field handling intact.
-- Apply migrations 001–008 in order; never auto-commit `.env`, `node_modules/`,
+- Apply migrations 001–009 in order; never auto-commit `.env`, `node_modules/`,
   `dist/`. Push to `payments-collection-flow`, not `main`. Commits end with the
   Co-Authored-By trailer.
 - Errors inline / via toast, never `alert()`. The **customer app has no ToastContainer**

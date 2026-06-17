@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 7cc7aL4N80J9U4bR6tvqTEW5Gkb8TuOW09SZcjeIYmEJazncrdPuH2dXoRidOJ2
+\restrict s0NoJkAVvQ0mS4yd8lqCGOInaGM2d296hVmJRIhop6QWdDl09gfh6r2gcfi3BTv
 
 -- Dumped from database version 18.4
 -- Dumped by pg_dump version 18.4
@@ -192,6 +192,18 @@ CREATE TABLE public.activity_logs (
     description text,
     metadata jsonb,
     created_at timestamp without time zone DEFAULT now()
+);
+
+
+--
+-- Name: app_settings; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.app_settings (
+    key text NOT NULL,
+    value jsonb NOT NULL,
+    updated_at timestamp without time zone DEFAULT now(),
+    updated_by uuid
 );
 
 
@@ -459,6 +471,14 @@ CREATE TABLE public.users (
 
 ALTER TABLE ONLY public.activity_logs
     ADD CONSTRAINT activity_logs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: app_settings app_settings_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.app_settings
+    ADD CONSTRAINT app_settings_pkey PRIMARY KEY (key);
 
 
 --
@@ -869,5 +889,5 @@ ALTER TABLE ONLY public.users
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 7cc7aL4N80J9U4bR6tvqTEW5Gkb8TuOW09SZcjeIYmEJazncrdPuH2dXoRidOJ2
+\unrestrict s0NoJkAVvQ0mS4yd8lqCGOInaGM2d296hVmJRIhop6QWdDl09gfh6r2gcfi3BTv
 
