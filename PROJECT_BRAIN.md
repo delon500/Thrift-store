@@ -112,8 +112,16 @@ error+retry states instead of reading the Zustand store and returning `null`); a
 `components/shared/Skeleton.jsx` + skeleton grid + error/retry on HomePage. NB there is
 **no backend `GET /products/:id`** — customer product views still rely on the full-list
 query (cached, shared via React Query); a per-product endpoint is a future optimization.
-Deferred frontend batches (offered, not yet done): a11y/design-token consistency, perf/SEO
-(route code-splitting — bundle >500kB, per-page titles). Lint clean + build passes.
+Then **a11y + design-consistency pass (committed):** global `:focus-visible` ring in
+`index.css` (uses `--color-primary`); alt/aria sweep (decorative icons → `alt=""`,
+state-aware `aria-label`/`aria-pressed` on the wishlist toggle, `aria-label` on the sort
+select + search Input + notification bell with unread count); unified the two notification
+components I'd built with raw `teal/gray` to the **M3 theme tokens** (`primary`,
+`on-surface`, `outline`, `surface-container-low`, `error`…) so they match the rest of the
+customer app — kept the semantic status-dot colors. NB tokens confirmed against
+`@theme` names; **not yet visually QA'd** in a browser (low-risk swaps, build passes).
+Deferred frontend batch (offered, not done): perf/SEO (route code-splitting — bundle
+>500kB, per-page titles). Lint clean + build passes.
 
 **Prior feature: Admin Settings — DONE (backend + admin frontend), committed.**
 Makes 3 previously-hardcoded values configurable platform-wide from the admin app:

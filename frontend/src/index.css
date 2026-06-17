@@ -86,6 +86,14 @@ body {
   font-family: var(--font-body-md);
 }
 
+/* Consistent, accessible keyboard-focus ring across the whole app. :focus-visible
+   only fires for keyboard / assistive-tech users, so mouse clicks stay clean. */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 .material-symbols-outlined {
   font-variation-settings:
     "FILL" 0,

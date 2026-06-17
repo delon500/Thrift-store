@@ -88,14 +88,19 @@ const ProductCard = ({
             {price}
           </p>
 
-          <button onClick={handleWishlistClick} className="cursor-pointer">
+          <button
+            onClick={handleWishlistClick}
+            aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+            aria-pressed={isWishlisted}
+            className="cursor-pointer"
+          >
             <img
               src={
                 isWishlisted
                   ? icons.heart_active_icon
                   : icons.heart_inactive_icon
               }
-              alt="Wishlist"
+              alt=""
               className="w-6 h-6"
             />
           </button>
@@ -108,7 +113,7 @@ const ProductCard = ({
         >
           <img
             src={icons.add_to_cart_icon}
-            alt="Add to Cart"
+            alt=""
             className="md:hidden lg:inline-block"
           />
           {addCartItemMutation.isPending ? "Adding..." : "Add to Backpack"}

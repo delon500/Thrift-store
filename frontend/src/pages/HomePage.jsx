@@ -86,12 +86,13 @@ const HomePage = () => {
                   : "border-teal-50 text-primary"
               }`}
             >
-              <img src={icons.filter_icon} />
+              <img src={icons.filter_icon} alt="" />
               Filters
             </button>
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value)}
+              aria-label="Sort products"
               className="bg-primary text-white px-5 py-2 rounded-none lg:rounded-xl font-label-caps lg:shadow-[0_4px_0_0_#00433f] transition-all cursor-pointer outline-none"
             >
               <option value="newest">Sort: Newest</option>
