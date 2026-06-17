@@ -101,24 +101,34 @@ Four independently-run apps (no root `package.json` — install/run each separat
   `~/.claude/skills/persistent-project-memory-system/`.
 
 ## 6. Active work / status
-**Active feature: Payment Management (admin) — DONE (backend + frontend).** Backend was
-committed (`02488be` tip; see §8 for what shipped). **Frontend now built** (uncommitted):
-`admin/src/features/payments/{api,hooks,pages}` — `paymentsApi.js`
-(getPayments/getPayment/recoverPayment), `usePayments.js` (usePayments + usePayment +
-useRecoverPayment), `PaymentsPage.jsx` (summary cards, status/debounced-search/date
-filters, shared Pagination, table, click-to-open detail modal with all fields +
-failure/refund reason + collapsible raw payload JSON + super-admin "Mark paid (recover)"
-button gated by `useMe().role === "super_admin"`, toasts). Route `/admin/payments` in
-`app/router.jsx`; sidebar "Payments" link; Payments CSV added to Reports page.
-**Admin lint clean + `npm run build` passes.** Not yet smoke-tested live against a running
-backend, and not yet committed.
+**Active feature: Notification Center (customer) — DONE (backend + frontend), uncommitted.**
+In-app notifications for parents/students — a bell + unread badge in the customer app, the
+in-app counterpart to the transactional emails. Backend: migration `008` (`notifications`
+table: user_id FK→users ON DELETE CASCADE, type, title, body, entity_type, entity_ref,
+link, read_at, created_at; indexes on (user_id,created_at) and partial unread);
+`services/notificationService.js` `createNotification(...)` (guarded fire-and-forget like
+logActivity); `controllers/notificationController.js` (list `?unread=&limit=&offset=` →
+`{notifications,total,unread}`, unread-count, mark `:id/read`, `read-all`);
+`routes/notificationRoute.js` mounted `/api/notifications` (all `protect`, scoped to
+`req.user.id`). Wired `createNotification` into 3 buyer events: `markOrderPaid`→order_ready,
+`markOrderPaymentFailed`→payment_failed (added `user_id` to its SELECT),
+`approveRegistration`→registration_approved. **Reject deliberately has NO notification**
+(rejected users can't log in, so they'd never see it). Frontend (customer app):
+`features/notifications/{api,hooks,components,pages,lib}` — `NotificationBell` (bell + badge
++ dropdown, outside-click close, click marks read + navigates), `NotificationsPage`
+(`/notifications`), `useUnreadCount` polls every 30s. Bell added to `Navbar` (only when
+logged in). Links point at real routes (`/orders`, `/products`). **No ToastContainer in the
+customer app — don't add toast there.** Verified live end-to-end (recover→order_ready
+notification, mark-read, user isolation) + **3 integration tests** (now **10 passing**);
+admin/frontend lint clean + builds pass. Throwaway test data cleaned up.
 
-Prior backend (committed at `02488be`): migration `007` (payments +
-`failure_reason`/`refunded_at`/`refund_reason`/`refunded_by`); write-points populate them
-(`markOrderPaymentFailed`→failure_reason, `refundOrder`→refund metadata + refunded_by);
-new `/api/admin/payments` (list+summary, detail incl. raw payload, super-admin recover).
-Verified live + integration tests (**7 passing**). Integration runner runs files
-**serially**; `seedOrder` emails unique per call.
+**Prior feature: Payment Management (admin) — DONE, committed.** Backend `02488be`
+(migration `007` payment failure/refund metadata; `/api/admin/payments` list+summary,
+detail incl. raw payload, super-admin recover). Frontend `3176fbf`
+(`admin/src/features/payments/{api,hooks,pages}`, `/admin/payments` route + sidebar link,
+detail modal with raw payload + super-admin "Mark paid (recover)" gated by
+`useMe().role === "super_admin"`, Payments CSV on Reports). Live smoke-tested + role gate
+verified.
 
 Earlier (also uncommitted): PayFast ITN tunnel fix + customer checkout status polling
 (`useOrderStatus`); recovered the user's genuinely-paid `ORD-2026-000041` (ITN lost to
@@ -150,31 +160,34 @@ a dead tunnel).
   `PROJECT_BRAIN.md`, the `CLAUDE.md` project-memory note, and the `TaskCompleted` hook
   in `.claude/settings.local.json` (personal, gitignored).
 
-## 8. Next actions — Payment Management DONE; verify + commit
-Both backend (committed `02488be`) and frontend (uncommitted, see §6) are built; admin
-lint clean + build passes. **Remaining for this feature:**
-1. Smoke-test live: start backend (port 5000), open admin (5174), log in, visit
-   `/admin/payments` — confirm list/summary/filters/pagination load, open a detail modal
-   (raw payload renders), and (as a **super_admin**) the "Mark paid (recover)" button
-   appears on a pending/failed payment and flips it. Use throwaway data only.
-2. Commit the frontend (branch `payments-collection-flow`).
+## 8. Next actions — Notification Center DONE; commit + (optional) browser smoke-test
+Backend + frontend built and verified (API-level live test + 10 integration tests; lint
+clean + builds pass). **Remaining for this feature:**
+1. Commit it (branch `payments-collection-flow`). Apply migration `008_notifications.sql`
+   to any other env. Schema.sql re-dumped (11 tables).
+2. Optional: browser smoke-test the bell in the customer app (5173) — log in as an
+   approved parent/student with a notification, confirm badge + dropdown + mark-read +
+   "View all" → `/notifications`. (API path already verified end-to-end.)
 
-Live endpoints consumed: `GET /api/admin/payments?status=&q=&from=&to=&limit=&offset=` →
-`{ payments, total, summary{ total_paid, total_refunded, failed_count, pending_count } }`;
-`GET /api/admin/payments/:id` → `{ payment }` (adds `raw_webhook_payload`, `refunded_by`);
-`POST /api/admin/payments/:orderReference/recover` (**super_admin**).
+Notification endpoints (all `protect`, own user): `GET /api/notifications?unread=&limit=&offset=`
+→ `{notifications,total,unread}`; `GET /api/notifications/unread-count`;
+`PATCH /api/notifications/:id/read`; `PATCH /api/notifications/read-all`. Notification
+types so far: `order_ready`, `payment_failed`, `registration_approved`.
 
-**Deferred (separate features):** Notifications Center; Admin Settings (hardcoded R1.50
-fee + 30-min expiry + payment methods); lint-clean ~17 errors; SMTP; open the PR
-(`github.com/delon500/Thrift-store` → `payments-collection-flow`, base `main`).
+**Deferred (separate features):** Admin Settings (hardcoded R1.50 fee + 30-min expiry +
+payment methods); a future Notifications surface for **admins/school staff** (this build is
+customer-only — would reuse the same table + a role/institution-scoped query); lint-clean
+~17 pre-existing admin errors; SMTP; open the PR (`github.com/delon500/Thrift-store` →
+`payments-collection-flow`, base `main`).
 
 ## 9. Conventions & constraints (do NOT break)
 - Don't re-add the dropped `collection_order_items` unique index (decision above).
 - Keep ITN signature blank-field handling intact.
-- Apply migrations 001–006 in order; never auto-commit `.env`, `node_modules/`,
+- Apply migrations 001–008 in order; never auto-commit `.env`, `node_modules/`,
   `dist/`. Push to `payments-collection-flow`, not `main`. Commits end with the
   Co-Authored-By trailer.
-- Errors inline / via toast, never `alert()`. Keep API base URL env-driven.
+- Errors inline / via toast, never `alert()`. The **customer app has no ToastContainer**
+  — show errors inline there. Keep API base URL env-driven.
 - `backend/.env` changes need a full backend restart (nodemon watches `.js`).
 
 ## 10. Run & test

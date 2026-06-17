@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict vC7mc7iuoSPhuWdKvVcDco3tKPQnaUoATkovjcxkkuYGLLaA5CxhdEBEydqnHtQ
+\restrict 7cc7aL4N80J9U4bR6tvqTEW5Gkb8TuOW09SZcjeIYmEJazncrdPuH2dXoRidOJ2
 
 -- Dumped from database version 18.4
 -- Dumped by pg_dump version 18.4
@@ -332,6 +332,24 @@ CREATE TABLE public.institutions (
 
 
 --
+-- Name: notifications; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.notifications (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    user_id uuid NOT NULL,
+    type character varying(50) NOT NULL,
+    title character varying(255) NOT NULL,
+    body text,
+    entity_type character varying(40),
+    entity_ref character varying(100),
+    link character varying(255),
+    read_at timestamp without time zone,
+    created_at timestamp without time zone DEFAULT now()
+);
+
+
+--
 -- Name: payments; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -508,6 +526,14 @@ ALTER TABLE ONLY public.institutions
 
 
 --
+-- Name: notifications notifications_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT notifications_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: payments payments_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -643,6 +669,20 @@ CREATE INDEX collection_orders_reference_idx ON public.collection_orders USING b
 --
 
 CREATE INDEX collection_orders_user_status_idx ON public.collection_orders USING btree (user_id, status);
+
+
+--
+-- Name: notifications_user_created_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX notifications_user_created_idx ON public.notifications USING btree (user_id, created_at DESC);
+
+
+--
+-- Name: notifications_user_unread_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX notifications_user_unread_idx ON public.notifications USING btree (user_id) WHERE (read_at IS NULL);
 
 
 --
@@ -786,6 +826,14 @@ ALTER TABLE ONLY public.collection_orders
 
 
 --
+-- Name: notifications notifications_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
 -- Name: payments payments_collection_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -821,5 +869,5 @@ ALTER TABLE ONLY public.users
 -- PostgreSQL database dump complete
 --
 
-\unrestrict vC7mc7iuoSPhuWdKvVcDco3tKPQnaUoATkovjcxkkuYGLLaA5CxhdEBEydqnHtQ
+\unrestrict 7cc7aL4N80J9U4bR6tvqTEW5Gkb8TuOW09SZcjeIYmEJazncrdPuH2dXoRidOJ2
 

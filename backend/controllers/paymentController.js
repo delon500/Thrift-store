@@ -4,6 +4,7 @@ import {
   verifyPayFastSignature,
 } from "../services/payfastService.js";
 import { logActivity } from "../services/activityLog.js";
+import { createNotification } from "../services/notificationService.js";
 import { sendCollectionReadyEmail } from "../services/emailService.js";
 
 const markOrderPaid = async ({ orderReference, providerPaymentId, rawPayload }) => {
@@ -91,6 +92,16 @@ const markOrderPaid = async ({ orderReference, providerPaymentId, rawPayload }) 
       description: `Payment received for ${order.order_reference}`,
     });
 
+    createNotification({
+      userId: order.user_id,
+      type: "order_ready",
+      title: "Your order is ready to collect",
+      body: `Payment confirmed for ${order.order_reference}. Present your reference at the school to collect your item.`,
+      entityType: "order",
+      entityRef: order.order_reference,
+      link: "/orders",
+    });
+
     // Notify the buyer their order is paid and ready to collect (graceful).
     try {
       const detail = await pool.query(
@@ -135,7 +146,7 @@ const markOrderPaymentFailed = async ({
     await client.query("BEGIN");
 
     const orderResult = await client.query(
-      `SELECT id, order_reference
+      `SELECT id, user_id, order_reference
        FROM collection_orders
        WHERE order_reference = $1
        FOR UPDATE`,
@@ -185,6 +196,16 @@ const markOrderPaymentFailed = async ({
     );
 
     await client.query("COMMIT");
+
+    createNotification({
+      userId: order.user_id,
+      type: "payment_failed",
+      title: "Payment failed",
+      body: `Your payment for ${order.order_reference} did not go through. You can try paying again from your orders.`,
+      entityType: "order",
+      entityRef: order.order_reference,
+      link: "/orders",
+    });
 
     return order;
   } catch (error) {
