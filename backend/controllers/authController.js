@@ -2,6 +2,7 @@ import pool from "../config/db.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { logActivity } from "../services/activityLog.js";
+import { notifyAdmins } from "../services/notificationService.js";
 
 const generateToken = (user) => {
   return jwt.sign(
@@ -85,6 +86,15 @@ const registerStudentParent = async (req, res) => {
       entityId: createdUser.id,
       entityRef: createdUser.email,
       description: `${createdUser.full_name} registered as ${createdUser.role}`,
+    });
+
+    notifyAdmins({
+      type: "registration_pending",
+      title: "New registration awaiting approval",
+      body: `${createdUser.full_name} registered as a ${createdUser.role}.`,
+      entityType: "user",
+      entityRef: createdUser.email,
+      link: "/admin/registrations",
     });
 
     res.status(201).json({
@@ -196,6 +206,15 @@ const registerInstitution = async (req, res) => {
       entityId: createdUser.id,
       entityRef: contact_email,
       description: `${institution_name} registered as ${role}`,
+    });
+
+    notifyAdmins({
+      type: "registration_pending",
+      title: "New registration awaiting approval",
+      body: `${institution_name} registered as a ${role}.`,
+      entityType: "user",
+      entityRef: contact_email,
+      link: "/admin/registrations",
     });
 
     res.status(201).json({

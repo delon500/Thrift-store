@@ -101,20 +101,77 @@ Four independently-run apps (no root `package.json` — install/run each separat
   `~/.claude/skills/persistent-project-memory-system/`.
 
 ## 6. Active work / status
-**Active feature: Payment Management (admin) — BACKEND DONE + tested; FRONTEND is next**
-(see §8). Backend shipped (uncommitted): migration `007` (payments +
-`failure_reason`/`refunded_at`/`refund_reason`/`refunded_by`); write-points populate them
-(`markOrderPaymentFailed`→failure_reason, `refundOrder`→refund metadata + refunded_by);
-new `/api/admin/payments` (list+summary, detail incl. raw payload, super-admin recover).
-Verified live + integration tests (now **7 passing**). Also fixed the integration runner
-to run files **serially** and made `seedOrder` emails unique per call.
+**Active feature: Admin Settings — DONE (backend + admin frontend), uncommitted.**
+Makes 3 previously-hardcoded values configurable platform-wide from the admin app:
+service fee (was R1.50 in cartController), checkout expiry minutes (was 30 in
+checkoutController), and the enabled subset of the 9 PayFast payment methods. Backend:
+migration `009` (`app_settings` key→jsonb table, seeded with current defaults);
+`services/settingsService.js` — `PAYMENT_METHOD_CATALOG` (moved here as the single source),
+`SETTINGS_DEFAULTS`, cached read-through `getSettings()` (60s TTL + `invalidateSettingsCache`
+on write) + `getServiceFee/getCheckoutExpiryMinutes/getEnabledPaymentMethods`;
+`lib/settingsRules.js` pure validation (+ unit tests); `controllers/adminSettingsController.js`
+(GET settings+catalog, PUT super-admin only); routes mounted `/api/admin/settings` (GET
+admin+super, PUT super). **Consumption:** `calculateCartSummary(items, serviceFee)` and
+`serializeCart({…serviceFee})` now take the fee (default 1.5 keeps pure-fn unit tests green);
+cart + checkout controllers pass `await getServiceFee()`; checkout uses
+`await getCheckoutExpiryMinutes()` and rejects a disabled method. `getPaymentMethod`/
+`normalizePaymentMethod` stay **sync** (catalog lookup — unit tests use `assert.throws`);
+`getPaymentMethods` (GET) returns only enabled. **Customer app needs NO changes** — it
+already pulls payment methods + the fee-bearing summary from the backend. Admin frontend:
+`admin/src/features/settings/{api,hooks,pages}` `SettingsPage` (`/admin/settings`, super-admin
+sidebar link; read-only for plain admin). Verified live end-to-end (fee 1.5→7.5 reflected in a
+cart immediately; methods filtered; disabled/unknown method rejected at checkout) then
+**restored to defaults**; **27 unit + 14 integration tests pass**; admin lint clean + builds.
+
+**Prior feature: Notification Center — DONE for BOTH customer + admin, committed (`b53fd8e`).**
+The `notifications` table is per-user and admins ARE users, so the **same
+`/api/notifications` endpoints serve both apps** — no per-app routes. Admin side adds
+`notificationService.notifyAdmins(...)` which fans an operational alert out to every
+`admin`/`super_admin` (one row each via `INSERT … SELECT`, so per-admin read state).
+Wired into 2 admin events: new pending sign-up (`registerStudentParent` +
+`registerInstitution`)→`registration_pending` (link `/admin/registrations`), and
+`markOrderPaymentFailed`→`payment_failed` (link `/admin/payments`). Admin frontend mirrors
+the customer one in `admin/src/features/notifications/{api,hooks,components,pages,lib}`;
+`NotificationBell` replaced the dead static `notification_icon` in the admin `Navbar`;
+route `/admin/notifications`. Verified live (register pending user → both admins notified,
+2 rows) + integration test for the fan-out (now **11 passing**). Admin lint clean + build.
+
+**Customer side (also DONE):**
+In-app notifications for parents/students — a bell + unread badge in the customer app, the
+in-app counterpart to the transactional emails. Backend: migration `008` (`notifications`
+table: user_id FK→users ON DELETE CASCADE, type, title, body, entity_type, entity_ref,
+link, read_at, created_at; indexes on (user_id,created_at) and partial unread);
+`services/notificationService.js` `createNotification(...)` (guarded fire-and-forget like
+logActivity); `controllers/notificationController.js` (list `?unread=&limit=&offset=` →
+`{notifications,total,unread}`, unread-count, mark `:id/read`, `read-all`);
+`routes/notificationRoute.js` mounted `/api/notifications` (all `protect`, scoped to
+`req.user.id`). Wired `createNotification` into 3 buyer events: `markOrderPaid`→order_ready,
+`markOrderPaymentFailed`→payment_failed (added `user_id` to its SELECT),
+`approveRegistration`→registration_approved. **Reject deliberately has NO notification**
+(rejected users can't log in, so they'd never see it). Frontend (customer app):
+`features/notifications/{api,hooks,components,pages,lib}` — `NotificationBell` (bell + badge
++ dropdown, outside-click close, click marks read + navigates), `NotificationsPage`
+(`/notifications`), `useUnreadCount` polls every 30s. Bell added to `Navbar` (only when
+logged in). Links point at real routes (`/orders`, `/products`). **No ToastContainer in the
+customer app — don't add toast there.** Verified live end-to-end (recover→order_ready
+notification, mark-read, user isolation) + **3 integration tests** (now **10 passing**);
+admin/frontend lint clean + builds pass. Throwaway test data cleaned up.
+
+**Prior feature: Payment Management (admin) — DONE, committed.** Backend `02488be`
+(migration `007` payment failure/refund metadata; `/api/admin/payments` list+summary,
+detail incl. raw payload, super-admin recover). Frontend `3176fbf`
+(`admin/src/features/payments/{api,hooks,pages}`, `/admin/payments` route + sidebar link,
+detail modal with raw payload + super-admin "Mark paid (recover)" gated by
+`useMe().role === "super_admin"`, Payments CSV on Reports). Live smoke-tested + role gate
+verified.
 
 Earlier (also uncommitted): PayFast ITN tunnel fix + customer checkout status polling
 (`useOrderStatus`); recovered the user's genuinely-paid `ORD-2026-000041` (ITN lost to
 a dead tunnel).
 
 ## 7. Known issues / blockers / debt
-- Per-school **fees/pricing** not built — service fee hardcoded **R1.50** in cart.
+- The service fee is now a **global** configurable setting (Admin Settings), default R1.50.
+  **Per-school** fees/pricing is still not built (would need per-institution settings).
 - ~17 **pre-existing lint errors** in untouched admin files (unused `React` imports).
 - Mobile polish: fixed-width (`w-[15%]`) admin sidebar.
 - Buyer/approval emails only log until SMTP is set in `backend/.env`.
@@ -139,47 +196,33 @@ a dead tunnel).
   `PROJECT_BRAIN.md`, the `CLAUDE.md` project-memory note, and the `TaskCompleted` hook
   in `.claude/settings.local.json` (personal, gitignored).
 
-## 8. Next actions — Payment Management: backend DONE, build the FRONTEND
-Backend complete (migration 007, write-points, `/api/admin/payments` list/detail/recover,
-7 integration tests pass). **Remaining = the admin frontend.**
+## 8. Next actions — Admin Settings DONE; commit
+Backend + admin frontend built and verified (live e2e fee/method change + restore;
+27 unit + 14 integration tests; lint clean + builds). **Remaining: commit it** (branch
+`payments-collection-flow`). Apply migrations `008` + `009` to any other env; schema.sql
+re-dumped (12 tables).
 
-Live endpoints to consume:
-- `GET /api/admin/payments?status=&q=&from=&to=&limit=&offset=` →
-  `{ payments, total, summary{ total_paid, total_refunded, failed_count, pending_count } }`.
-  Each payment row: provider, provider_payment_id, payment_method, status, amount,
-  currency, paid_at, failed_at, failure_reason, refunded_at, refund_reason, created_at,
-  order_reference, user_full_name, user_email, order_status, institution_name.
-- `GET /api/admin/payments/:id` → `{ payment }` (adds `raw_webhook_payload`, `refunded_by`).
-- `POST /api/admin/payments/:orderReference/recover` (**super_admin**) → marks a stuck
-  paid order paid.
+Settings endpoints: `GET /api/admin/settings` → `{settings, payment_method_catalog}`
+(admin+super); `PUT /api/admin/settings` (super only) — keys `service_fee`,
+`checkout_expiry_minutes`, `enabled_payment_methods`. Reads go through cached
+`settingsService.getSettings()` (defaults fallback). Notification types so far: customer
+`order_ready`/`payment_failed`/`registration_approved`; admin `registration_pending`/
+`payment_failed`.
 
-Build `admin/src/features/payments/{api,hooks,pages}`:
-- `paymentsApi.js`: `getPayments({token,params})`, `getPayment({id,token})`,
-  `recoverPayment({orderReference,token})`.
-- `usePayments.js`: `usePayments(params)` (queryKey `["admin-payments",params]`,
-  `placeholderData:(p)=>p`); `useRecoverPayment()` (invalidate `["admin-payments"]`).
-- `PaymentsPage.jsx` (route `/admin/payments`, sidebar "Payments"): summary cards,
-  filters (status dropdown, debounced search via `lib/useDebouncedValue`, date from/to),
-  shared `components/shared/Pagination`, table (order ref · customer · method · status
-  badge · amount · paid/failed date · PF ref) → row opens a **detail drawer** (all fields
-  + failure/refund reason + collapsible raw `raw_webhook_payload` JSON + a super-admin
-  **"Mark paid (recover)"** button shown when payment is pending/failed). Gate the button
-  with `useMe().role === "super_admin"`. Toasts for actions.
-- Add a **Payments CSV** to the Reports page (`/admin/payments` no-limit → `.payments`).
-**Copy the patterns from** `features/institutions` (list+filters+pagination+modal+role
-gating) and `features/registeredUsers`.
-
-**Deferred (separate features):** Notifications Center; Admin Settings (hardcoded R1.50
-fee + 30-min expiry + payment methods); lint-clean ~17 errors; SMTP; open the PR
-(`github.com/delon500/Thrift-store` → `payments-collection-flow`, base `main`).
+**Deferred / candidate next features:** per-**institution** settings (current Admin Settings
+is global); a **school-staff** notifications surface (school-admin app — reuse the
+notifications table + an institution-scoped fan-out); lint-clean ~17 pre-existing admin
+errors; SMTP; **open the PR** (`github.com/delon500/Thrift-store` →
+`payments-collection-flow`, base `main`).
 
 ## 9. Conventions & constraints (do NOT break)
 - Don't re-add the dropped `collection_order_items` unique index (decision above).
 - Keep ITN signature blank-field handling intact.
-- Apply migrations 001–006 in order; never auto-commit `.env`, `node_modules/`,
+- Apply migrations 001–009 in order; never auto-commit `.env`, `node_modules/`,
   `dist/`. Push to `payments-collection-flow`, not `main`. Commits end with the
   Co-Authored-By trailer.
-- Errors inline / via toast, never `alert()`. Keep API base URL env-driven.
+- Errors inline / via toast, never `alert()`. The **customer app has no ToastContainer**
+  — show errors inline there. Keep API base URL env-driven.
 - `backend/.env` changes need a full backend restart (nodemon watches `.js`).
 
 ## 10. Run & test

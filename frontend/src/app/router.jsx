@@ -16,6 +16,7 @@ import Settings from "../features/settings/pages/Settings";
 import ProtectedRoute from "../features/auth/components/ProtectedRoute";
 import Checkout from "../features/checkout/pages/Checkout";
 import Orders from "../features/orders/pages/Orders";
+import NotificationsPage from "../features/notifications/pages/NotificationsPage";
 
 const router = createBrowserRouter([
   {
@@ -41,6 +42,7 @@ const router = createBrowserRouter([
           { path: "settings", element: <Settings /> },
           { path: "checkout", element: <Checkout /> },
           { path: "orders", element: <Orders /> },
+          { path: "notifications", element: <NotificationsPage /> },
           // { path: "sell/my-products", element: <MyProductsPage /> },
           // { path: "sell/add-product", element: <AddProductPage /> },
           // { path: "sell/create", element: <CreateShop /> },

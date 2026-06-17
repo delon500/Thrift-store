@@ -6,6 +6,7 @@ import { Link, useNavigate } from "react-router-dom";
 import BreadCrumbs from "./BreadCrumbs";
 import { useProductStore } from "../../features/products/store/productStore";
 import useAuthStore from "../../features/auth/store/authStore";
+import NotificationBell from "../../features/notifications/components/NotificationBell";
 const Navbar = () => {
   const [menuToggle, setMenuToggle] = useState(false);
   const navigate = useNavigate();
@@ -32,6 +33,7 @@ const Navbar = () => {
             className="cursor-pointer"
             onClick={() => navigate("/wishlist")}
           />
+          {token ? <NotificationBell /> : null}
           {token ? (
             <div className="relative group">
               <img

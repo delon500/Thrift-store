@@ -1,8 +1,12 @@
 import pool from "../config/db.js";
+import { getServiceFee } from "../services/settingsService.js";
 
-const SERVICE_FEE = 1.5;
+// Fallback fee — kept in sync with SETTINGS_DEFAULTS.service_fee. Used when no
+// configured fee is passed in (e.g. pure unit tests), so the function stays
+// pure and synchronous; controllers pass the live fee from settings.
+const DEFAULT_SERVICE_FEE = 1.5;
 
-const calculateCartSummary = (items) => {
+const calculateCartSummary = (items, serviceFee = DEFAULT_SERVICE_FEE) => {
   const subtotal = items.reduce(
     (sum, item) => sum + Number(item.price) * Number(item.quantity),
     0,
@@ -11,7 +15,7 @@ const calculateCartSummary = (items) => {
     (sum, item) => sum + Number(item.quantity),
     0,
   );
-  const service_fee = total_items > 0 ? SERVICE_FEE : 0;
+  const service_fee = total_items > 0 ? Number(serviceFee) : 0;
 
   return {
     subtotal,
@@ -21,7 +25,12 @@ const calculateCartSummary = (items) => {
   };
 };
 
-const serializeCart = ({ cartId, status = "active", rows = [] }) => {
+const serializeCart = ({
+  cartId,
+  status = "active",
+  rows = [],
+  serviceFee = DEFAULT_SERVICE_FEE,
+}) => {
   const items = rows.map((row) => ({
     id: row.cart_item_id,
     product_id: row.product_id,
@@ -40,7 +49,7 @@ const serializeCart = ({ cartId, status = "active", rows = [] }) => {
     id: cartId,
     status,
     items,
-    summary: calculateCartSummary(items),
+    summary: calculateCartSummary(items, serviceFee),
   };
 };
 
@@ -107,8 +116,11 @@ const getCart = async (req, res) => {
   try {
     const cart = await getOrCreateActiveCart(pool, req.user.id);
     const rows = await getCartRows(pool, cart.id);
+    const serviceFee = await getServiceFee();
 
-    return res.json(serializeCart({ cartId: cart.id, status: cart.status, rows }));
+    return res.json(
+      serializeCart({ cartId: cart.id, status: cart.status, rows, serviceFee }),
+    );
   } catch (error) {
     return res
       .status(500)
@@ -153,10 +165,13 @@ const addCartItem = async (req, res) => {
     );
 
     const rows = await getCartRows(pool, cart.id);
+    const serviceFee = await getServiceFee();
 
     return res
       .status(201)
-      .json(serializeCart({ cartId: cart.id, status: cart.status, rows }));
+      .json(
+        serializeCart({ cartId: cart.id, status: cart.status, rows, serviceFee }),
+      );
   } catch (error) {
     return res
       .status(500)
@@ -175,8 +190,11 @@ const removeCartItem = async (req, res) => {
     );
 
     const rows = await getCartRows(pool, cart.id);
+    const serviceFee = await getServiceFee();
 
-    return res.json(serializeCart({ cartId: cart.id, status: cart.status, rows }));
+    return res.json(
+      serializeCart({ cartId: cart.id, status: cart.status, rows, serviceFee }),
+    );
   } catch (error) {
     return res
       .status(500)
@@ -256,7 +274,7 @@ const checkoutCart = async (req, res) => {
       [req.user.id],
     );
     const user = userResult.rows[0];
-    const summary = calculateCartSummary(rows);
+    const summary = calculateCartSummary(rows, await getServiceFee());
     const institutionId = products[0].institution_id;
 
     const orderResult = await client.query(

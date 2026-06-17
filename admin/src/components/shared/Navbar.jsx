@@ -1,5 +1,5 @@
-import { icons } from "../../assets/icons/icons";
 import { useMe } from "../../features/auth/hook/useAuth";
+import NotificationBell from "../../features/notifications/components/NotificationBell";
 
 const initialsOf = (name) =>
   (name || "")
@@ -21,7 +21,7 @@ const Navbar = () => {
         <div className="font-bold text-gray-700">Admin</div>
         {/* Right */}
         <div className="flex justify-between items-center gap-4">
-          <img src={icons.notification_icon} alt="notification" />
+          <NotificationBell />
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-teal-600 text-xs font-bold text-white">
               {initialsOf(me?.full_name)}

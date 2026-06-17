@@ -6,38 +6,19 @@ import {
   releaseExpiredOrders,
 } from "./paymentController.js";
 import { logActivity } from "../services/activityLog.js";
+import {
+  getCheckoutExpiryMinutes,
+  getEnabledPaymentMethods,
+  getServiceFee,
+  PAYMENT_METHOD_CATALOG,
+} from "../services/settingsService.js";
 
-// How long a checkout holds its items as "Pending" before the hold lapses and
-// the items are returned to the store.
-const CHECKOUT_EXPIRY_MINUTES = 30;
+// Full provider catalog (re-exported as PAYMENT_METHODS for back-compat). Which
+// of these are actually offered is the configurable enabled subset (settings).
+const PAYMENT_METHODS = PAYMENT_METHOD_CATALOG;
 
-const PAYMENT_METHODS = [
-  { id: "card", label: "Card", provider: "payfast", type: "gateway" },
-  {
-    id: "instant_eft",
-    label: "Instant EFT",
-    provider: "payfast",
-    type: "bank",
-  },
-  {
-    id: "capitec_pay",
-    label: "Capitec Pay",
-    provider: "payfast",
-    type: "bank",
-  },
-  { id: "absa_pay", label: "Absa Pay", provider: "payfast", type: "bank" },
-  { id: "snapscan", label: "SnapScan", provider: "payfast", type: "qr" },
-  { id: "zapper", label: "Zapper", provider: "payfast", type: "qr" },
-  {
-    id: "scan_to_pay",
-    label: "Scan to Pay",
-    provider: "payfast",
-    type: "qr",
-  },
-  { id: "scode", label: "SCode", provider: "payfast", type: "retail" },
-  { id: "mobicred", label: "Mobicred", provider: "payfast", type: "credit" },
-];
-
+// Looks a method up in the full catalog — used to display the method on an
+// existing order even if it has since been disabled.
 const normalizePaymentMethod = (paymentMethod) =>
   PAYMENT_METHODS.find((method) => method.id === paymentMethod);
 
@@ -51,8 +32,9 @@ const getPaymentMethod = (paymentMethod) => {
   return method;
 };
 
+// GET — only the methods currently enabled by the admin.
 const getPaymentMethods = async (_req, res) => {
-  return res.json({ payment_methods: PAYMENT_METHODS });
+  return res.json({ payment_methods: await getEnabledPaymentMethods() });
 };
 
 const getActiveCartRows = async (client, userId) => {
@@ -88,6 +70,14 @@ const createCheckout = async (req, res) => {
 
   try {
     const method = getPaymentMethod(req.body.payment_method);
+
+    // The method must be in the catalog (above) AND currently enabled by admin.
+    const enabledMethods = await getEnabledPaymentMethods();
+    if (!enabledMethods.some((enabled) => enabled.id === method.id)) {
+      return res
+        .status(400)
+        .json({ message: "That payment method is not currently available" });
+    }
 
     // Reclaim items from abandoned/expired holds before reading availability,
     // so a previous lapsed checkout never blocks a fresh one.
@@ -125,7 +115,8 @@ const createCheckout = async (req, res) => {
       [req.user.id],
     );
     const user = userResult.rows[0];
-    const summary = calculateCartSummary(rows);
+    const summary = calculateCartSummary(rows, await getServiceFee());
+    const expiryMinutes = await getCheckoutExpiryMinutes();
 
     const orderResult = await client.query(
       `INSERT INTO collection_orders (
@@ -154,7 +145,7 @@ const createCheckout = async (req, res) => {
         summary.service_fee,
         summary.total,
         req.body.collection_note || null,
-        CHECKOUT_EXPIRY_MINUTES,
+        expiryMinutes,
       ],
     );
     const order = orderResult.rows[0];

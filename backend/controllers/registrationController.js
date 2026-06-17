@@ -4,6 +4,7 @@ import {
   sendRejectionEmail,
 } from "../services/emailService.js";
 import { logActivity } from "../services/activityLog.js";
+import { createNotification } from "../services/notificationService.js";
 
 const INSTITUTION_ROLES = ["school", "university"];
 
@@ -117,6 +118,16 @@ const approveRegistration = async (req, res) => {
       entityId: result.user.id,
       entityRef: result.user.email,
       description: `Approved ${result.user.full_name} (${result.user.role})`,
+    });
+
+    createNotification({
+      userId: result.user.id,
+      type: "registration_approved",
+      title: "Your account was approved",
+      body: "You can now browse and buy items from your institution.",
+      entityType: "user",
+      entityRef: result.user.email,
+      link: "/products",
     });
 
     return res.json({ message: "Registration approved", user: result.user });

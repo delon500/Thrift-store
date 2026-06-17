@@ -11,6 +11,7 @@ import parentRouter from "./routes/parentRoute.js";
 import studentRouter from "./routes/studentRoute.js";
 import userRouter from "./routes/userRoute.js";
 import orderRouter from "./routes/orderRoute.js";
+import notificationRouter from "./routes/notificationRoute.js";
 import cartRouter from "./routes/cartRoute.js";
 import checkoutRouter from "./routes/checkoutRoute.js";
 import paymentRouter from "./routes/paymentRoute.js";
@@ -20,6 +21,7 @@ import schoolRouter from "./routes/schoolRoute.js";
 import adminRouter from "./routes/adminRoute.js";
 import adminInstitutionRouter from "./routes/adminInstitutionRoute.js";
 import adminPaymentRouter from "./routes/adminPaymentRoute.js";
+import adminSettingsRouter from "./routes/adminSettingsRoute.js";
 
 connectCloudinary();
 
@@ -58,6 +60,7 @@ app.use("/api/products", productRouter);
 app.use("/api/students", studentRouter);
 app.use("/api/users", userRouter);
 app.use("/api/orders", orderRouter);
+app.use("/api/notifications", notificationRouter);
 app.use("/api/cart", cartRouter);
 app.use("/api/checkout", checkoutRouter);
 app.use("/api/payments", paymentRouter);
@@ -66,6 +69,7 @@ app.use("/api/admin/registrations", registrationRouter);
 app.use("/api/school", schoolRouter);
 app.use("/api/admin/institutions", adminInstitutionRouter);
 app.use("/api/admin/payments", adminPaymentRouter);
+app.use("/api/admin/settings", adminSettingsRouter);
 app.use("/api/admin", adminRouter);
 
 app.listen(port, () => {

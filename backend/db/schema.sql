@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict vC7mc7iuoSPhuWdKvVcDco3tKPQnaUoATkovjcxkkuYGLLaA5CxhdEBEydqnHtQ
+\restrict s0NoJkAVvQ0mS4yd8lqCGOInaGM2d296hVmJRIhop6QWdDl09gfh6r2gcfi3BTv
 
 -- Dumped from database version 18.4
 -- Dumped by pg_dump version 18.4
@@ -196,6 +196,18 @@ CREATE TABLE public.activity_logs (
 
 
 --
+-- Name: app_settings; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.app_settings (
+    key text NOT NULL,
+    value jsonb NOT NULL,
+    updated_at timestamp without time zone DEFAULT now(),
+    updated_by uuid
+);
+
+
+--
 -- Name: cart_items; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -332,6 +344,24 @@ CREATE TABLE public.institutions (
 
 
 --
+-- Name: notifications; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.notifications (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    user_id uuid NOT NULL,
+    type character varying(50) NOT NULL,
+    title character varying(255) NOT NULL,
+    body text,
+    entity_type character varying(40),
+    entity_ref character varying(100),
+    link character varying(255),
+    read_at timestamp without time zone,
+    created_at timestamp without time zone DEFAULT now()
+);
+
+
+--
 -- Name: payments; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -444,6 +474,14 @@ ALTER TABLE ONLY public.activity_logs
 
 
 --
+-- Name: app_settings app_settings_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.app_settings
+    ADD CONSTRAINT app_settings_pkey PRIMARY KEY (key);
+
+
+--
 -- Name: cart_items cart_items_cart_product_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -505,6 +543,14 @@ ALTER TABLE ONLY public.institutions
 
 ALTER TABLE ONLY public.institutions
     ADD CONSTRAINT institutions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: notifications notifications_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT notifications_pkey PRIMARY KEY (id);
 
 
 --
@@ -643,6 +689,20 @@ CREATE INDEX collection_orders_reference_idx ON public.collection_orders USING b
 --
 
 CREATE INDEX collection_orders_user_status_idx ON public.collection_orders USING btree (user_id, status);
+
+
+--
+-- Name: notifications_user_created_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX notifications_user_created_idx ON public.notifications USING btree (user_id, created_at DESC);
+
+
+--
+-- Name: notifications_user_unread_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX notifications_user_unread_idx ON public.notifications USING btree (user_id) WHERE (read_at IS NULL);
 
 
 --
@@ -786,6 +846,14 @@ ALTER TABLE ONLY public.collection_orders
 
 
 --
+-- Name: notifications notifications_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
 -- Name: payments payments_collection_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -821,5 +889,5 @@ ALTER TABLE ONLY public.users
 -- PostgreSQL database dump complete
 --
 
-\unrestrict vC7mc7iuoSPhuWdKvVcDco3tKPQnaUoATkovjcxkkuYGLLaA5CxhdEBEydqnHtQ
+\unrestrict s0NoJkAVvQ0mS4yd8lqCGOInaGM2d296hVmJRIhop6QWdDl09gfh6r2gcfi3BTv
 
