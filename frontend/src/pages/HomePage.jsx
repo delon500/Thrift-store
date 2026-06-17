@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
 import { icons } from "../assets/icon/icons";
 import ProductCard from "../features/home/components/ProductCard";
+import { ProductCardSkeleton } from "../components/shared/Skeleton";
 import { useProductStore } from "../features/products/store/productStore";
+import { useGetProducts } from "../features/products/hooks/useProduct";
 import useAuthStore from "../features/auth/store/authStore";
 
 const PAGE_SIZE = 8;
@@ -12,6 +14,7 @@ const HomePage = () => {
   const productData = useProductStore((state) => state.products);
   const searchQuery = useProductStore((state) => state.searchQuery);
   const user = useAuthStore((state) => state.user);
+  const { isLoading, isError, refetch } = useGetProducts();
 
   const [showFilters, setShowFilters] = useState(false);
   const [listingFilter, setListingFilter] = useState("");
@@ -153,7 +156,26 @@ const HomePage = () => {
       ) : null}
 
       <div className="mt-10">
-        {pageItems.length === 0 ? (
+        {isLoading && productData.length === 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 gap-y-6">
+            {Array.from({ length: PAGE_SIZE }).map((_, index) => (
+              <ProductCardSkeleton key={index} />
+            ))}
+          </div>
+        ) : isError && productData.length === 0 ? (
+          <div className="flex flex-col items-center gap-4 py-16 text-center">
+            <p className="font-semibold text-on-surface">
+              We couldn&apos;t load the store right now.
+            </p>
+            <button
+              type="button"
+              onClick={() => refetch()}
+              className="rounded-xl bg-primary px-5 py-2.5 font-semibold text-on-primary"
+            >
+              Try again
+            </button>
+          </div>
+        ) : pageItems.length === 0 ? (
           <p className="text-outline">No products match your search or filters.</p>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 gap-y-6">

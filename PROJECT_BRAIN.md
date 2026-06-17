@@ -106,8 +106,13 @@ Four independently-run apps (no root `package.json` — install/run each separat
 (filled the empty drawer in `Navbar` + shared `components/shared/navItems.js` now powering
 both Sidebar and the drawer; hamburger `md:hidden`), tab `<title>`=School Thrift + meta +
 `public/favicon.svg`, and **react-toastify** mounted in `main.jsx` (replaced all 11
-`alert()` calls with toasts). Deferred frontend batches (offered, not yet done): robustness
-(product deep-link fetch fallback + skeletons), a11y/design-token consistency, perf/SEO
+`alert()` calls with toasts). Then **robustness pass (committed):** fixed the Product deep-link/refresh **blank screen**
+([Product.jsx] now consumes `useGetProducts()` directly with loading skeleton / not-found /
+error+retry states instead of reading the Zustand store and returning `null`); added
+`components/shared/Skeleton.jsx` + skeleton grid + error/retry on HomePage. NB there is
+**no backend `GET /products/:id`** — customer product views still rely on the full-list
+query (cached, shared via React Query); a per-product endpoint is a future optimization.
+Deferred frontend batches (offered, not yet done): a11y/design-token consistency, perf/SEO
 (route code-splitting — bundle >500kB, per-page titles). Lint clean + build passes.
 
 **Prior feature: Admin Settings — DONE (backend + admin frontend), committed.**
