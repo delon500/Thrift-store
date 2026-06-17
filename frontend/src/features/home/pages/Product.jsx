@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "react-toastify";
 import { useProductStore } from "../../products/store/productStore";
 import { Link, useParams } from "react-router-dom";
 import { icons } from "../../../assets/icon/icons";
@@ -32,9 +33,9 @@ const Product = () => {
 
     try {
       await addCartItemMutation.mutateAsync(product.id);
-      alert("Item added to cart");
+      toast.success("Item added to cart");
     } catch (error) {
-      alert(error?.response?.data?.message || "Could not add item to cart");
+      toast.error(error?.response?.data?.message || "Could not add item to cart");
     }
   };
 

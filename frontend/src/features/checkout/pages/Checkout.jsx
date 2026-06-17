@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { toast } from "react-toastify";
 import { useServerCart } from "../../cart/hooks/useCart";
 import { useProductStore } from "../../products/store/productStore";
 import {
@@ -83,7 +84,7 @@ const Checkout = () => {
       const data = await createCheckoutMutation.mutateAsync(formData);
       setCheckout(data);
     } catch (error) {
-      alert(error?.response?.data?.message || "Checkout could not be created");
+      toast.error(error?.response?.data?.message || "Checkout could not be created");
     }
   };
 

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import { useProductStore } from "../../products/store/productStore";
 import { useMyOrders, useResumeOrder } from "../hooks/useOrders";
 
@@ -87,7 +88,7 @@ const Orders = () => {
       const checkout = await resumeMutation.mutateAsync(orderReference);
       submitToPayfast(checkout.payment_gateway);
     } catch (resumeError) {
-      alert(
+      toast.error(
         resumeError?.response?.data?.message || "Could not resume payment",
       );
     }

@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
 import { icons } from "../../../assets/icon/icons";
 import { useAddCartItem } from "../../cart/hooks/useCart";
 import { useWishlistStore } from "../../wishlist/store/wishlistStore";
@@ -49,8 +50,9 @@ const ProductCard = ({
 
     try {
       await addCartItemMutation.mutateAsync(id);
+      toast.success("Added to backpack");
     } catch (error) {
-      alert(error?.response?.data?.message || "Could not add item to cart");
+      toast.error(error?.response?.data?.message || "Could not add item to cart");
     }
   };
 

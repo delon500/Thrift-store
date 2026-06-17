@@ -101,7 +101,16 @@ Four independently-run apps (no root `package.json` — install/run each separat
   `~/.claude/skills/persistent-project-memory-system/`.
 
 ## 6. Active work / status
-**Active feature: Admin Settings — DONE (backend + admin frontend), uncommitted.**
+**Just done: Customer frontend "professionalism" pass (committed).** Branded 404
+([NotFoundPage] real page + CTA, doubles as router errorElement), working **mobile nav**
+(filled the empty drawer in `Navbar` + shared `components/shared/navItems.js` now powering
+both Sidebar and the drawer; hamburger `md:hidden`), tab `<title>`=School Thrift + meta +
+`public/favicon.svg`, and **react-toastify** mounted in `main.jsx` (replaced all 11
+`alert()` calls with toasts). Deferred frontend batches (offered, not yet done): robustness
+(product deep-link fetch fallback + skeletons), a11y/design-token consistency, perf/SEO
+(route code-splitting — bundle >500kB, per-page titles). Lint clean + build passes.
+
+**Prior feature: Admin Settings — DONE (backend + admin frontend), committed.**
 Makes 3 previously-hardcoded values configurable platform-wide from the admin app:
 service fee (was R1.50 in cartController), checkout expiry minutes (was 30 in
 checkoutController), and the enabled subset of the 9 PayFast payment methods. Backend:
@@ -227,8 +236,8 @@ errors; SMTP; **open the PR** (`github.com/delon500/Thrift-store` →
 - Apply migrations 001–009 in order; never auto-commit `.env`, `node_modules/`,
   `dist/`. Push to `payments-collection-flow`, not `main`. Commits end with the
   Co-Authored-By trailer.
-- Errors inline / via toast, never `alert()`. The **customer app has no ToastContainer**
-  — show errors inline there. Keep API base URL env-driven.
+- Errors inline / via toast, never `alert()`. **All 3 apps now mount react-toastify**
+  (customer `ToastContainer` is in `main.jsx`, bottom-right). Keep API base URL env-driven.
 - `backend/.env` changes need a full backend restart (nodemon watches `.js`).
 
 ## 10. Run & test
