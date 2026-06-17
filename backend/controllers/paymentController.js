@@ -149,14 +149,19 @@ const markOrderPaymentFailed = async ({
 
     const order = orderResult.rows[0];
 
+    const failureReason = rawPayload?.payment_status
+      ? `PayFast payment_status=${rawPayload.payment_status}`
+      : null;
+
     await client.query(
       `UPDATE payments
        SET status = 'failed',
            provider_payment_id = COALESCE($1, provider_payment_id),
            failed_at = now(),
-           raw_webhook_payload = COALESCE($2, raw_webhook_payload)
-       WHERE collection_order_id = $3`,
-      [providerPaymentId || null, rawPayload || null, order.id],
+           failure_reason = COALESCE($2, failure_reason),
+           raw_webhook_payload = COALESCE($3, raw_webhook_payload)
+       WHERE collection_order_id = $4`,
+      [providerPaymentId || null, failureReason, rawPayload || null, order.id],
     );
 
     await client.query(
@@ -365,7 +370,7 @@ const confirmPayment = async (req, res) => {
 
 const payfastItn = async (req, res) => {
   try {
-    const payload = req.body;
+    const payload = req.body || {};
     const orderReference = payload.m_payment_id;
 
     console.log(

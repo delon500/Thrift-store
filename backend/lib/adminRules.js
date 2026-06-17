@@ -52,6 +52,23 @@ export const orderCancelError = (status) => {
   return null;
 };
 
+// Deleting an institution.
+export const institutionDeleteError = ({ hasUsers, hasProducts }) => {
+  if (hasUsers) {
+    return {
+      status: 409,
+      message: "This institution has users. Remove or reassign them first.",
+    };
+  }
+  if (hasProducts) {
+    return {
+      status: 409,
+      message: "This institution has products. Remove them first.",
+    };
+  }
+  return null;
+};
+
 // Refunding an order.
 export const orderRefundError = ({ status, paymentStatus }) => {
   if (paymentStatus !== "paid") {

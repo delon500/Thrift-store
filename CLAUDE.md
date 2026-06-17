@@ -9,6 +9,14 @@ second-hand or lost-and-found items from the institution (school/university) the
 pay online (ZAR via **PayFast**), receive a **reference number**, and present it at the school to
 collect the physical item.
 
+## Project memory — keep PROJECT_BRAIN.md current
+
+After completing any meaningful task, update **`PROJECT_BRAIN.md`** (repo root) so it stays a
+compressed but complete snapshot of the project — overview, architecture, key decisions, completed
+work, active work, blockers, and next actions — such that a fresh session can reconstruct the project
+from that file alone. Edit it in place to reflect the current state (it is a living snapshot, not a
+running history). This is the fastest way for a new session to get oriented; read it first.
+
 ## Architecture
 
 Four independently-run apps. **There is no root `package.json`** — install and run each separately.

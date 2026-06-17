@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import useAuthStore from "../../features/auth/store/authStore";
+import { useMe } from "../../features/auth/hook/useAuth";
 import { icons } from "../../assets/icons/icons";
 import {
   action_card,
@@ -113,6 +114,12 @@ const SidebarGroup = ({ group }) => {
 
 const Sidebar = () => {
   const logout = useAuthStore((state) => state.logout);
+  const { data: me } = useMe();
+  const isSuper = me?.role === "super_admin";
+  // Creating accounts (Register Users) is super-admin only.
+  const groups = sidebarGroups.filter(
+    (group) => group.label !== "Register Users" || isSuper,
+  );
   return (
     <div className="w-[15%] min-h-screen border-gray-300  border-r-2 bg-white">
       <div className="flex flex-col gap-4 pt-6 pl-[3%] text-[15px]">
@@ -123,9 +130,16 @@ const Sidebar = () => {
         <img src={icons.admin_home_icon} alt="" className="w-5 h-5" />
         <p className="hidden md:block text-gray-500">Dashboard</p>
       </NavLink>
-      {sidebarGroups.map((group) => (
+      {groups.map((group) => (
         <SidebarGroup key={group.label} group={group} />
       ))}
+      <NavLink
+        to={"/admin/institutions"}
+        className="flex items-center gap-3 px-3 py-2"
+      >
+        <img src={icons.admin_school_icon} alt="" className="w-5 h-5" />
+        <p className="hidden md:block text-gray-500">Institutions</p>
+      </NavLink>
       <NavLink
         to={"/admin/reports"}
         className="flex items-center gap-3 px-3 py-2"

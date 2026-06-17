@@ -271,8 +271,11 @@ const refundOrder = async (req, res) => {
     }
 
     await client.query(
-      "UPDATE payments SET status = 'refunded' WHERE collection_order_id = $1",
-      [order.id],
+      `UPDATE payments
+       SET status = 'refunded', refunded_at = now(),
+           refund_reason = $2, refunded_by = $3
+       WHERE collection_order_id = $1`,
+      [order.id, req.body?.reason || null, req.user.id],
     );
     await client.query(
       "UPDATE collection_orders SET status = 'cancelled' WHERE id = $1",

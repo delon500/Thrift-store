@@ -8,7 +8,7 @@ import { allowRoles, protect } from "../middleware/authMiddleware.js";
 
 const registrationRouter = express.Router();
 
-registrationRouter.use(protect, allowRoles("admin"));
+registrationRouter.use(protect, allowRoles("admin", "super_admin"));
 registrationRouter.get("/", listPendingRegistrations);
 registrationRouter.patch("/:userId/approve", approveRegistration);
 registrationRouter.patch("/:userId/reject", rejectRegistration);

@@ -6,7 +6,7 @@ const studentRouter = express.Router();
 studentRouter.post(
   "/admin/register/student",
   protect,
-  allowRoles("admin"),
+  allowRoles("super_admin"),
   registerStudent,
 );
 

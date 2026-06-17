@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict gikPMu3kIXTls0dJ4aFh8a1oPu5yg8cDEdtjdHiugt5DOcKhZ2czxWWrBlqQmMt
+\restrict vC7mc7iuoSPhuWdKvVcDco3tKPQnaUoATkovjcxkkuYGLLaA5CxhdEBEydqnHtQ
 
 -- Dumped from database version 18.4
 -- Dumped by pg_dump version 18.4
@@ -152,7 +152,8 @@ CREATE TYPE public.user_role AS ENUM (
     'parent',
     'school',
     'university',
-    'admin'
+    'admin',
+    'super_admin'
 );
 
 
@@ -347,7 +348,11 @@ CREATE TABLE public.payments (
     failed_at timestamp without time zone,
     raw_webhook_payload jsonb,
     created_at timestamp without time zone DEFAULT now(),
-    updated_at timestamp without time zone DEFAULT now()
+    updated_at timestamp without time zone DEFAULT now(),
+    failure_reason text,
+    refunded_at timestamp without time zone,
+    refund_reason text,
+    refunded_by uuid
 );
 
 
@@ -816,5 +821,5 @@ ALTER TABLE ONLY public.users
 -- PostgreSQL database dump complete
 --
 
-\unrestrict gikPMu3kIXTls0dJ4aFh8a1oPu5yg8cDEdtjdHiugt5DOcKhZ2czxWWrBlqQmMt
+\unrestrict vC7mc7iuoSPhuWdKvVcDco3tKPQnaUoATkovjcxkkuYGLLaA5CxhdEBEydqnHtQ
 

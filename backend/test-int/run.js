@@ -70,7 +70,9 @@ if (files.length === 0) {
   process.exit(0);
 }
 
-const result = spawnSync("node", ["--test", ...files], {
+// Run the files serially (--test-concurrency=1): they share one test database
+// and truncate between tests, so parallel files would wipe each other's data.
+const result = spawnSync("node", ["--test", "--test-concurrency=1", ...files], {
   stdio: "inherit",
   env: process.env,
 });

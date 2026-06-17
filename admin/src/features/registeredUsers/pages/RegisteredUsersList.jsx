@@ -9,6 +9,7 @@ import {
 } from "../hooks/useRegisteredUsers";
 import { useDebouncedValue } from "../../../lib/useDebouncedValue";
 import Pagination from "../../../components/shared/Pagination";
+import { useMe } from "../../auth/hook/useAuth";
 
 const PAGE_SIZE = 10;
 
@@ -183,6 +184,8 @@ const EditUserModal = ({ user, onClose }) => {
 const RegisteredUsersList = () => {
   const { role } = useParams();
   const navigate = useNavigate();
+  const { data: me } = useMe();
+  const canManage = me?.role === "super_admin";
   const updateMutation = useUpdateUser();
   const deleteMutation = useDeleteUser();
   const [query, setQuery] = useState("");
@@ -274,7 +277,9 @@ const RegisteredUsersList = () => {
                   <th className="px-4 py-3">Institution</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3">Joined</th>
-                  <th className="px-4 py-3 text-right">Actions</th>
+                  {canManage ? (
+                    <th className="px-4 py-3 text-right">Actions</th>
+                  ) : null}
                 </tr>
               </thead>
               <tbody>
@@ -295,6 +300,7 @@ const RegisteredUsersList = () => {
                       </span>
                     </td>
                     <td className="px-4 py-3">{formatDate(user.created_at)}</td>
+                    {canManage ? (
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-2">
                         <button
@@ -322,6 +328,7 @@ const RegisteredUsersList = () => {
                         </button>
                       </div>
                     </td>
+                    ) : null}
                   </tr>
                 ))}
               </tbody>
