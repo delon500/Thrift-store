@@ -1,22 +1,29 @@
+/* eslint-disable react-refresh/only-export-components -- this is route config,
+   not a fast-refresh component module; it exports the router. */
+import { lazy } from "react";
 import { createBrowserRouter } from "react-router-dom";
-import NotFoundPage from "../pages/NotFoundPage";
-import HomePage from "../pages/HomePage";
 import PublicLayout from "../layout/PublicLayout";
-import Cart from "../features/cart/pages/Cart";
-import SellItemHomePage from "../features/sell/pages/SellItemHomePage";
-import AddProductPage from "../features/sell/pages/AddProductPage";
-import MyProductsPage from "../features/sell/pages/MyProductsPage";
-import AuthPage from "../features/auth/pages/AuthPage";
-import WishlistPage from "../features/wishlist/pages/WishlistPage";
-import CreateShop from "../features/sell/pages/CreateShop";
-import Product from "../features/home/pages/Product";
-import LostAndFound from "../features/lostItems/pages/LostAndFound";
-import ThriftStore from "../features/thriftStore/pages/ThriftStore";
-import Settings from "../features/settings/pages/Settings";
 import ProtectedRoute from "../features/auth/components/ProtectedRoute";
-import Checkout from "../features/checkout/pages/Checkout";
-import Orders from "../features/orders/pages/Orders";
-import NotificationsPage from "../features/notifications/pages/NotificationsPage";
+import AuthPage from "../features/auth/pages/AuthPage";
+import NotFoundPage from "../pages/NotFoundPage";
+
+// Code-split the routed pages so the initial bundle only carries the shell +
+// the login entry; each page loads on demand (Suspense fallback in PublicLayout).
+const HomePage = lazy(() => import("../pages/HomePage"));
+const Cart = lazy(() => import("../features/cart/pages/Cart"));
+const SellItemHomePage = lazy(
+  () => import("../features/sell/pages/SellItemHomePage"),
+);
+const WishlistPage = lazy(() => import("../features/wishlist/pages/WishlistPage"));
+const Product = lazy(() => import("../features/home/pages/Product"));
+const LostAndFound = lazy(() => import("../features/lostItems/pages/LostAndFound"));
+const ThriftStore = lazy(() => import("../features/thriftStore/pages/ThriftStore"));
+const Settings = lazy(() => import("../features/settings/pages/Settings"));
+const Checkout = lazy(() => import("../features/checkout/pages/Checkout"));
+const Orders = lazy(() => import("../features/orders/pages/Orders"));
+const NotificationsPage = lazy(
+  () => import("../features/notifications/pages/NotificationsPage"),
+);
 
 const router = createBrowserRouter([
   {
@@ -43,9 +50,6 @@ const router = createBrowserRouter([
           { path: "checkout", element: <Checkout /> },
           { path: "orders", element: <Orders /> },
           { path: "notifications", element: <NotificationsPage /> },
-          // { path: "sell/my-products", element: <MyProductsPage /> },
-          // { path: "sell/add-product", element: <AddProductPage /> },
-          // { path: "sell/create", element: <CreateShop /> },
         ],
       },
     ],
@@ -55,11 +59,6 @@ const router = createBrowserRouter([
     element: <AuthPage />,
     errorElement: <NotFoundPage />,
   },
-  // {
-  //   path: "/wishlist",
-  //   element: <WishlistPage />,
-  //   errorElement: <NotFoundPage />,
-  // },
 ]);
 
 export default router;

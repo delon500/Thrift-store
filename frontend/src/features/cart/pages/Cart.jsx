@@ -9,10 +9,12 @@ import {
   useRemoveCartItem,
   useServerCart,
 } from "../hooks/useCart";
+import { useDocumentTitle } from "../../../lib/useDocumentTitle";
 
 const formatMoney = (amount) => Number(amount || 0).toFixed(2);
 
 const Cart = () => {
+  useDocumentTitle("Your Cart");
   const navigate = useNavigate();
   const currency = useProductStore((state) => state.currency);
   const { data: cart, isLoading, isError, error } = useServerCart();

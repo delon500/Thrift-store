@@ -7,6 +7,7 @@ import {
   useMyProfile,
   useUpdateMyProfile,
 } from "../hooks/useSettings";
+import { useDocumentTitle } from "../../../lib/useDocumentTitle";
 
 const initialPasswordForm = {
   current_password: "",
@@ -87,6 +88,7 @@ const SettingsSection = ({ title, description, children, action }) => (
 );
 
 const Settings = () => {
+  useDocumentTitle("Settings");
   const navigate = useNavigate();
   const fallbackUser = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);

@@ -5,6 +5,7 @@ import {
   useNotifications,
 } from "../hooks/useNotifications";
 import { timeAgo } from "../lib/timeAgo";
+import { useDocumentTitle } from "../../../lib/useDocumentTitle";
 
 const TYPE_ACCENT = {
   order_ready: "bg-primary",
@@ -13,6 +14,7 @@ const TYPE_ACCENT = {
 };
 
 const NotificationsPage = () => {
+  useDocumentTitle("Notifications");
   const navigate = useNavigate();
   const { data, isLoading } = useNotifications();
   const markRead = useMarkRead();

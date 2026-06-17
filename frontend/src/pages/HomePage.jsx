@@ -5,6 +5,7 @@ import { ProductCardSkeleton } from "../components/shared/Skeleton";
 import { useProductStore } from "../features/products/store/productStore";
 import { useGetProducts } from "../features/products/hooks/useProduct";
 import useAuthStore from "../features/auth/store/authStore";
+import { useDocumentTitle } from "../lib/useDocumentTitle";
 
 const PAGE_SIZE = 8;
 const LISTING_TYPES = ["Thrift Store", "Lost and Found"];
@@ -15,6 +16,7 @@ const HomePage = () => {
   const searchQuery = useProductStore((state) => state.searchQuery);
   const user = useAuthStore((state) => state.user);
   const { isLoading, isError, refetch } = useGetProducts();
+  useDocumentTitle("Browse Items");
 
   const [showFilters, setShowFilters] = useState(false);
   const [listingFilter, setListingFilter] = useState("");

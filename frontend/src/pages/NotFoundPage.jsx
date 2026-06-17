@@ -1,6 +1,8 @@
 import { Link, useRouteError } from "react-router-dom";
+import { useDocumentTitle } from "../lib/useDocumentTitle";
 
 const NotFoundPage = () => {
+  useDocumentTitle("Page not found");
   // Rendered both as the 404 route and as the router errorElement, so it may
   // receive a thrown route error — log it without breaking the page.
   const error = useRouteError();

@@ -6,6 +6,7 @@ import { useGetProducts } from "../../products/hooks/useProduct";
 import { icons } from "../../../assets/icon/icons";
 import { useAddCartItem } from "../../cart/hooks/useCart";
 import { Skeleton } from "../../../components/shared/Skeleton";
+import { useDocumentTitle } from "../../../lib/useDocumentTitle";
 
 const ProductDetailSkeleton = () => (
   <div className="mt-10 flex flex-col lg:flex-row gap-6">
@@ -46,6 +47,7 @@ const Product = () => {
   const [selectedImages, setSelectedImages] = useState({});
 
   const product = products.find((item) => item.id === id);
+  useDocumentTitle(product?.name || "Item");
 
   const handleAddToCart = async (event) => {
     event.preventDefault();
@@ -268,6 +270,7 @@ const Product = () => {
                   <img
                     src={item.image?.[0]}
                     alt={item.name}
+                    loading="lazy"
                     className="w-full h-full object-cover"
                   />
                 </div>

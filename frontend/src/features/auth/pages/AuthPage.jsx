@@ -1,10 +1,12 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import LoginForm from "../components/LoginForm";
 import RegisterForm from "../components/RegisterForm";
 import { images } from "../../../assets/images/images";
 import { Link } from "react-router-dom";
+import { useDocumentTitle } from "../../../lib/useDocumentTitle";
 
 const AuthPage = () => {
+  useDocumentTitle("Sign in");
   const [mode, setMode] = useState("login");
 
   return (

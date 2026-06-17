@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useServerCart } from "../../cart/hooks/useCart";
+import { useDocumentTitle } from "../../../lib/useDocumentTitle";
 import { useProductStore } from "../../products/store/productStore";
 import {
   useCancelCheckout,
@@ -25,6 +26,7 @@ const methodDescriptions = {
 const formatMoney = (amount) => Number(amount || 0).toFixed(2);
 
 const Checkout = () => {
+  useDocumentTitle("Checkout");
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const currency = useProductStore((state) => state.currency);

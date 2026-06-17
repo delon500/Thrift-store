@@ -120,8 +120,14 @@ components I'd built with raw `teal/gray` to the **M3 theme tokens** (`primary`,
 `on-surface`, `outline`, `surface-container-low`, `error`…) so they match the rest of the
 customer app — kept the semantic status-dot colors. NB tokens confirmed against
 `@theme` names; **not yet visually QA'd** in a browser (low-risk swaps, build passes).
-Deferred frontend batch (offered, not done): perf/SEO (route code-splitting — bundle
->500kB, per-page titles). Lint clean + build passes.
+Then **perf/SEO pass (committed) — all 4 frontend batches now done.** Route-level
+code-splitting: `app/router.jsx` lazy-loads every routed page (`React.lazy`), with a
+`Suspense` + `components/shared/PageLoader` fallback around `<Outlet/>` in PublicLayout;
+**main JS bundle 473kB → 354kB** (gzip 121kB), per-page chunks load on demand, >500kB
+warning gone. Per-page `<title>` via a tiny `lib/useDocumentTitle` hook applied to ~9 pages
+(Product uses the item name). `loading="lazy"` on grid/related product images. NB
+`router.jsx` has an `eslint-disable react-refresh/only-export-components` header (it's route
+config, not a component module). Lint clean + build passes.
 
 **Prior feature: Admin Settings — DONE (backend + admin frontend), committed.**
 Makes 3 previously-hardcoded values configurable platform-wide from the admin app:
