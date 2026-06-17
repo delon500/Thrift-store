@@ -1,0 +1,195 @@
+# PROJECT_BRAIN.md
+
+> Single-file source of truth. A fresh session should be able to reconstruct the
+> whole project from this file alone. Auto-updated when a task completes (hook in
+> `.claude/settings.local.json`). Conventions live in `CLAUDE.md`. Keep this
+> current — edit in place, don't append history.
+>
+> _Last updated: 2026-06-17_
+
+## 1. What & why
+A **school thrift-store & lost-and-found collection platform**. Parents/students
+buy second-hand or lost-and-found items from the school/university they're
+registered to, pay online (**ZAR via PayFast**), get a **reference number**, and
+present it at the school to collect the physical item. Goal: give institutions a
+simple resale/lost-and-found channel with online payment + in-person collection.
+
+## 2. Architecture & stack
+Four independently-run apps (no root `package.json` — install/run each separately):
+
+| Folder | App | Stack | Port |
+|---|---|---|---|
+| `backend/` | REST API | Node, Express 5 (ESM), `pg` | 5000 |
+| `frontend/` | Customer app | React 19 + Vite | 5173 |
+| `admin/` | Platform admin | React 19 + Vite | 5174 |
+| `school-admin/` | School staff (collections) | React 19 + Vite | 5175 |
+
+- **Frontend libs:** TanStack Query (server state), Zustand (auth/client state, token
+  mirrored to localStorage), Tailwind v4, axios (`src/lib/axios.js`, base URL from
+  `VITE_API_URL`, 401-interceptor auto-logout), recharts (admin charts),
+  react-toastify (admin notifications). Feature-folder layout
+  `src/features/<f>/{api,hooks,pages,components,store}`; central `src/app/router.jsx`.
+- **Backend:** Express 5 ESM. `controllers/` (handlers + SQL, `*.test.js` beside them),
+  `routes/` (one router per resource, mounted in `server.js`), `middleware/`
+  (`authMiddleware` = `protect` + `allowRoles`, `multer`, `rateLimit`), `services/`
+  (`payfastService`, `emailService`, `activityLog`), `lib/adminRules.js` (pure
+  decision logic), `db/migrations/` (manual, in order) + `db/schema.sql` (full dump).
+  Helmet + CORS allowlist (`CORS_ORIGINS`). Integrations: PostgreSQL, Cloudinary
+  (images), OpenAI (Add-Items auto-fill), PayFast (payments), nodemailer (email).
+- **Repo:** branch `payments-collection-flow` on `github.com/delon500/Thrift-store`
+  (user is a collaborator). Local dev DB `thriftstore`; tests use `thriftstore_test`.
+
+## 3. Domain model & key flows
+- **Roles** (`user_role`): student, parent, school, university, admin, **super_admin**.
+  JWT `{ id, role, institution_id, status }`. Most data scoped by `institution_id`
+  (admins/super_admins have `null`). Non-`approved` status blocks login (403); a
+  `suspended`/`rejected` **institution** also blocks its users.
+- **Registration → approval:** public sign-ups are `pending` → admin approves/rejects
+  in the admin app (email via emailService, graceful). `approval_status` =
+  pending | approved | rejected | suspended.
+- **Buy → collect:** products (per institution, permanent ref `ITEM-2026-000123`) →
+  checkout creates `collection_orders` (`ORD-2026-000123`) + items + a PayFast
+  payment. Verified PayFast **ITN** → order `ready_for_collection`, products
+  `Reserved`, buyer emailed. School staff verify the reference and mark `collected`
+  → products `Claimed`. Abandoned checkouts expire/release after 30 min.
+- **Admin tiers:** `admin` = day-to-day (dashboard, approvals, inventory, collections,
+  reports, view users/institutions). `super_admin` = everything, incl. user
+  edit/suspend/delete, order **refund**, and all account creation (register staff/
+  school/parent/student). Enforced by `allowRoles` on routes + `useMe().role` in UI.
+- **Key enums (must match exactly):** `product_status` = Available/Sold/Pending/
+  Reserved/Claimed/Cancelled · `listing_type` = "Thrift Store"/"Lost and Found" ·
+  `collection_order_status` incl. payment_pending/ready_for_collection/collected/
+  cancelled/expired/payment_failed · `payment_status` = pending/paid/failed/cancelled/
+  refunded · `product_gender` = Male/Female/Unisex.
+
+## 4. Key decisions (don't reverse unknowingly)
+- Stay on **PayFast**; refunds are **record-only** (mark refunded + release items;
+  actual money refund done manually in the PayFast dashboard).
+- **Dropped** the unique index on `collection_order_items.product_reference_number`
+  (migration 003) — it blocked re-ordering a product after a cancelled order.
+- **PayFast ITN signature must include blank fields** when verifying (PayFast signs
+  every posted field); outgoing requests omit them (`payfastService` skipEmpty).
+- DB **migrations are manual**, applied in filename order (001–007). `db/schema.sql`
+  is the canonical full schema (pg_dump via `C:\Program Files\PostgreSQL\18\bin\pg_dump.exe`)
+  used by integration tests — re-dump it after any migration. Integration files run
+  **serially** (`--test-concurrency=1`) since they share one test DB.
+- Server-side pagination endpoints return `{ items, total }`; **no `limit` = all**
+  (so reports/exports/View-Store still get everything).
+- Admin business rules extracted to pure `lib/adminRules.js` and unit-tested.
+- Emails are graceful (send if SMTP configured, else log).
+
+## 5. Completed work
+- **Payments lifecycle:** real PayFast ITN (+ signature fix), expiry/cancel/release,
+  resume-payment, My-Orders (filter/pagination/images/continue-to-pay).
+- **Customer storefront:** product filters + sort + pagination, card add-to-cart
+  (server cart), Available-only listing, inline auth messaging.
+- **Admin app (broad):** registration approval (+email), inventory CRUD, Item-Mgmt hub
+  + Add Items (AI) + View Store, Orders & Collections (verify/collect/cancel/refund),
+  analytics **Dashboard** (KPIs + recharts + activity-log feed), **Registered Users**
+  (list + lifecycle: suspend/edit/reset-pw/delete), **Reports** (CSV), **Account**
+  (profile/password/platform), **Institutions** (list/edit/suspend/delete + counts).
+  Toasts replace all `alert()`s. Real logged-in admin in navbar.
+- **School Admin app:** scoped login, ready-for-collection list, verify ORD-/ITEM-
+  reference, mark collected.
+- **Hardening:** login rate-limit, 401 interceptors (all 3 apps), helmet + CORS
+  allowlist, env-based API URL (`VITE_API_URL` + `.env.example` each app).
+- **Roles:** super_admin/admin tiers (migration 006) + route auth + UI gating.
+- **Institution management** + login enforcement for suspended/rejected institutions.
+- **Tests:** pure unit tests (`npm test`, 20 incl. adminRules) + **integration layer**
+  (`npm run test:integration`, throwaway `thriftstore_test` DB, 4 order tests).
+- **Docs/skills:** `CLAUDE.md`, `PROJECT_STATE.md`; a separate PPMS skill at
+  `~/.claude/skills/persistent-project-memory-system/`.
+
+## 6. Active work / status
+**Active feature: Payment Management (admin) — BACKEND DONE + tested; FRONTEND is next**
+(see §8). Backend shipped (uncommitted): migration `007` (payments +
+`failure_reason`/`refunded_at`/`refund_reason`/`refunded_by`); write-points populate them
+(`markOrderPaymentFailed`→failure_reason, `refundOrder`→refund metadata + refunded_by);
+new `/api/admin/payments` (list+summary, detail incl. raw payload, super-admin recover).
+Verified live + integration tests (now **7 passing**). Also fixed the integration runner
+to run files **serially** and made `seedOrder` emails unique per call.
+
+Earlier (also uncommitted): PayFast ITN tunnel fix + customer checkout status polling
+(`useOrderStatus`); recovered the user's genuinely-paid `ORD-2026-000041` (ITN lost to
+a dead tunnel).
+
+## 7. Known issues / blockers / debt
+- Per-school **fees/pricing** not built — service fee hardcoded **R1.50** in cart.
+- ~17 **pre-existing lint errors** in untouched admin files (unused `React` imports).
+- Mobile polish: fixed-width (`w-[15%]`) admin sidebar.
+- Buyer/approval emails only log until SMTP is set in `backend/.env`.
+- **Dev-data note:** a test parent user was accidentally hard-deleted during role
+  testing (dev DB 2→1 parents); ORD-2026-000002 was wrongly cancelled then reverted.
+- The backend dev server is currently run via a Claude-started background process
+  (the user's `npm run dev` had closed) — stop it before starting your own (port 5000).
+- **PayFast (local dev) — recurring:** the ITN needs a public URL; a **cloudflared
+  tunnel** proxies PayFast→localhost:5000 and `PAYFAST_NOTIFY_URL` must point at the
+  *current* tunnel + `/api/payments/payfast/itn`. `trycloudflare` quick-tunnels are
+  EPHEMERAL and **keep dying on this machine** (DNS i/o timeouts). When payments stick
+  on "awaiting payment": (1) `cloudflared tunnel --url http://localhost:5000`, grab the
+  new `*.trycloudflare.com` URL, (2) `sed -i` it into `PAYFAST_NOTIFY_URL` in
+  `backend/.env`, (3) restart the backend (touch a `.js` so nodemon respawns + re-reads
+  `.env`). To recover a genuinely-paid order whose ITN was lost: call
+  `markOrderPaid({ orderReference })` (idempotent). PayFast sandbox also **refuses to
+  let the merchant pay themselves** — buyer email == merchant email (`izyizy4good@gmail.com`)
+  → test with a NON-merchant email. (A super-admin "recover" button is part of the
+  Payment Management plan to make this a one-click UI action.)
+- **Uncommitted (local only, branch tip is `02488be`):** payment-ITN guard +
+  checkout-status polling (`frontend` `Checkout.jsx`, `useOrderStatus`, `getMyOrder`),
+  `PROJECT_BRAIN.md`, the `CLAUDE.md` project-memory note, and the `TaskCompleted` hook
+  in `.claude/settings.local.json` (personal, gitignored).
+
+## 8. Next actions — Payment Management: backend DONE, build the FRONTEND
+Backend complete (migration 007, write-points, `/api/admin/payments` list/detail/recover,
+7 integration tests pass). **Remaining = the admin frontend.**
+
+Live endpoints to consume:
+- `GET /api/admin/payments?status=&q=&from=&to=&limit=&offset=` →
+  `{ payments, total, summary{ total_paid, total_refunded, failed_count, pending_count } }`.
+  Each payment row: provider, provider_payment_id, payment_method, status, amount,
+  currency, paid_at, failed_at, failure_reason, refunded_at, refund_reason, created_at,
+  order_reference, user_full_name, user_email, order_status, institution_name.
+- `GET /api/admin/payments/:id` → `{ payment }` (adds `raw_webhook_payload`, `refunded_by`).
+- `POST /api/admin/payments/:orderReference/recover` (**super_admin**) → marks a stuck
+  paid order paid.
+
+Build `admin/src/features/payments/{api,hooks,pages}`:
+- `paymentsApi.js`: `getPayments({token,params})`, `getPayment({id,token})`,
+  `recoverPayment({orderReference,token})`.
+- `usePayments.js`: `usePayments(params)` (queryKey `["admin-payments",params]`,
+  `placeholderData:(p)=>p`); `useRecoverPayment()` (invalidate `["admin-payments"]`).
+- `PaymentsPage.jsx` (route `/admin/payments`, sidebar "Payments"): summary cards,
+  filters (status dropdown, debounced search via `lib/useDebouncedValue`, date from/to),
+  shared `components/shared/Pagination`, table (order ref · customer · method · status
+  badge · amount · paid/failed date · PF ref) → row opens a **detail drawer** (all fields
+  + failure/refund reason + collapsible raw `raw_webhook_payload` JSON + a super-admin
+  **"Mark paid (recover)"** button shown when payment is pending/failed). Gate the button
+  with `useMe().role === "super_admin"`. Toasts for actions.
+- Add a **Payments CSV** to the Reports page (`/admin/payments` no-limit → `.payments`).
+**Copy the patterns from** `features/institutions` (list+filters+pagination+modal+role
+gating) and `features/registeredUsers`.
+
+**Deferred (separate features):** Notifications Center; Admin Settings (hardcoded R1.50
+fee + 30-min expiry + payment methods); lint-clean ~17 errors; SMTP; open the PR
+(`github.com/delon500/Thrift-store` → `payments-collection-flow`, base `main`).
+
+## 9. Conventions & constraints (do NOT break)
+- Don't re-add the dropped `collection_order_items` unique index (decision above).
+- Keep ITN signature blank-field handling intact.
+- Apply migrations 001–006 in order; never auto-commit `.env`, `node_modules/`,
+  `dist/`. Push to `payments-collection-flow`, not `main`. Commits end with the
+  Co-Authored-By trailer.
+- Errors inline / via toast, never `alert()`. Keep API base URL env-driven.
+- `backend/.env` changes need a full backend restart (nodemon watches `.js`).
+
+## 10. Run & test
+```bash
+cd backend && npm install && npm run dev          # API :5000 (nodemon)
+cd frontend && npm install && npm run dev          # :5173
+cd admin && npm install && npm run dev             # :5174
+cd school-admin && npm install && npm run dev      # :5175
+cd backend && npm test                             # unit (no DB)
+cd backend && npm run test:integration             # integration (throwaway test DB)
+```
+Copy `backend/.env.example` → `backend/.env` and fill it in. Each React app has its
+own `.env.example` (`VITE_API_URL`).
