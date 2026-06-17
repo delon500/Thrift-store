@@ -1,6 +1,9 @@
 import test, { before, beforeEach, after } from "node:test";
 import assert from "node:assert/strict";
-import { createNotification } from "../services/notificationService.js";
+import {
+  createNotification,
+  notifyAdmins,
+} from "../services/notificationService.js";
 import {
   listNotifications,
   markRead,
@@ -75,4 +78,33 @@ test("a user cannot see another user's notifications", async () => {
   const res = mockRes();
   await listNotifications(reqAs(b.user.id), res);
   assert.equal(res.body.total, 0);
+});
+
+test("notifyAdmins fans out to every admin/super_admin but not other roles", async () => {
+  await pool.query(
+    `INSERT INTO users (role, full_name, email, contact_number, password_hash, status)
+     VALUES
+       ('admin', 'A1', 'a1@test.local', '0', 'x', 'approved'),
+       ('super_admin', 'A2', 'a2@test.local', '0', 'x', 'approved'),
+       ('parent', 'P1', 'p1@test.local', '0', 'x', 'approved')`,
+  );
+
+  await notifyAdmins({
+    type: "registration_pending",
+    title: "New registration awaiting approval",
+  });
+
+  const adminRows = await pool.query(
+    `SELECT count(*)::int AS n
+     FROM notifications n JOIN users u ON u.id = n.user_id
+     WHERE u.role IN ('admin', 'super_admin')`,
+  );
+  const otherRows = await pool.query(
+    `SELECT count(*)::int AS n
+     FROM notifications n JOIN users u ON u.id = n.user_id
+     WHERE u.role NOT IN ('admin', 'super_admin')`,
+  );
+
+  assert.equal(adminRows.rows[0].n, 2);
+  assert.equal(otherRows.rows[0].n, 0);
 });

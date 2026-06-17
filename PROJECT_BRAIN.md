@@ -101,7 +101,20 @@ Four independently-run apps (no root `package.json` — install/run each separat
   `~/.claude/skills/persistent-project-memory-system/`.
 
 ## 6. Active work / status
-**Active feature: Notification Center (customer) — DONE (backend + frontend), uncommitted.**
+**Active feature: Notification Center — DONE for BOTH customer + admin, uncommitted.**
+The `notifications` table is per-user and admins ARE users, so the **same
+`/api/notifications` endpoints serve both apps** — no per-app routes. Admin side adds
+`notificationService.notifyAdmins(...)` which fans an operational alert out to every
+`admin`/`super_admin` (one row each via `INSERT … SELECT`, so per-admin read state).
+Wired into 2 admin events: new pending sign-up (`registerStudentParent` +
+`registerInstitution`)→`registration_pending` (link `/admin/registrations`), and
+`markOrderPaymentFailed`→`payment_failed` (link `/admin/payments`). Admin frontend mirrors
+the customer one in `admin/src/features/notifications/{api,hooks,components,pages,lib}`;
+`NotificationBell` replaced the dead static `notification_icon` in the admin `Navbar`;
+route `/admin/notifications`. Verified live (register pending user → both admins notified,
+2 rows) + integration test for the fan-out (now **11 passing**). Admin lint clean + build.
+
+**Customer side (also DONE):**
 In-app notifications for parents/students — a bell + unread badge in the customer app, the
 in-app counterpart to the transactional emails. Backend: migration `008` (`notifications`
 table: user_id FK→users ON DELETE CASCADE, type, title, body, entity_type, entity_ref,
@@ -169,16 +182,19 @@ clean + builds pass). **Remaining for this feature:**
    approved parent/student with a notification, confirm badge + dropdown + mark-read +
    "View all" → `/notifications`. (API path already verified end-to-end.)
 
-Notification endpoints (all `protect`, own user): `GET /api/notifications?unread=&limit=&offset=`
-→ `{notifications,total,unread}`; `GET /api/notifications/unread-count`;
-`PATCH /api/notifications/:id/read`; `PATCH /api/notifications/read-all`. Notification
-types so far: `order_ready`, `payment_failed`, `registration_approved`.
+Notification endpoints (all `protect`, own user — serve customer AND admin apps):
+`GET /api/notifications?unread=&limit=&offset=` → `{notifications,total,unread}`;
+`GET /api/notifications/unread-count`; `PATCH /api/notifications/:id/read`;
+`PATCH /api/notifications/read-all`. Types: customer `order_ready`, `payment_failed`,
+`registration_approved`; admin `registration_pending`, `payment_failed`.
 
-**Deferred (separate features):** Admin Settings (hardcoded R1.50 fee + 30-min expiry +
-payment methods); a future Notifications surface for **admins/school staff** (this build is
-customer-only — would reuse the same table + a role/institution-scoped query); lint-clean
-~17 pre-existing admin errors; SMTP; open the PR (`github.com/delon500/Thrift-store` →
-`payments-collection-flow`, base `main`).
+**Next feature (user's plan): Admin Settings** — hardcoded R1.50 service fee (cartController)
++ 30-min `CHECKOUT_EXPIRY` + `PAYMENT_METHODS`; make them configurable from the admin app.
+
+**Deferred:** a **school-staff** notifications surface (school-admin app — would reuse the
+same table + an institution-scoped fan-out); lint-clean ~17 pre-existing admin errors;
+SMTP; open the PR (`github.com/delon500/Thrift-store` → `payments-collection-flow`, base
+`main`).
 
 ## 9. Conventions & constraints (do NOT break)
 - Don't re-add the dropped `collection_order_items` unique index (decision above).
