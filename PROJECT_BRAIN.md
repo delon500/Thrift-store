@@ -174,7 +174,13 @@ a dead tunnel).
   **Per-school** fees/pricing is still not built (would need per-institution settings).
 - ~17 **pre-existing lint errors** in untouched admin files (unused `React` imports).
 - Mobile polish: fixed-width (`w-[15%]`) admin sidebar.
-- Buyer/approval emails only log until SMTP is set in `backend/.env`.
+- **SMTP is LIVE** (Gmail). `.env`: SMTP_HOST=smtp.gmail.com, **PORT=465** (587 is
+  **blocked on this network** — `Greeting never received`; 465/SSL works), USER/FROM=
+  izyizy4good@gmail.com, SMTP_PASS=16-char App Password. Verified end-to-end
+  (`npm run mail:test` + real approval/collection-ready templates sent to a `+alias`).
+  `emailService` has `verifyEmailTransport()`; test script `scripts/send-test-email.js`.
+  Note: nodemon doesn't watch `.env`, so **restart the backend after changing SMTP_*** (the
+  transporter is cached per process).
 - **Dev-data note:** a test parent user was accidentally hard-deleted during role
   testing (dev DB 2→1 parents); ORD-2026-000002 was wrongly cancelled then reverted.
 - The backend dev server is currently run via a Claude-started background process
