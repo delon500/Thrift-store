@@ -4,6 +4,7 @@ import useAuthStore from "../../auth/store/authStore";
 import { getOrders } from "../../orders/api/orderApi";
 import { getUsersByRole } from "../../registeredUsers/api/registeredUsersApi";
 import { getAdminProducts } from "../../inventory/api/inventoryApi";
+import { getPayments } from "../../payments/api/paymentsApi";
 import { downloadCsv, toCsv } from "../lib/csv";
 
 const REPORTS = [
@@ -56,6 +57,24 @@ const REPORTS = [
       { label: "Price (R)", get: (p) => p.price },
       { label: "Condition", get: (p) => p.condition },
       { label: "Category", get: (p) => p.category },
+    ],
+  },
+  {
+    key: "payments",
+    name: "Payments report",
+    description:
+      "Every payment with order, customer, school, status, amount, and PayFast reference.",
+    fetcher: (token) => getPayments({ token }).then((data) => data.payments),
+    columns: [
+      { label: "Order Reference", get: (p) => p.order_reference },
+      { label: "Customer", get: (p) => p.user_full_name },
+      { label: "Email", get: (p) => p.user_email },
+      { label: "School", get: (p) => p.institution_name },
+      { label: "Status", get: (p) => p.status },
+      { label: "Method", get: (p) => p.payment_method },
+      { label: "Amount (R)", get: (p) => p.amount },
+      { label: "PayFast Ref", get: (p) => p.provider_payment_id },
+      { label: "Paid At", get: (p) => p.paid_at },
     ],
   },
 ];

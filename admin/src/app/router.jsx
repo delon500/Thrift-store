@@ -20,6 +20,7 @@ import RegisteredUsersList from "../features/registeredUsers/pages/RegisteredUse
 import ReportsPage from "../features/reports/pages/ReportsPage";
 import AccountPage from "../features/account/pages/AccountPage";
 import InstitutionsPage from "../features/institutions/pages/InstitutionsPage";
+import PaymentsPage from "../features/payments/pages/PaymentsPage";
 
 const router = createBrowserRouter([
   {
@@ -98,6 +99,10 @@ const router = createBrowserRouter([
       {
         path: "/admin/institutions",
         element: <InstitutionsPage />,
+      },
+      {
+        path: "/admin/payments",
+        element: <PaymentsPage />,
       },
       {
         path: "*",

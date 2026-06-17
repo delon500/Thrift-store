@@ -101,13 +101,24 @@ Four independently-run apps (no root `package.json` — install/run each separat
   `~/.claude/skills/persistent-project-memory-system/`.
 
 ## 6. Active work / status
-**Active feature: Payment Management (admin) — BACKEND DONE + tested; FRONTEND is next**
-(see §8). Backend shipped (uncommitted): migration `007` (payments +
+**Active feature: Payment Management (admin) — DONE (backend + frontend).** Backend was
+committed (`02488be` tip; see §8 for what shipped). **Frontend now built** (uncommitted):
+`admin/src/features/payments/{api,hooks,pages}` — `paymentsApi.js`
+(getPayments/getPayment/recoverPayment), `usePayments.js` (usePayments + usePayment +
+useRecoverPayment), `PaymentsPage.jsx` (summary cards, status/debounced-search/date
+filters, shared Pagination, table, click-to-open detail modal with all fields +
+failure/refund reason + collapsible raw payload JSON + super-admin "Mark paid (recover)"
+button gated by `useMe().role === "super_admin"`, toasts). Route `/admin/payments` in
+`app/router.jsx`; sidebar "Payments" link; Payments CSV added to Reports page.
+**Admin lint clean + `npm run build` passes.** Not yet smoke-tested live against a running
+backend, and not yet committed.
+
+Prior backend (committed at `02488be`): migration `007` (payments +
 `failure_reason`/`refunded_at`/`refund_reason`/`refunded_by`); write-points populate them
 (`markOrderPaymentFailed`→failure_reason, `refundOrder`→refund metadata + refunded_by);
 new `/api/admin/payments` (list+summary, detail incl. raw payload, super-admin recover).
-Verified live + integration tests (now **7 passing**). Also fixed the integration runner
-to run files **serially** and made `seedOrder` emails unique per call.
+Verified live + integration tests (**7 passing**). Integration runner runs files
+**serially**; `seedOrder` emails unique per call.
 
 Earlier (also uncommitted): PayFast ITN tunnel fix + customer checkout status polling
 (`useOrderStatus`); recovered the user's genuinely-paid `ORD-2026-000041` (ITN lost to
@@ -139,35 +150,19 @@ a dead tunnel).
   `PROJECT_BRAIN.md`, the `CLAUDE.md` project-memory note, and the `TaskCompleted` hook
   in `.claude/settings.local.json` (personal, gitignored).
 
-## 8. Next actions — Payment Management: backend DONE, build the FRONTEND
-Backend complete (migration 007, write-points, `/api/admin/payments` list/detail/recover,
-7 integration tests pass). **Remaining = the admin frontend.**
+## 8. Next actions — Payment Management DONE; verify + commit
+Both backend (committed `02488be`) and frontend (uncommitted, see §6) are built; admin
+lint clean + build passes. **Remaining for this feature:**
+1. Smoke-test live: start backend (port 5000), open admin (5174), log in, visit
+   `/admin/payments` — confirm list/summary/filters/pagination load, open a detail modal
+   (raw payload renders), and (as a **super_admin**) the "Mark paid (recover)" button
+   appears on a pending/failed payment and flips it. Use throwaway data only.
+2. Commit the frontend (branch `payments-collection-flow`).
 
-Live endpoints to consume:
-- `GET /api/admin/payments?status=&q=&from=&to=&limit=&offset=` →
-  `{ payments, total, summary{ total_paid, total_refunded, failed_count, pending_count } }`.
-  Each payment row: provider, provider_payment_id, payment_method, status, amount,
-  currency, paid_at, failed_at, failure_reason, refunded_at, refund_reason, created_at,
-  order_reference, user_full_name, user_email, order_status, institution_name.
-- `GET /api/admin/payments/:id` → `{ payment }` (adds `raw_webhook_payload`, `refunded_by`).
-- `POST /api/admin/payments/:orderReference/recover` (**super_admin**) → marks a stuck
-  paid order paid.
-
-Build `admin/src/features/payments/{api,hooks,pages}`:
-- `paymentsApi.js`: `getPayments({token,params})`, `getPayment({id,token})`,
-  `recoverPayment({orderReference,token})`.
-- `usePayments.js`: `usePayments(params)` (queryKey `["admin-payments",params]`,
-  `placeholderData:(p)=>p`); `useRecoverPayment()` (invalidate `["admin-payments"]`).
-- `PaymentsPage.jsx` (route `/admin/payments`, sidebar "Payments"): summary cards,
-  filters (status dropdown, debounced search via `lib/useDebouncedValue`, date from/to),
-  shared `components/shared/Pagination`, table (order ref · customer · method · status
-  badge · amount · paid/failed date · PF ref) → row opens a **detail drawer** (all fields
-  + failure/refund reason + collapsible raw `raw_webhook_payload` JSON + a super-admin
-  **"Mark paid (recover)"** button shown when payment is pending/failed). Gate the button
-  with `useMe().role === "super_admin"`. Toasts for actions.
-- Add a **Payments CSV** to the Reports page (`/admin/payments` no-limit → `.payments`).
-**Copy the patterns from** `features/institutions` (list+filters+pagination+modal+role
-gating) and `features/registeredUsers`.
+Live endpoints consumed: `GET /api/admin/payments?status=&q=&from=&to=&limit=&offset=` →
+`{ payments, total, summary{ total_paid, total_refunded, failed_count, pending_count } }`;
+`GET /api/admin/payments/:id` → `{ payment }` (adds `raw_webhook_payload`, `refunded_by`);
+`POST /api/admin/payments/:orderReference/recover` (**super_admin**).
 
 **Deferred (separate features):** Notifications Center; Admin Settings (hardcoded R1.50
 fee + 30-min expiry + payment methods); lint-clean ~17 errors; SMTP; open the PR

@@ -141,6 +141,26 @@ const Sidebar = () => {
         <p className="hidden md:block text-gray-500">Institutions</p>
       </NavLink>
       <NavLink
+        to={"/admin/payments"}
+        className="flex items-center gap-3 px-3 py-2"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-5 h-5 text-gray-500"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+          />
+        </svg>
+        <p className="hidden md:block text-gray-500">Payments</p>
+      </NavLink>
+      <NavLink
         to={"/admin/reports"}
         className="flex items-center gap-3 px-3 py-2"
       >
