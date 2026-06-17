@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict KybutTN0mpDEC96HAuPHv3oygzd04arrYbdIk2rYvgZnCojLd2mB5ilrKyyZb1u
+\restrict vC7mc7iuoSPhuWdKvVcDco3tKPQnaUoATkovjcxkkuYGLLaA5CxhdEBEydqnHtQ
 
 -- Dumped from database version 18.4
 -- Dumped by pg_dump version 18.4
@@ -348,7 +348,11 @@ CREATE TABLE public.payments (
     failed_at timestamp without time zone,
     raw_webhook_payload jsonb,
     created_at timestamp without time zone DEFAULT now(),
-    updated_at timestamp without time zone DEFAULT now()
+    updated_at timestamp without time zone DEFAULT now(),
+    failure_reason text,
+    refunded_at timestamp without time zone,
+    refund_reason text,
+    refunded_by uuid
 );
 
 
@@ -817,5 +821,5 @@ ALTER TABLE ONLY public.users
 -- PostgreSQL database dump complete
 --
 
-\unrestrict KybutTN0mpDEC96HAuPHv3oygzd04arrYbdIk2rYvgZnCojLd2mB5ilrKyyZb1u
+\unrestrict vC7mc7iuoSPhuWdKvVcDco3tKPQnaUoATkovjcxkkuYGLLaA5CxhdEBEydqnHtQ
 

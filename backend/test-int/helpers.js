@@ -34,6 +34,10 @@ export const truncateAll = async () => {
   await pool.query(`TRUNCATE ${list} RESTART IDENTITY CASCADE`);
 };
 
+// Monotonic counter so emails are unique even when seedOrder is called several
+// times within one test (institutions.contact_email and users.email are unique).
+let seedSequence = 0;
+
 // Seeds institution → buyer → product → order/item/payment and returns the rows.
 // Defaults model a paid, ready-for-collection order holding a Reserved product.
 export const seedOrder = async ({
@@ -42,14 +46,17 @@ export const seedOrder = async ({
   productStatus = "Reserved",
   itemStatus = "reserved",
 } = {}) => {
+  const seq = ++seedSequence;
+
   const institution = (
     await pool.query(
       `INSERT INTO institutions
         (institution_name, institution_type, contact_person_name, contact_email,
          contact_number, institution_phone, status)
-       VALUES ('Test School', 'public', 'Contact', 'school@test.local',
+       VALUES ('Test School', 'public', 'Contact', $1,
                '0000000000', '0000000000', 'approved')
        RETURNING id, institution_name`,
+      [`school-${seq}@test.local`],
     )
   ).rows[0];
 
@@ -57,9 +64,9 @@ export const seedOrder = async ({
     await pool.query(
       `INSERT INTO users
         (role, full_name, email, contact_number, password_hash, institution_id, status)
-       VALUES ('parent', 'Test Buyer', 'buyer@test.local', '0000000000', 'x', $1, 'approved')
+       VALUES ('parent', 'Test Buyer', $1, '0000000000', 'x', $2, 'approved')
        RETURNING id`,
-      [institution.id],
+      [`buyer-${seq}@test.local`, institution.id],
     )
   ).rows[0];
 
