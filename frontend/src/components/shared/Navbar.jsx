@@ -39,7 +39,7 @@ const Navbar = () => {
       <div className="flex items-center justify-between w-full">
         <div className="flex-1 md:max-w-[250px] lg:max-w-md relative hidden sm:block">
           <Input
-            placeholder="Search for 'Backpack'..."
+            placeholder="Search for items..."
             type="text"
             onChange={(e) => setSearchQuery(e.target.value)}
             value={searchQuery}
@@ -109,7 +109,7 @@ const Navbar = () => {
 
         <div className="p-4">
           <Input
-            placeholder="Search for 'Backpack'..."
+            placeholder="Search for Items..."
             type="text"
             onChange={(e) => setSearchQuery(e.target.value)}
             value={searchQuery}

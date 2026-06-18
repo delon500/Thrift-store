@@ -45,7 +45,7 @@ const AccountMenu = () => {
       {open ? (
         <div
           role="menu"
-          className="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-xl border border-outline-variant bg-white shadow-lg"
+          className="absolute right-0 z-[999] mt-2 w-56 overflow-hidden rounded-md border border-outline-variant bg-white shadow-lg"
         >
           <div className="border-b border-outline-variant px-4 py-3">
             <p className="truncate font-semibold text-on-surface">
@@ -57,6 +57,15 @@ const AccountMenu = () => {
               </p>
             ) : null}
           </div>
+          <NavLink
+            to="/orders"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-3 px-4 py-3 text-sm text-on-surface hover:bg-surface-container-low"
+          >
+            <img src={icons.order_icon} alt="" className="h-5 w-5" />
+            My Orders
+          </NavLink>
           <NavLink
             to="/settings"
             role="menuitem"
