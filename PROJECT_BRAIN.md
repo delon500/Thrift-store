@@ -101,7 +101,35 @@ Four independently-run apps (no root `package.json` — install/run each separat
   `~/.claude/skills/persistent-project-memory-system/`.
 
 ## 6. Active work / status
-**Active feature: Admin Settings — DONE (backend + admin frontend), uncommitted.**
+**Just done: Customer frontend "professionalism" pass (committed).** Branded 404
+([NotFoundPage] real page + CTA, doubles as router errorElement), working **mobile nav**
+(filled the empty drawer in `Navbar` + shared `components/shared/navItems.js` now powering
+both Sidebar and the drawer; hamburger `md:hidden`), tab `<title>`=School Thrift + meta +
+`public/favicon.svg`, and **react-toastify** mounted in `main.jsx` (replaced all 11
+`alert()` calls with toasts). Then **robustness pass (committed):** fixed the Product deep-link/refresh **blank screen**
+([Product.jsx] now consumes `useGetProducts()` directly with loading skeleton / not-found /
+error+retry states instead of reading the Zustand store and returning `null`); added
+`components/shared/Skeleton.jsx` + skeleton grid + error/retry on HomePage. NB there is
+**no backend `GET /products/:id`** — customer product views still rely on the full-list
+query (cached, shared via React Query); a per-product endpoint is a future optimization.
+Then **a11y + design-consistency pass (committed):** global `:focus-visible` ring in
+`index.css` (uses `--color-primary`); alt/aria sweep (decorative icons → `alt=""`,
+state-aware `aria-label`/`aria-pressed` on the wishlist toggle, `aria-label` on the sort
+select + search Input + notification bell with unread count); unified the two notification
+components I'd built with raw `teal/gray` to the **M3 theme tokens** (`primary`,
+`on-surface`, `outline`, `surface-container-low`, `error`…) so they match the rest of the
+customer app — kept the semantic status-dot colors. NB tokens confirmed against
+`@theme` names; **not yet visually QA'd** in a browser (low-risk swaps, build passes).
+Then **perf/SEO pass (committed) — all 4 frontend batches now done.** Route-level
+code-splitting: `app/router.jsx` lazy-loads every routed page (`React.lazy`), with a
+`Suspense` + `components/shared/PageLoader` fallback around `<Outlet/>` in PublicLayout;
+**main JS bundle 473kB → 354kB** (gzip 121kB), per-page chunks load on demand, >500kB
+warning gone. Per-page `<title>` via a tiny `lib/useDocumentTitle` hook applied to ~9 pages
+(Product uses the item name). `loading="lazy"` on grid/related product images. NB
+`router.jsx` has an `eslint-disable react-refresh/only-export-components` header (it's route
+config, not a component module). Lint clean + build passes.
+
+**Prior feature: Admin Settings — DONE (backend + admin frontend), committed.**
 Makes 3 previously-hardcoded values configurable platform-wide from the admin app:
 service fee (was R1.50 in cartController), checkout expiry minutes (was 30 in
 checkoutController), and the enabled subset of the 9 PayFast payment methods. Backend:
@@ -227,8 +255,8 @@ errors; SMTP; **open the PR** (`github.com/delon500/Thrift-store` →
 - Apply migrations 001–009 in order; never auto-commit `.env`, `node_modules/`,
   `dist/`. Push to `payments-collection-flow`, not `main`. Commits end with the
   Co-Authored-By trailer.
-- Errors inline / via toast, never `alert()`. The **customer app has no ToastContainer**
-  — show errors inline there. Keep API base URL env-driven.
+- Errors inline / via toast, never `alert()`. **All 3 apps now mount react-toastify**
+  (customer `ToastContainer` is in `main.jsx`, bottom-right). Keep API base URL env-driven.
 - `backend/.env` changes need a full backend restart (nodemon watches `.js`).
 
 ## 10. Run & test

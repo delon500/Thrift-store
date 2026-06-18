@@ -9,8 +9,8 @@ import {
 import { timeAgo } from "../lib/timeAgo";
 
 const TYPE_ACCENT = {
-  order_ready: "bg-teal-500",
-  payment_failed: "bg-red-500",
+  order_ready: "bg-primary",
+  payment_failed: "bg-error",
   registration_approved: "bg-green-500",
 };
 
@@ -49,8 +49,8 @@ const NotificationBell = () => {
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="relative cursor-pointer text-gray-600 hover:text-teal-600"
-        aria-label="Notifications"
+        className="relative cursor-pointer text-on-surface-variant hover:text-primary"
+        aria-label={unread > 0 ? `Notifications, ${unread} unread` : "Notifications"}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -67,21 +67,21 @@ const NotificationBell = () => {
           />
         </svg>
         {unread > 0 ? (
-          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-error px-1 text-[10px] font-bold text-on-error">
             {unread > 9 ? "9+" : unread}
           </span>
         ) : null}
       </button>
 
       {open ? (
-        <div className="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
-          <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
-            <p className="font-bold text-gray-800">Notifications</p>
+        <div className="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-xl border border-outline-variant bg-white shadow-lg">
+          <div className="flex items-center justify-between border-b border-outline-variant px-4 py-3">
+            <p className="font-bold text-on-surface">Notifications</p>
             {unread > 0 ? (
               <button
                 type="button"
                 onClick={() => markAllRead.mutate()}
-                className="text-xs font-semibold text-teal-600 hover:underline"
+                className="text-xs font-semibold text-primary hover:underline"
               >
                 Mark all read
               </button>
@@ -90,9 +90,9 @@ const NotificationBell = () => {
 
           <div className="max-h-96 overflow-y-auto">
             {isLoading ? (
-              <p className="px-4 py-6 text-sm text-gray-500">Loading...</p>
+              <p className="px-4 py-6 text-sm text-on-surface-variant">Loading...</p>
             ) : notifications.length === 0 ? (
-              <p className="px-4 py-6 text-center text-sm text-gray-500">
+              <p className="px-4 py-6 text-center text-sm text-on-surface-variant">
                 You're all caught up.
               </p>
             ) : (
@@ -101,27 +101,27 @@ const NotificationBell = () => {
                   key={notification.id}
                   type="button"
                   onClick={() => handleOpen(notification)}
-                  className={`flex w-full gap-3 border-b border-gray-50 px-4 py-3 text-left hover:bg-gray-50 ${
-                    notification.read_at ? "" : "bg-teal-50/40"
+                  className={`flex w-full gap-3 border-b border-outline-variant px-4 py-3 text-left hover:bg-surface-container-low ${
+                    notification.read_at ? "" : "bg-surface-container-low"
                   }`}
                 >
                   <span
                     className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${
                       notification.read_at
                         ? "bg-transparent"
-                        : TYPE_ACCENT[notification.type] || "bg-teal-500"
+                        : TYPE_ACCENT[notification.type] || "bg-primary"
                     }`}
                   />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-semibold text-gray-800">
+                    <span className="block truncate text-sm font-semibold text-on-surface">
                       {notification.title}
                     </span>
                     {notification.body ? (
-                      <span className="mt-0.5 block text-xs text-gray-500 line-clamp-2">
+                      <span className="mt-0.5 block text-xs text-on-surface-variant line-clamp-2">
                         {notification.body}
                       </span>
                     ) : null}
-                    <span className="mt-1 block text-[11px] text-gray-400">
+                    <span className="mt-1 block text-[11px] text-outline">
                       {timeAgo(notification.created_at)}
                     </span>
                   </span>
@@ -136,7 +136,7 @@ const NotificationBell = () => {
               setOpen(false);
               navigate("/notifications");
             }}
-            className="block w-full border-t border-gray-100 px-4 py-3 text-center text-sm font-semibold text-teal-600 hover:bg-gray-50"
+            className="block w-full border-t border-outline-variant px-4 py-3 text-center text-sm font-semibold text-primary hover:bg-surface-container-low"
           >
             View all
           </button>

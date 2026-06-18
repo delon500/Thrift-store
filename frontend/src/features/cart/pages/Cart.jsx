@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import CartItems from "../components/CartItems";
 import { icons } from "../../../assets/icon/icons";
 import { useProductStore } from "../../products/store/productStore";
@@ -8,10 +9,12 @@ import {
   useRemoveCartItem,
   useServerCart,
 } from "../hooks/useCart";
+import { useDocumentTitle } from "../../../lib/useDocumentTitle";
 
 const formatMoney = (amount) => Number(amount || 0).toFixed(2);
 
 const Cart = () => {
+  useDocumentTitle("Your Cart");
   const navigate = useNavigate();
   const currency = useProductStore((state) => state.currency);
   const { data: cart, isLoading, isError, error } = useServerCart();
@@ -31,7 +34,7 @@ const Cart = () => {
     try {
       await removeCartItemMutation.mutateAsync(id);
     } catch (removeError) {
-      alert(removeError?.response?.data?.message || "Could not remove item");
+      toast.error(removeError?.response?.data?.message || "Could not remove item");
     }
   };
 
@@ -39,7 +42,7 @@ const Cart = () => {
     try {
       await clearCartMutation.mutateAsync();
     } catch (clearError) {
-      alert(clearError?.response?.data?.message || "Could not clear cart");
+      toast.error(clearError?.response?.data?.message || "Could not clear cart");
     }
   };
 

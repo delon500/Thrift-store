@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
 import { icons } from "../../../assets/icon/icons";
 import { useAddCartItem } from "../../cart/hooks/useCart";
 import { useWishlistStore } from "../../wishlist/store/wishlistStore";
@@ -49,8 +50,9 @@ const ProductCard = ({
 
     try {
       await addCartItemMutation.mutateAsync(id);
+      toast.success("Added to backpack");
     } catch (error) {
-      alert(error?.response?.data?.message || "Could not add item to cart");
+      toast.error(error?.response?.data?.message || "Could not add item to cart");
     }
   };
 
@@ -68,6 +70,7 @@ const ProductCard = ({
         <img
           src={image[0]}
           alt={name}
+          loading="lazy"
           className="h-48 w-full object-cover hover:scale-110 transition ease-in-out"
         />
       </div>
@@ -86,14 +89,19 @@ const ProductCard = ({
             {price}
           </p>
 
-          <button onClick={handleWishlistClick} className="cursor-pointer">
+          <button
+            onClick={handleWishlistClick}
+            aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+            aria-pressed={isWishlisted}
+            className="cursor-pointer"
+          >
             <img
               src={
                 isWishlisted
                   ? icons.heart_active_icon
                   : icons.heart_inactive_icon
               }
-              alt="Wishlist"
+              alt=""
               className="w-6 h-6"
             />
           </button>
@@ -106,7 +114,7 @@ const ProductCard = ({
         >
           <img
             src={icons.add_to_cart_icon}
-            alt="Add to Cart"
+            alt=""
             className="md:hidden lg:inline-block"
           />
           {addCartItemMutation.isPending ? "Adding..." : "Add to Backpack"}

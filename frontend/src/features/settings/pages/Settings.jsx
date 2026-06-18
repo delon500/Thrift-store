@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import useAuthStore from "../../auth/store/authStore";
 import {
   useChangeMyPassword,
   useMyProfile,
   useUpdateMyProfile,
 } from "../hooks/useSettings";
+import { useDocumentTitle } from "../../../lib/useDocumentTitle";
 
 const initialPasswordForm = {
   current_password: "",
@@ -86,6 +88,7 @@ const SettingsSection = ({ title, description, children, action }) => (
 );
 
 const Settings = () => {
+  useDocumentTitle("Settings");
   const navigate = useNavigate();
   const fallbackUser = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
@@ -132,9 +135,9 @@ const Settings = () => {
     try {
       await updateProfileMutation.mutateAsync(profileForm);
       setIsEditingProfile(false);
-      alert("Profile updated successfully");
+      toast.success("Profile updated successfully");
     } catch (submitError) {
-      alert(getErrorMessage(submitError, "Profile update failed"));
+      toast.error(getErrorMessage(submitError, "Profile update failed"));
     }
   };
 
@@ -144,9 +147,9 @@ const Settings = () => {
     try {
       await changePasswordMutation.mutateAsync(passwordForm);
       setPasswordForm(initialPasswordForm);
-      alert("Password changed successfully");
+      toast.success("Password changed successfully");
     } catch (submitError) {
-      alert(getErrorMessage(submitError, "Password change failed"));
+      toast.error(getErrorMessage(submitError, "Password change failed"));
     }
   };
 

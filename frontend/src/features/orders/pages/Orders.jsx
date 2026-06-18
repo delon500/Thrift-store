@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import { useProductStore } from "../../products/store/productStore";
 import { useMyOrders, useResumeOrder } from "../hooks/useOrders";
+import { useDocumentTitle } from "../../../lib/useDocumentTitle";
 
 const PAGE_SIZE = 5;
 
@@ -64,6 +66,7 @@ const StatusBadge = ({ status }) => {
 };
 
 const Orders = () => {
+  useDocumentTitle("My Orders");
   const navigate = useNavigate();
   const currency = useProductStore((state) => state.currency);
   const { data: orders = [], isLoading, isError, error } = useMyOrders();
@@ -87,7 +90,7 @@ const Orders = () => {
       const checkout = await resumeMutation.mutateAsync(orderReference);
       submitToPayfast(checkout.payment_gateway);
     } catch (resumeError) {
-      alert(
+      toast.error(
         resumeError?.response?.data?.message || "Could not resume payment",
       );
     }
