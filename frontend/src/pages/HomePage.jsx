@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
-import { icons } from "../assets/icon/icons";
-import ProductCard from "../features/home/components/ProductCard";
+import MarketProductCard from "../features/home/components/MarketProductCard";
 import { ProductCardSkeleton } from "../components/shared/Skeleton";
 import { useProductStore } from "../features/products/store/productStore";
 import { useGetProducts } from "../features/products/hooks/useProduct";
@@ -8,8 +7,15 @@ import useAuthStore from "../features/auth/store/authStore";
 import { useDocumentTitle } from "../lib/useDocumentTitle";
 
 const PAGE_SIZE = 8;
-const LISTING_TYPES = ["Thrift Store", "Lost and Found"];
 const CONDITIONS = ["Excellent", "Good", "Fair", "Poor"];
+const CATEGORIES = [
+  { label: "All", value: "" },
+  { label: "Thrift store", value: "Thrift Store" },
+  { label: "Lost & found", value: "Lost and Found" },
+];
+
+const selectClass =
+  "rounded-full border border-[var(--mk-border)] bg-[var(--mk-surface)] px-4 py-2 text-sm text-[var(--mk-ink)] outline-none focus:border-[var(--mk-primary)]";
 
 const HomePage = () => {
   const productData = useProductStore((state) => state.products);
@@ -18,7 +24,6 @@ const HomePage = () => {
   const { isLoading, isError, refetch } = useGetProducts();
   useDocumentTitle("Browse Items");
 
-  const [showFilters, setShowFilters] = useState(false);
   const [listingFilter, setListingFilter] = useState("");
   const [conditionFilter, setConditionFilter] = useState("");
   const [sort, setSort] = useState("newest");
@@ -66,83 +71,67 @@ const HomePage = () => {
   const hasActiveFilters = listingFilter || conditionFilter;
 
   return (
-    <div className="mt-3">
-      <div className="flex">
-        <div>
-          <h1 className="font-headline-lg text-headline-lg text-on-surface mb-4 hidden lg:block">
-            {user?.institution_name}
-          </h1>
-          <p className="font-body-lg text-label-caps text-outline max-w-2xl hidden lg:block">
-            High-quality blazers, skirts, and cardigans looking for their next
-            owner. Perfectly clean and ready for the next term!
-          </p>
-        </div>
+    <div className="mt-3 rounded-3xl bg-[var(--mk-canvas)] p-4 sm:p-6">
+      <header className="mb-6">
+        <h1 className="text-2xl font-bold text-[var(--mk-ink)] sm:text-3xl">
+          {user?.institution_name || "School"} thrift store
+        </h1>
+        <p className="mt-1 max-w-2xl text-sm text-[var(--mk-muted)] sm:text-base">
+          Give pre-loved school items a second life — buy online, then collect at
+          school with your reference number.
+        </p>
+      </header>
 
-        <div className="flex items-center md:justify-between lg:justify-items-start lg:gap-4 m-auto sm:ml-auto border border-[var(--color-outline)] md:border-none md:w-full">
-          <div className="flex items-center lg:gap-4">
+      <div className="mb-4 flex flex-wrap gap-2">
+        {CATEGORIES.map((category) => {
+          const active = listingFilter === category.value;
+          return (
             <button
-              onClick={() => setShowFilters((value) => !value)}
-              className={`bg-white border-4 px-5 py-2 rounded-none lg:rounded-xl font-label-caps lg:shadow-sm hover:shadow-md transition-all flex items-center gap-2 cursor-pointer ${
-                showFilters || hasActiveFilters
-                  ? "border-primary text-primary"
-                  : "border-teal-50 text-primary"
+              key={category.label}
+              type="button"
+              onClick={() => setListingFilter(category.value)}
+              aria-pressed={active}
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+                active
+                  ? "bg-[var(--mk-ink)] text-white"
+                  : "border border-[var(--mk-border)] bg-[var(--mk-surface)] text-[var(--mk-muted)] hover:border-[var(--mk-ink)]"
               }`}
             >
-              <img src={icons.filter_icon} alt="" />
-              Filters
+              {category.label}
             </button>
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value)}
-              aria-label="Sort products"
-              className="bg-primary text-white px-5 py-2 rounded-none lg:rounded-xl font-label-caps lg:shadow-[0_4px_0_0_#00433f] transition-all cursor-pointer outline-none"
-            >
-              <option value="newest">Sort: Newest</option>
-              <option value="price-asc">Price: Low to High</option>
-              <option value="price-desc">Price: High to Low</option>
-            </select>
-          </div>
-        </div>
+          );
+        })}
       </div>
 
-      {showFilters ? (
-        <div className="mt-4 flex flex-wrap items-end gap-4 rounded-xl border border-outline-variant bg-white p-4">
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="font-semibold text-on-surface-variant">
-              Listing type
-            </span>
-            <select
-              value={listingFilter}
-              onChange={(e) => setListingFilter(e.target.value)}
-              className="rounded-lg border border-outline-variant px-3 py-2 outline-none focus:border-primary"
-            >
-              <option value="">All</option>
-              {LISTING_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {type}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="font-semibold text-on-surface-variant">
-              Condition
-            </span>
-            <select
-              value={conditionFilter}
-              onChange={(e) => setConditionFilter(e.target.value)}
-              className="rounded-lg border border-outline-variant px-3 py-2 outline-none focus:border-primary"
-            >
-              <option value="">Any</option>
-              {CONDITIONS.map((conditionOption) => (
-                <option key={conditionOption} value={conditionOption}>
-                  {conditionOption}
-                </option>
-              ))}
-            </select>
-          </label>
-
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <span className="text-sm text-[var(--mk-muted)]">
+          {filteredProducts.length}{" "}
+          {filteredProducts.length === 1 ? "item" : "items"}
+        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={conditionFilter}
+            onChange={(event) => setConditionFilter(event.target.value)}
+            aria-label="Filter by condition"
+            className={selectClass}
+          >
+            <option value="">Any condition</option>
+            {CONDITIONS.map((conditionOption) => (
+              <option key={conditionOption} value={conditionOption}>
+                {conditionOption}
+              </option>
+            ))}
+          </select>
+          <select
+            value={sort}
+            onChange={(event) => setSort(event.target.value)}
+            aria-label="Sort products"
+            className={selectClass}
+          >
+            <option value="newest">Newest</option>
+            <option value="price-asc">Price: low to high</option>
+            <option value="price-desc">Price: high to low</option>
+          </select>
           {hasActiveFilters ? (
             <button
               type="button"
@@ -150,90 +139,95 @@ const HomePage = () => {
                 setListingFilter("");
                 setConditionFilter("");
               }}
-              className="rounded-lg border border-outline-variant px-4 py-2 text-sm font-semibold text-on-surface-variant hover:bg-surface-container-low"
+              className="rounded-full px-3 py-2 text-sm font-semibold text-[var(--mk-primary)] hover:underline"
             >
-              Clear filters
+              Clear
             </button>
           ) : null}
         </div>
-      ) : null}
-
-      <div className="mt-10">
-        {isLoading && productData.length === 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 gap-y-6">
-            {Array.from({ length: PAGE_SIZE }).map((_, index) => (
-              <ProductCardSkeleton key={index} />
-            ))}
-          </div>
-        ) : isError && productData.length === 0 ? (
-          <div className="flex flex-col items-center gap-4 py-16 text-center">
-            <p className="font-semibold text-on-surface">
-              We couldn&apos;t load the store right now.
-            </p>
-            <button
-              type="button"
-              onClick={() => refetch()}
-              className="rounded-xl bg-primary px-5 py-2.5 font-semibold text-on-primary"
-            >
-              Try again
-            </button>
-          </div>
-        ) : pageItems.length === 0 ? (
-          <p className="text-outline">No products match your search or filters.</p>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 gap-y-6">
-            {pageItems.map((product) => (
-              <ProductCard
-                key={product.id}
-                id={product.id}
-                image={product.image}
-                name={product.name}
-                price={product.price}
-                schoolName={product.schoolName}
-                schoolId={product.schoolId}
-                listing_type={product.listing_type}
-              />
-            ))}
-          </div>
-        )}
-
-        {totalPages > 1 ? (
-          <div className="mt-10 flex items-center justify-center gap-2">
-            <button
-              type="button"
-              onClick={() => setPage(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="rounded-lg border border-outline-variant px-3 py-2 text-sm font-semibold disabled:opacity-40"
-            >
-              Prev
-            </button>
-            {Array.from({ length: totalPages }, (_, index) => index + 1).map(
-              (pageNumber) => (
-                <button
-                  key={pageNumber}
-                  type="button"
-                  onClick={() => setPage(pageNumber)}
-                  className={`h-9 w-9 rounded-lg text-sm font-bold ${
-                    pageNumber === currentPage
-                      ? "bg-primary text-on-primary"
-                      : "border border-outline-variant text-on-surface"
-                  }`}
-                >
-                  {pageNumber}
-                </button>
-              ),
-            )}
-            <button
-              type="button"
-              onClick={() => setPage(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="rounded-lg border border-outline-variant px-3 py-2 text-sm font-semibold disabled:opacity-40"
-            >
-              Next
-            </button>
-          </div>
-        ) : null}
       </div>
+
+      {isLoading && productData.length === 0 ? (
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+          {Array.from({ length: PAGE_SIZE }).map((_, index) => (
+            <ProductCardSkeleton key={index} />
+          ))}
+        </div>
+      ) : isError && productData.length === 0 ? (
+        <div className="flex flex-col items-center gap-4 py-16 text-center">
+          <p className="font-semibold text-[var(--mk-ink)]">
+            We couldn&apos;t load the store right now.
+          </p>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="rounded-full bg-[var(--mk-primary)] px-5 py-2.5 font-semibold text-white hover:bg-[var(--mk-primary-dark)]"
+          >
+            Try again
+          </button>
+        </div>
+      ) : pageItems.length === 0 ? (
+        <div className="flex flex-col items-center gap-2 py-16 text-center">
+          <p className="font-semibold text-[var(--mk-ink)]">No items found</p>
+          <p className="text-sm text-[var(--mk-muted)]">
+            Try a different search or clear your filters.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+          {pageItems.map((product) => (
+            <MarketProductCard
+              key={product.id}
+              id={product.id}
+              image={product.image}
+              name={product.name}
+              price={product.price}
+              schoolName={product.schoolName}
+              schoolId={product.schoolId}
+              listing_type={product.listing_type}
+              condition={product.condition}
+            />
+          ))}
+        </div>
+      )}
+
+      {totalPages > 1 ? (
+        <div className="mt-10 flex items-center justify-center gap-2">
+          <button
+            type="button"
+            onClick={() => setPage(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="rounded-full border border-[var(--mk-border)] bg-[var(--mk-surface)] px-4 py-2 text-sm font-semibold text-[var(--mk-ink)] disabled:opacity-40"
+          >
+            Prev
+          </button>
+          {Array.from({ length: totalPages }, (_, index) => index + 1).map(
+            (pageNumber) => (
+              <button
+                key={pageNumber}
+                type="button"
+                onClick={() => setPage(pageNumber)}
+                aria-current={pageNumber === currentPage ? "page" : undefined}
+                className={`h-9 w-9 rounded-full text-sm font-bold ${
+                  pageNumber === currentPage
+                    ? "bg-[var(--mk-primary)] text-white"
+                    : "border border-[var(--mk-border)] bg-[var(--mk-surface)] text-[var(--mk-ink)]"
+                }`}
+              >
+                {pageNumber}
+              </button>
+            ),
+          )}
+          <button
+            type="button"
+            onClick={() => setPage(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="rounded-full border border-[var(--mk-border)] bg-[var(--mk-surface)] px-4 py-2 text-sm font-semibold text-[var(--mk-ink)] disabled:opacity-40"
+          >
+            Next
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 };

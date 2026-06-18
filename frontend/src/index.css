@@ -78,6 +78,19 @@
   --text-headline-lg: 40px;
 }
 
+/* Marketplace redesign palette (prototype, additive — does not alter the
+   existing @theme tokens, so only the restyled catalog uses these). */
+:root {
+  --mk-canvas: #faf8f3;
+  --mk-surface: #ffffff;
+  --mk-ink: #17150f;
+  --mk-muted: #6b655c;
+  --mk-border: #e8e3da;
+  --mk-primary: #0f7a52;
+  --mk-primary-dark: #0a5c3d;
+  --mk-accent: #e8590c;
+}
+
 /* OPTIONAL GLOBAL STYLES */
 
 body {
