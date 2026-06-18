@@ -4,7 +4,10 @@ import { icons } from "../../assets/icon/icons";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useProductStore } from "../../features/products/store/productStore";
 import useAuthStore from "../../features/auth/store/authStore";
+import { useWishlistStore } from "../../features/wishlist/store/wishlistStore";
+import { useServerCart } from "../../features/cart/hooks/useCart";
 import NotificationBell from "../../features/notifications/components/NotificationBell";
+import AccountMenu from "./AccountMenu";
 import { navItems } from "./navItems";
 
 const drawerLinkClass = ({ isActive }) =>
@@ -12,12 +15,22 @@ const drawerLinkClass = ({ isActive }) =>
     isActive ? "bg-teal-600 text-white" : "text-slate-600 hover:bg-teal-50"
   }`;
 
+const CountBadge = ({ count }) =>
+  count > 0 ? (
+    <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-on-primary">
+      {count > 9 ? "9+" : count}
+    </span>
+  ) : null;
+
 const Navbar = () => {
   const [menuToggle, setMenuToggle] = useState(false);
   const navigate = useNavigate();
   const searchQuery = useProductStore((state) => state.searchQuery);
   const setSearchQuery = useProductStore((state) => state.setSearchQuery);
   const logout = useAuthStore((state) => state.logout);
+  const wishlistCount = useWishlistStore((state) => state.wishlistItems.length);
+  const { data: cart } = useServerCart();
+  const cartCount = cart?.items?.length || 0;
 
   const closeMenu = () => setMenuToggle(false);
 
@@ -33,23 +46,31 @@ const Navbar = () => {
             isSearch={true}
           />
         </div>
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-5">
           <button
             type="button"
             onClick={() => navigate("/wishlist")}
-            aria-label="Wishlist"
-            className="cursor-pointer"
+            aria-label={
+              wishlistCount > 0
+                ? `Wishlist, ${wishlistCount} items`
+                : "Wishlist"
+            }
+            className="relative cursor-pointer"
           >
             <img src={icons.wishlist_icon} alt="" />
+            <CountBadge count={wishlistCount} />
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate("/cart")}
+            aria-label={cartCount > 0 ? `Cart, ${cartCount} items` : "Cart"}
+            className="relative cursor-pointer"
+          >
+            <img src={icons.inactive_cart_icon} alt="" className="w-6 h-6" />
+            <CountBadge count={cartCount} />
           </button>
           <NotificationBell />
-          <div className="relative group">
-            <img
-              src={icons.profile_icon}
-              alt="Profile"
-              className="cursor-pointer w-8 h-8"
-            />
-          </div>
+          <AccountMenu />
           <button
             type="button"
             onClick={() => setMenuToggle(true)}

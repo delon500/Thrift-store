@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Input from "../../../components/ui/Input";
 import { useLogin } from "../hooks/useAuth";
 import useAuthStore from "../store/authStore";
@@ -15,6 +15,7 @@ const LoginForm = () => {
     password: "",
   });
   const [message, setMessage] = useState(null);
+  const [showResetHelp, setShowResetHelp] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -84,13 +85,21 @@ const LoginForm = () => {
             PASSWORD
           </label>
 
-          <Link
-            to="/forgot-password"
+          <button
+            type="button"
+            onClick={() => setShowResetHelp((value) => !value)}
             className="text-sm font-semibold text-primary hover:underline"
           >
             Forgot Password?
-          </Link>
+          </button>
         </div>
+
+        {showResetHelp ? (
+          <p className="mb-2 rounded-lg bg-surface-container-low px-3 py-2 text-xs text-on-surface-variant">
+            Password resets are handled by your school. Please contact your
+            school administrator to have your password reset.
+          </p>
+        ) : null}
 
         <Input
           name="password"

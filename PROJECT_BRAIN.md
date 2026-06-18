@@ -129,6 +129,18 @@ warning gone. Per-page `<title>` via a tiny `lib/useDocumentTitle` hook applied 
 `router.jsx` has an `eslint-disable react-refresh/only-export-components` header (it's route
 config, not a component module). Lint clean + build passes.
 
+Then **bugs & nav-chrome pass (committed):** fixed the **dead "Forgot Password?" link**
+(LoginForm linked to non-existent `/forgot-password`) → now an inline note "contact your
+school admin" (fits the admin-managed model); made the non-functional profile icon a real
+**account dropdown** (`components/shared/AccountMenu.jsx` — name/email + Settings + Logout,
+outside-click close); added **cart + wishlist count badges** to the Navbar (new cart icon →
+`/cart`, count from shared `["cart"]` query so it updates live; wishlist count from the
+store). Lint clean + build passes. **Not visually QA'd in a browser.** Remaining recommended
+frontend work (offered): collection UX (order stepper + QR of the reference), commerce polish
+(one `formatCurrency` helper, broken-image fallback, rich empty states), robustness
+(ErrorBoundary, confirm destructive actions, persist wishlist server-side), scale
+(server-side product search/pagination + `GET /products/:id`), frontend tests (Vitest+RTL).
+
 **Prior feature: Admin Settings — DONE (backend + admin frontend), committed.**
 Makes 3 previously-hardcoded values configurable platform-wide from the admin app:
 service fee (was R1.50 in cartController), checkout expiry minutes (was 30 in
@@ -243,11 +255,17 @@ Settings endpoints: `GET /api/admin/settings` → `{settings, payment_method_cat
 `order_ready`/`payment_failed`/`registration_approved`; admin `registration_pending`/
 `payment_failed`.
 
+**PR flow:** work ships from `payments-collection-flow` → `main` via PRs the **user merges**
+(no `gh`/token in env; PRs are created via the GitHub API using the git-credential `gho_`
+token — write `.git/PR_BODY.md`, POST to `/repos/delon500/Thrift-store/pulls`). Merged so
+far: **#6** (payments/notifications/admin-settings), **#7** (SMTP). **#8 OPEN** = customer
+frontend professionalism pass (4 commits). After a merge, local `main` is stale — diff PRs
+against `origin/main`, not local `main`.
+
 **Deferred / candidate next features:** per-**institution** settings (current Admin Settings
 is global); a **school-staff** notifications surface (school-admin app — reuse the
 notifications table + an institution-scoped fan-out); lint-clean ~17 pre-existing admin
-errors; SMTP; **open the PR** (`github.com/delon500/Thrift-store` →
-`payments-collection-flow`, base `main`).
+errors.
 
 ## 9. Conventions & constraints (do NOT break)
 - Don't re-add the dropped `collection_order_items` unique index (decision above).
