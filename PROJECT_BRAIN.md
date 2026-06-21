@@ -159,6 +159,14 @@ enum labels `paid`/`ready_for_collection`/`collected` verified valid). New `feat
 `useReadyOrders`) + "Recent collections". Router: `/school` index → Dashboard, Collections moved
 to `/school/collections`; Sidebar NAV gained Dashboard; Navbar label → "School Thrift". Lint
 clean, build passes, backend syntax-checked.
+3 ✅ Collections redesign — rebuilt `CollectionsPage` in the marketplace look: big touch
+targets (text-base inputs/buttons, py-3.5/py-4), `ScanLine`-iconed verify field, `PageHeader`,
+`Badge` status tones (STATUS_TONE map), `cardClass` order card with per-item `Package` rows +
+item-status badges, full-width "Mark as collected". Logic unchanged (lookup/collect/ready
+hooks); `useMarkCollected` now also invalidates `school-dashboard`. **QR DECISION: deferred** —
+went manual-entry-only (user didn't pick; lower-risk, no camera dep). Seam left for it: the
+buyer's QR pass encodes the plain `order_reference`, so a scanner just calls `loadReference()`.
+**No old teal/gray utilities remain anywhere in school-admin src.** Lint clean, build passes.
 
 
 **ACTIVE: Customer UI/UX redesign on branch `frontend-redesign`** (off

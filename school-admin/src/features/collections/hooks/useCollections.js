@@ -32,6 +32,7 @@ export const useMarkCollected = () => {
     mutationFn: (orderReference) => markCollected({ orderReference, token }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["school-ready-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["school-dashboard"] });
     },
   });
 };
