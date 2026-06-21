@@ -4,6 +4,7 @@ import { getInstitutions } from "../../institutions/api/institutionsApi";
 import { useNavigate } from "react-router-dom";
 import { useRegisterParent } from "../hooks/useRegisterUser";
 import useAuthStore from "../../auth/store/authStore";
+import { PageHeader } from "../../../components/shared/ui";
 const RegisterParent = () => {
   const token = useAuthStore((state) => state.token);
   const useRegisterParentMutation = useRegisterParent();
@@ -57,19 +58,12 @@ const RegisterParent = () => {
 
   return (
     <div className="w-full">
-      {/* Header */}
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-black text-primary">Register Parent</h1>
+      <PageHeader
+        title="Register parent"
+        subtitle="Create a parent account. They can sign in once approved."
+      />
 
-        <p className="text-sm text-on-surface-variant">
-          Create parent accounts to manage inventory, verify pickups, monitor
-          orders, and operate the school shop.
-        </p>
-      </div>
-
-      {/* Form */}
-
-      <form onSubmit={handleSubmit} className="mt-8">
+      <form onSubmit={handleSubmit}>
         <div className="bg-white border border-outline-variant rounded-3xl p-6 shadow-sm">
           <div className="mb-6">
             <h2 className="font-bold text-on-surface text-lg">

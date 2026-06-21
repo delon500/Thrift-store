@@ -119,8 +119,10 @@ src` clean**. Part 2 ✅: all 5 list pages
 (Institutions, RegisteredUsersList, Orders, Inventory, ViewStore) now use the shared
 `PageHeader` (consistent titles, dropped redundant `p-6` that double-padded the new layout);
 Institutions uses `Badge` tones. NB after the recolor the tables already matched the kit's
-classes, so no per-table rewrite was needed. 4 ⬜ Forms (Register*
-+ AddItems). 5 ⬜ Auth + Account + Settings + Notifications + Registrations + Reports.
+classes, so no per-table rewrite was needed. 4 ✅ Forms — all 5 Register* pages + AddItems + the two hub pages
+(RegisterUsersHomePage, ItemManagementHomePage) now use the shared `PageHeader` (forms were
+already token-recolored + in card wrappers). AddItems still imports the PNG `icons`/`images`
+for its upload UI + the hub `CardActions` use PNG icons → handled in step 6. 5 ⬜ Auth + Account + Settings + Notifications + Registrations + Reports.
 6 ⬜ Cleanup (PNG assets, dead code, finish tokens). lucide-react installed in admin.
 
 

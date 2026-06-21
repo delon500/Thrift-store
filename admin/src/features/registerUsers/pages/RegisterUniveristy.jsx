@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useRegisterInstitution } from "../hooks/useRegisterUser";
 import useAuthStore from "../../auth/store/authStore";
+import { PageHeader } from "../../../components/shared/ui";
 
 const RegisterUniveristy = () => {
   const token = useAuthStore((state) => state.token);
@@ -47,20 +48,12 @@ const RegisterUniveristy = () => {
   };
   return (
     <div className="w-full">
-      {/* Header */}
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-black text-primary">
-          Register University
-        </h1>
+      <PageHeader
+        title="Register university"
+        subtitle="Create a university institution account. It can sign in once approved."
+      />
 
-        <p className="text-sm text-on-surface-variant">
-          Create university accounts to manage inventory, verify pickups,
-          monitor orders, and operate the university shop.
-        </p>
-      </div>
-
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="mt-8">
+      <form onSubmit={handleSubmit}>
         <div className="bg-white border border-outline-variant rounded-3xl p-6 shadow-sm">
           <div className="mb-6">
             <h2 className="font-bold text-on-surface text-lg">

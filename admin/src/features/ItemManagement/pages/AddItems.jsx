@@ -8,6 +8,7 @@ import {
   useCreateProduct,
 } from "../../product/hooks/useProduct";
 import useAuthStore from "../../auth/store/authStore";
+import { PageHeader } from "../../../components/shared/ui";
 
 // listing_type is a DB enum — values must match exactly.
 const LISTING_TYPES = ["Thrift Store", "Lost and Found"];
@@ -82,15 +83,10 @@ const AddItems = () => {
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className="flex flex-col gap-2">
-        <h1 className="text-sm sm:text-2xl font-black text-primary">
-          Add Items
-        </h1>
-        <p className="text-sm sm:text-sm font-medium text-on-surface-variant">
-          Manage the school store inventory, verify pickups, and set up your
-          shopfront.
-        </p>
-      </div>
+      <PageHeader
+        title="Add items"
+        subtitle="List a thrift or lost-and-found item for your school store."
+      />
 
       <div className="flex flex-col sm:flex-row gap-6 w-full">
         <div className="w-full sm:w-[60%]">

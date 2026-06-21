@@ -1,24 +1,16 @@
 import { register_user_action_card } from "../../../data/data";
 import CardActions from "../../../components/shared/CardActions";
+import { PageHeader } from "../../../components/shared/ui";
 
 const RegisterUsersHomePage = () => {
   return (
     <div>
-      {/* Heading */}
-      <div className="flex flex-col gap-2">
-        <h1 className="text-sm sm:text-2xl font-black text-primary">
-          Register Users
-        </h1>
-        <p className="text-sm sm:text-sm font-medium text-on-surface-variant">
-          Select the type of profile you want to create. Each option below opens
-          its own dedicated registration page, keeping the process simple.
-          focused. and easier to manage.
-        </p>
-      </div>
+      <PageHeader
+        title="Register users"
+        subtitle="Choose the type of account to create — each opens its own registration page."
+      />
 
-      {/* Card Actions */}
-
-      <div className="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter mb-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter mb-12">
         {register_user_action_card.map((action, index) => {
           return (
             <CardActions
