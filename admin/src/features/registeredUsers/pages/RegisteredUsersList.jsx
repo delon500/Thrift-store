@@ -9,6 +9,7 @@ import {
 } from "../hooks/useRegisteredUsers";
 import { useDebouncedValue } from "../../../lib/useDebouncedValue";
 import Pagination from "../../../components/shared/Pagination";
+import { PageHeader } from "../../../components/shared/ui";
 import { useMe } from "../../auth/hook/useAuth";
 
 const PAGE_SIZE = 10;
@@ -234,7 +235,7 @@ const RegisteredUsersList = () => {
   };
 
   return (
-    <div className="p-6">
+    <div>
       <button
         type="button"
         onClick={() => navigate("/admin/registered-users")}
@@ -243,12 +244,10 @@ const RegisteredUsersList = () => {
         ← All registered users
       </button>
 
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-black text-primary">{title}</h1>
-        <p className="text-sm font-medium text-on-surface-variant">
-          {total} {total === 1 ? "person" : "people"}
-        </p>
-      </div>
+      <PageHeader
+        title={title}
+        subtitle={`${total} ${total === 1 ? "person" : "people"}`}
+      />
 
       <input
         value={query}

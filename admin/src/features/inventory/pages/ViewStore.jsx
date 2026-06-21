@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useInventory } from "../hooks/useInventory";
+import { PageHeader } from "../../../components/shared/ui";
 
 const LISTING_TYPES = ["Thrift Store", "Lost and Found"];
 
@@ -32,15 +33,13 @@ const ViewStore = () => {
   );
 
   return (
-    <div className="p-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-black text-primary">Store Preview</h1>
-        <p className="text-sm font-medium text-on-surface-variant">
-          See the marketplace the way students and parents do — only available items appear.
-        </p>
-      </div>
+    <div>
+      <PageHeader
+        title="Store preview"
+        subtitle="See the marketplace the way students and parents do — only available items appear."
+      />
 
-      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+      <div className="flex flex-col gap-3 sm:flex-row">
         <select
           value={school}
           onChange={(e) => setSchool(e.target.value)}

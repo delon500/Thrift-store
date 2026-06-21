@@ -7,19 +7,20 @@ import {
 } from "../hooks/useInstitutions";
 import { useDebouncedValue } from "../../../lib/useDebouncedValue";
 import Pagination from "../../../components/shared/Pagination";
+import { Badge, PageHeader } from "../../../components/shared/ui";
 import { useMe } from "../../auth/hook/useAuth";
+
+const STATUS_TONE = {
+  approved: "success",
+  pending: "warning",
+  rejected: "danger",
+  suspended: "warning",
+};
 
 const PAGE_SIZE = 10;
 const STATUS_OPTIONS = ["approved", "suspended", "pending", "rejected"];
 const TYPE_OPTIONS = ["public", "private", "independent"];
 const CATEGORY_OPTIONS = ["school", "university"];
-
-const STATUS_STYLES = {
-  approved: "bg-green-100 text-green-800",
-  pending: "bg-yellow-100 text-yellow-800",
-  rejected: "bg-red-100 text-red-700",
-  suspended: "bg-orange-100 text-orange-700",
-};
 
 const formatDate = (value) =>
   value ? new Date(value).toLocaleDateString(undefined, { dateStyle: "medium" }) : "";
@@ -188,15 +189,13 @@ const InstitutionsPage = () => {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-black text-primary">Institutions</h1>
-        <p className="text-sm font-medium text-on-surface-variant">
-          Schools and universities on the platform. {total} total.
-        </p>
-      </div>
+    <div>
+      <PageHeader
+        title="Institutions"
+        subtitle={`Schools and universities on the platform. ${total} total.`}
+      />
 
-      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+      <div className="flex flex-col gap-3 sm:flex-row">
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -262,14 +261,12 @@ const InstitutionsPage = () => {
                       {institution.user_count} / {institution.product_count}
                     </td>
                     <td className="px-4 py-3">
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-bold capitalize ${
-                          STATUS_STYLES[institution.status] ||
-                          "bg-surface-container-high text-on-surface"
-                        }`}
+                      <Badge
+                        tone={STATUS_TONE[institution.status] || "neutral"}
+                        className="capitalize"
                       >
                         {institution.status}
-                      </span>
+                      </Badge>
                     </td>
                     <td className="px-4 py-3">
                       {formatDate(institution.created_at)}

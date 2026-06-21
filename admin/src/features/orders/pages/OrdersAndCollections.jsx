@@ -9,6 +9,7 @@ import {
 } from "../hooks/useOrders";
 import { useDebouncedValue } from "../../../lib/useDebouncedValue";
 import Pagination from "../../../components/shared/Pagination";
+import { PageHeader } from "../../../components/shared/ui";
 import { useMe } from "../../auth/hook/useAuth";
 
 const PAGE_SIZE = 10;
@@ -107,15 +108,11 @@ const OrdersAndCollections = () => {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-black text-primary">
-          Orders & Collections
-        </h1>
-        <p className="text-sm font-medium text-on-surface-variant">
-          Track payments, verify references, and mark school collections.
-        </p>
-      </div>
+    <div>
+      <PageHeader
+        title="Orders & collections"
+        subtitle="Track payments, verify references, and mark school collections."
+      />
 
       <input
         value={query}

@@ -7,6 +7,7 @@ import {
 } from "../hooks/useInventory";
 import { useDebouncedValue } from "../../../lib/useDebouncedValue";
 import Pagination from "../../../components/shared/Pagination";
+import { PageHeader } from "../../../components/shared/ui";
 
 const PAGE_SIZE = 10;
 
@@ -242,15 +243,13 @@ const InventoryPage = () => {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-black text-primary">Inventory</h1>
-        <p className="text-sm font-medium text-on-surface-variant">
-          View, edit, and remove items across all schools.
-        </p>
-      </div>
+    <div>
+      <PageHeader
+        title="Inventory"
+        subtitle="View, edit, and remove items across all schools."
+      />
 
-      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+      <div className="flex flex-col gap-3 sm:flex-row">
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
