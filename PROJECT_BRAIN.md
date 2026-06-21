@@ -178,6 +178,12 @@ search + status filter + paginated table (added `components/shared/Pagination` +
 rows link to `OrderDetailPage` (items, buyer/payment/dates sidebar, collect action). `useMarkCollected`
 now also invalidates `school-orders`/`school-order`. Mounted `ToastContainer` in main.jsx (detail
 page uses toast). Sidebar gained Orders. Lint clean, build passes, backend syntax-checked.
+5 ✅ Collection history + CSV export — backend: `listSchoolOrders` now selects `collected_at`
+and accepts `collectedFrom`/`collectedTo` (filter `collected_at::date`). Frontend: ported
+`lib/csv.js` (toCsv/downloadCsv from admin); `features/history/HistoryPage` (reuses `useOrders`
+with `status=collected` + date range + search + pagination) with an **Export CSV** that fetches
+ALL matching rows (no limit) and downloads. `getOrders` passes the date params. Router `/school/history`
++ Sidebar History item. Lint clean, build passes, backend syntax-checked.
 
 
 **ACTIVE: Customer UI/UX redesign on branch `frontend-redesign`** (off

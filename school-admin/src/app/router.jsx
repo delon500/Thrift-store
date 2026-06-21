@@ -6,6 +6,7 @@ import DashboardPage from "../features/dashboard/pages/DashboardPage";
 import CollectionsPage from "../features/collections/pages/CollectionsPage";
 import OrdersPage from "../features/orders/pages/OrdersPage";
 import OrderDetailPage from "../features/orders/pages/OrderDetailPage";
+import HistoryPage from "../features/history/pages/HistoryPage";
 import NotFound from "../pages/NotFound";
 
 const router = createBrowserRouter([
@@ -24,6 +25,7 @@ const router = createBrowserRouter([
           { path: "collections", element: <CollectionsPage /> },
           { path: "orders", element: <OrdersPage /> },
           { path: "orders/:orderReference", element: <OrderDetailPage /> },
+          { path: "history", element: <HistoryPage /> },
         ],
       },
     ],

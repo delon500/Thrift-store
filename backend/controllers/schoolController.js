@@ -110,6 +110,17 @@ const listSchoolOrders = async (req, res) => {
       where += ` AND (co.order_reference ILIKE $${idx} OR co.user_full_name ILIKE $${idx} OR co.user_email ILIKE $${idx})`;
     }
 
+    // Date range over the hand-over date (used by the collection-history view).
+    if (req.query.collectedFrom) {
+      values.push(req.query.collectedFrom);
+      where += ` AND co.collected_at::date >= $${values.length}`;
+    }
+
+    if (req.query.collectedTo) {
+      values.push(req.query.collectedTo);
+      where += ` AND co.collected_at::date <= $${values.length}`;
+    }
+
     const countResult = await pool.query(
       `SELECT COUNT(*)::int AS total FROM collection_orders co WHERE ${where}`,
       values,
@@ -132,6 +143,7 @@ const listSchoolOrders = async (req, res) => {
         co.user_email,
         co.total::text AS total,
         co.created_at,
+        co.collected_at,
         p.status AS payment_status
        FROM collection_orders co
        LEFT JOIN payments p ON p.collection_order_id = co.id

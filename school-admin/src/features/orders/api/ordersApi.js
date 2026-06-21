@@ -6,10 +6,18 @@ const authHeaders = (token) => ({
   },
 });
 
-export const getOrders = async ({ token, q, status, limit, offset }) => {
+export const getOrders = async ({
+  token,
+  q,
+  status,
+  limit,
+  offset,
+  collectedFrom,
+  collectedTo,
+}) => {
   const response = await api.get("/school/orders", {
     ...authHeaders(token),
-    params: { q, status, limit, offset },
+    params: { q, status, limit, offset, collectedFrom, collectedTo },
   });
 
   return response.data; // { orders, total }
