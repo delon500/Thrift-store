@@ -109,7 +109,8 @@ marketplace design language as the customer app (emerald `#0f7a52`, warm canvas 
 focus ring; `Sidebar` rebuilt (lucide, declarative groups/links, role-gated, logout) with a
 shared `SidebarNav` export; `Navbar` (sticky top bar + mobile drawer reusing `SidebarNav`);
 `AdminLayout` (canvas bg, sidebar+content, no notebook-grid); `NotificationBell` → lucide +
-tokens. 2 ⬜ Dashboard (AdminHome). 3 ⬜ Data-table list pages (RegisteredUsersList,
+tokens. 2 ✅ Dashboard (AdminHome) — lucide-iconed stat cards, token Panels, recharts rebranded to
+the palette, token activity-feed badges. 3 ⬜ Data-table list pages (RegisteredUsersList,
 Institutions, Payments, OrdersAndCollections, Inventory/ViewStore). 4 ⬜ Forms (Register*
 + AddItems). 5 ⬜ Auth + Account + Settings + Notifications + Registrations + Reports.
 6 ⬜ Cleanup (PNG assets, dead code, finish tokens). lucide-react installed in admin.
