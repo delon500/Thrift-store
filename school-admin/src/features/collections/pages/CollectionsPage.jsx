@@ -1,6 +1,7 @@
 import { useState } from "react";
 import {
   ScanLine,
+  QrCode,
   Package,
   CircleCheckBig,
   CircleAlert,
@@ -12,6 +13,7 @@ import {
   cardClass,
   inputClass,
 } from "../../../components/shared/ui";
+import QrScanner from "../../../components/shared/QrScanner";
 import {
   useLookup,
   useMarkCollected,
@@ -45,6 +47,7 @@ const CollectionsPage = () => {
   const [reference, setReference] = useState("");
   const [order, setOrder] = useState(null);
   const [message, setMessage] = useState(null);
+  const [scanOpen, setScanOpen] = useState(false);
 
   const loadReference = async (value) => {
     const ref = value.trim();
@@ -69,6 +72,11 @@ const CollectionsPage = () => {
   const handleVerify = (event) => {
     event.preventDefault();
     loadReference(reference);
+  };
+
+  const handleScanResult = (decodedText) => {
+    setScanOpen(false);
+    loadReference(decodedText);
   };
 
   const handleCollect = async () => {
@@ -121,6 +129,14 @@ const CollectionsPage = () => {
               className="rounded-xl bg-primary px-6 py-3.5 text-base font-semibold text-on-primary transition-colors hover:bg-on-primary-container disabled:opacity-60"
             >
               {lookup.isPending ? "Checking..." : "Verify"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setScanOpen(true)}
+              className="flex items-center justify-center gap-2 rounded-xl border border-outline-variant px-6 py-3.5 text-base font-semibold text-on-surface transition-colors hover:bg-surface-container-low"
+            >
+              <QrCode size={20} aria-hidden="true" />
+              Scan
             </button>
           </form>
 
@@ -250,6 +266,13 @@ const CollectionsPage = () => {
           </div>
         </aside>
       </div>
+
+      {scanOpen ? (
+        <QrScanner
+          onResult={handleScanResult}
+          onClose={() => setScanOpen(false)}
+        />
+      ) : null}
     </div>
   );
 };

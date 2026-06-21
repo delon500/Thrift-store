@@ -163,9 +163,11 @@ clean, build passes, backend syntax-checked.
 targets (text-base inputs/buttons, py-3.5/py-4), `ScanLine`-iconed verify field, `PageHeader`,
 `Badge` status tones (STATUS_TONE map), `cardClass` order card with per-item `Package` rows +
 item-status badges, full-width "Mark as collected". Logic unchanged (lookup/collect/ready
-hooks); `useMarkCollected` now also invalidates `school-dashboard`. **QR DECISION: deferred** —
-went manual-entry-only (user didn't pick; lower-risk, no camera dep). Seam left for it: the
-buyer's QR pass encodes the plain `order_reference`, so a scanner just calls `loadReference()`.
+hooks); `useMarkCollected` now also invalidates `school-dashboard`. **QR scanning ADDED** (follow-up to
+step 3): `html5-qrcode@^2.3.8` + `components/shared/QrScanner.jsx` — a camera modal
+(`facingMode:"environment"`, graceful permission/no-camera fallback to manual entry) that
+decodes the buyer's pass (plain `order_reference`) and calls `loadReference()`. Collections page
+got a "Scan" button next to Verify. NB camera needs HTTPS in prod (works on localhost in dev).
 **No old teal/gray utilities remain anywhere in school-admin src.** Lint clean, build passes.
 
 
