@@ -110,7 +110,9 @@ the final cleanup step). User reviews each step before the next. **Step plan:**
 1 ✅ Foundations + app shell — palette app-wide, lucide, redesigned Navbar (full-width top
 bar, logo, search, cart/wishlist/bell/account), Sidebar (clean rail), mobile drawer,
 PublicLayout (canvas), real Footer (was a stub), `MarketProductCard` + catalog (`/products`).
-2 ⬜ Product detail page. 3 ⬜ Cart + Checkout. 4 ⬜ My Orders + NEW order/collection detail
+2 ✅ Product detail page (gallery + thumbnails, sticky buy box, lucide spec rows,
+formatted price, image fallback, wishlist, related via `MarketProductCard`). 3 ⬜ Cart +
+Checkout. 4 ⬜ My Orders + NEW order/collection detail
 (status stepper + QR of the reference). 5 ⬜ Auth pages. 6 ⬜ New pages ("How collection
 works", restyle Wishlist). 7 ⬜ Cleanup (delete PNG assets + old `ProductCard`, finish token
 migration, a11y/QA). NB other pages still use the old `--color-*`-named tokens (now holding
