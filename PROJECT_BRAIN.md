@@ -110,8 +110,13 @@ focus ring; `Sidebar` rebuilt (lucide, declarative groups/links, role-gated, log
 shared `SidebarNav` export; `Navbar` (sticky top bar + mobile drawer reusing `SidebarNav`);
 `AdminLayout` (canvas bg, sidebar+content, no notebook-grid); `NotificationBell` → lucide +
 tokens. 2 ✅ Dashboard (AdminHome) — lucide-iconed stat cards, token Panels, recharts rebranded to
-the palette, token activity-feed badges. 3 ⬜ Data-table list pages (RegisteredUsersList,
-Institutions, Payments, OrdersAndCollections, Inventory/ViewStore). 4 ⬜ Forms (Register*
+the palette, token activity-feed badges. 3 🟡 Data-table list pages — shared
+admin UI kit `components/shared/ui.jsx` (PageHeader, Badge tones, SummaryCard, Modal,
+input/table class constants); **PaymentsPage** fully on the kit; **app-wide token recolor**
+of every remaining admin page via sed (raw teal/gray → tokens); deleted dead `App.jsx`,
+branded `AdminNotFoundPage`, and cleared all ~14 pre-existing unused-import errors → **`eslint
+src` clean**. TODO: kit-ify structure + lucide icons on Institutions, Inventory, Orders,
+RegisteredUsersList, ViewStore (recolored but not yet restructured). 4 ⬜ Forms (Register*
 + AddItems). 5 ⬜ Auth + Account + Settings + Notifications + Registrations + Reports.
 6 ⬜ Cleanup (PNG assets, dead code, finish tokens). lucide-react installed in admin.
 

@@ -25,7 +25,7 @@ const formatDate = (value) =>
   value ? new Date(value).toLocaleDateString(undefined, { dateStyle: "medium" }) : "";
 
 const inputClass =
-  "rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:border-teal-600";
+  "rounded-md border border-outline-variant px-3 py-2 text-sm outline-none focus:border-primary";
 
 const EditInstitutionModal = ({ institution, onClose }) => {
   const [form, setForm] = useState({
@@ -56,14 +56,14 @@ const EditInstitutionModal = ({ institution, onClose }) => {
 
   const field = (label, key) => (
     <label className="grid gap-1 text-sm">
-      <span className="font-semibold text-gray-600">{label}</span>
+      <span className="font-semibold text-on-surface-variant">{label}</span>
       <input value={form[key]} onChange={setField(key)} className={inputClass} />
     </label>
   );
 
   const select = (label, key, options) => (
     <label className="grid gap-1 text-sm">
-      <span className="font-semibold text-gray-600">{label}</span>
+      <span className="font-semibold text-on-surface-variant">{label}</span>
       <select value={form[key]} onChange={setField(key)} className={inputClass}>
         {options.map((option) => (
           <option key={option} value={option}>
@@ -78,11 +78,11 @@ const EditInstitutionModal = ({ institution, onClose }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white p-6">
         <div className="flex items-start justify-between">
-          <h2 className="text-xl font-black text-teal-600">Edit institution</h2>
+          <h2 className="text-xl font-black text-primary">Edit institution</h2>
           <button
             type="button"
             onClick={onClose}
-            className="text-2xl leading-none text-gray-400 hover:text-gray-700"
+            className="text-2xl leading-none text-on-surface-variant hover:text-on-surface"
           >
             ×
           </button>
@@ -104,7 +104,7 @@ const EditInstitutionModal = ({ institution, onClose }) => {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-600"
+            className="rounded-lg border border-outline-variant px-4 py-2 text-sm font-semibold text-on-surface-variant"
           >
             Cancel
           </button>
@@ -112,7 +112,7 @@ const EditInstitutionModal = ({ institution, onClose }) => {
             type="button"
             onClick={handleSave}
             disabled={updateMutation.isPending}
-            className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-60"
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white disabled:opacity-60"
           >
             {updateMutation.isPending ? "Saving..." : "Save changes"}
           </button>
@@ -190,8 +190,8 @@ const InstitutionsPage = () => {
   return (
     <div className="p-6">
       <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-black text-teal-600">Institutions</h1>
-        <p className="text-sm font-medium text-gray-500">
+        <h1 className="text-2xl font-black text-primary">Institutions</h1>
+        <p className="text-sm font-medium text-on-surface-variant">
           Schools and universities on the platform. {total} total.
         </p>
       </div>
@@ -201,12 +201,12 @@ const InstitutionsPage = () => {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search by name or contact email..."
-          className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-teal-600"
+          className="w-full rounded-lg border border-outline-variant bg-white px-4 py-3 text-sm outline-none focus:border-primary"
         />
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-teal-600"
+          className="rounded-lg border border-outline-variant bg-white px-4 py-3 text-sm outline-none focus:border-primary"
         >
           <option value="">All statuses</option>
           {STATUS_OPTIONS.map((status) => (
@@ -223,15 +223,15 @@ const InstitutionsPage = () => {
         </p>
       ) : null}
 
-      <section className="mt-6 overflow-hidden rounded-xl border border-gray-200 bg-white">
+      <section className="mt-6 overflow-hidden rounded-xl border border-outline-variant bg-white">
         {isLoading ? (
-          <p className="p-5 text-gray-500">Loading...</p>
+          <p className="p-5 text-on-surface-variant">Loading...</p>
         ) : institutions.length === 0 ? (
-          <p className="p-5 text-gray-500">No institutions found.</p>
+          <p className="p-5 text-on-surface-variant">No institutions found.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[900px] text-left text-sm">
-              <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+              <thead className="bg-surface-container-low text-xs uppercase text-on-surface-variant">
                 <tr>
                   <th className="px-4 py-3">Institution</th>
                   <th className="px-4 py-3">Type</th>
@@ -245,12 +245,12 @@ const InstitutionsPage = () => {
               </thead>
               <tbody>
                 {institutions.map((institution) => (
-                  <tr key={institution.id} className="border-t border-gray-100">
+                  <tr key={institution.id} className="border-t border-outline-variant">
                     <td className="px-4 py-3">
-                      <p className="font-semibold text-gray-800">
+                      <p className="font-semibold text-on-surface">
                         {institution.institution_name}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-on-surface-variant">
                         {institution.contact_email}
                       </p>
                     </td>
@@ -265,7 +265,7 @@ const InstitutionsPage = () => {
                       <span
                         className={`rounded-full px-3 py-1 text-xs font-bold capitalize ${
                           STATUS_STYLES[institution.status] ||
-                          "bg-gray-100 text-gray-700"
+                          "bg-surface-container-high text-on-surface"
                         }`}
                       >
                         {institution.status}
@@ -290,7 +290,7 @@ const InstitutionsPage = () => {
                           <button
                             type="button"
                             onClick={() => setEditing(institution)}
-                            className="rounded-lg border border-teal-600 px-3 py-1.5 text-xs font-bold text-teal-700 hover:bg-teal-50"
+                            className="rounded-lg border border-primary px-3 py-1.5 text-xs font-bold text-primary hover:bg-surface-container-low"
                           >
                             Edit
                           </button>

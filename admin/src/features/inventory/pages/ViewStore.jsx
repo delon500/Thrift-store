@@ -34,8 +34,8 @@ const ViewStore = () => {
   return (
     <div className="p-6">
       <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-black text-teal-600">Store Preview</h1>
-        <p className="text-sm font-medium text-gray-500">
+        <h1 className="text-2xl font-black text-primary">Store Preview</h1>
+        <p className="text-sm font-medium text-on-surface-variant">
           See the marketplace the way students and parents do — only available items appear.
         </p>
       </div>
@@ -44,7 +44,7 @@ const ViewStore = () => {
         <select
           value={school}
           onChange={(e) => setSchool(e.target.value)}
-          className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-teal-600"
+          className="rounded-lg border border-outline-variant bg-white px-4 py-3 text-sm outline-none focus:border-primary"
         >
           <option value="">All schools</option>
           {schools.map((name) => (
@@ -56,7 +56,7 @@ const ViewStore = () => {
         <select
           value={listingType}
           onChange={(e) => setListingType(e.target.value)}
-          className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-teal-600"
+          className="rounded-lg border border-outline-variant bg-white px-4 py-3 text-sm outline-none focus:border-primary"
         >
           <option value="">All listings</option>
           {LISTING_TYPES.map((type) => (
@@ -74,17 +74,17 @@ const ViewStore = () => {
       ) : null}
 
       {isLoading ? (
-        <p className="mt-6 text-gray-500">Loading store...</p>
+        <p className="mt-6 text-on-surface-variant">Loading store...</p>
       ) : visible.length === 0 ? (
-        <p className="mt-6 text-gray-500">No available items to show.</p>
+        <p className="mt-6 text-on-surface-variant">No available items to show.</p>
       ) : (
         <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {visible.map((product) => (
             <div
               key={product.id}
-              className="overflow-hidden rounded-2xl border border-gray-200 bg-white"
+              className="overflow-hidden rounded-2xl border border-outline-variant bg-white"
             >
-              <div className="aspect-square w-full bg-gray-100">
+              <div className="aspect-square w-full bg-surface-container-high">
                 {product.image?.[0] ? (
                   <img
                     src={product.image[0]}
@@ -94,14 +94,14 @@ const ViewStore = () => {
                 ) : null}
               </div>
               <div className="flex flex-col gap-1 p-4">
-                <span className="w-fit rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-bold uppercase text-teal-700">
+                <span className="w-fit rounded-full bg-surface-container-low px-2 py-0.5 text-[10px] font-bold uppercase text-primary">
                   {product.listing_type}
                 </span>
-                <p className="mt-1 font-bold text-gray-800">{product.name}</p>
-                <p className="text-xs text-gray-500">{product.schoolName}</p>
+                <p className="mt-1 font-bold text-on-surface">{product.name}</p>
+                <p className="text-xs text-on-surface-variant">{product.schoolName}</p>
                 <div className="mt-2 flex items-center justify-between">
-                  <span className="text-xs text-gray-500">{product.condition}</span>
-                  <span className="text-lg font-black text-teal-600">
+                  <span className="text-xs text-on-surface-variant">{product.condition}</span>
+                  <span className="text-lg font-black text-primary">
                     R{product.price}
                   </span>
                 </div>

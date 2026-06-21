@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useRegisterStaff } from "../hooks/useRegisterUser";
 import useAuthStore from "../../auth/store/authStore";
 import { useNavigate } from "react-router-dom";
@@ -43,9 +43,9 @@ const RegisterStaff = () => {
     <div className="w-full">
       {/* Header */}
       <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-black text-teal-600">Register Staff</h1>
+        <h1 className="text-2xl font-black text-primary">Register Staff</h1>
 
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-on-surface-variant">
           Create staff and administrator accounts to manage inventory, verify
           pickups, monitor orders, and operate the school shop.
         </p>
@@ -53,13 +53,13 @@ const RegisterStaff = () => {
 
       {/* Form Card */}
       <form onSubmit={handleSubmit} className="mt-8">
-        <div className="bg-white border border-gray-200 rounded-3xl p-6 shadow-sm">
+        <div className="bg-white border border-outline-variant rounded-3xl p-6 shadow-sm">
           {/* Section Header */}
           <div className="mb-6">
-            <h2 className="font-bold text-gray-800 text-lg">
+            <h2 className="font-bold text-on-surface text-lg">
               Staff Information
             </h2>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-on-surface-variant">
               Enter the details of the staff member you want to register.
             </p>
           </div>
@@ -67,7 +67,7 @@ const RegisterStaff = () => {
           {/* Row 1 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-              <label className="block text-sm font-semibold text-gray-600 mb-2">
+              <label className="block text-sm font-semibold text-on-surface-variant mb-2">
                 Full Name
               </label>
 
@@ -78,12 +78,12 @@ const RegisterStaff = () => {
                 onChange={handleChange}
                 placeholder="John Doe"
                 required
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-teal-500"
+                className="w-full border border-outline-variant rounded-xl px-4 py-3 outline-none focus:border-primary"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-600 mb-2">
+              <label className="block text-sm font-semibold text-on-surface-variant mb-2">
                 Email Address
               </label>
 
@@ -93,7 +93,7 @@ const RegisterStaff = () => {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="john@school.com"
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-teal-500"
+                className="w-full border border-outline-variant rounded-xl px-4 py-3 outline-none focus:border-primary"
                 required
               />
             </div>
@@ -102,7 +102,7 @@ const RegisterStaff = () => {
           {/* Row 2 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
             <div>
-              <label className="block text-sm font-semibold text-gray-600 mb-2">
+              <label className="block text-sm font-semibold text-on-surface-variant mb-2">
                 Contact Number
               </label>
 
@@ -112,13 +112,13 @@ const RegisterStaff = () => {
                 value={formData.contactNumber}
                 onChange={handleChange}
                 placeholder="+27..."
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-teal-500"
+                className="w-full border border-outline-variant rounded-xl px-4 py-3 outline-none focus:border-primary"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-600 mb-2">
+              <label className="block text-sm font-semibold text-on-surface-variant mb-2">
                 Account Type
               </label>
 
@@ -126,7 +126,7 @@ const RegisterStaff = () => {
                 name="role"
                 value={formData.role}
                 onChange={handleChange}
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-teal-500"
+                className="w-full border border-outline-variant rounded-xl px-4 py-3 outline-none focus:border-primary"
               >
                 <option value="admin">Administrator</option>
               </select>
@@ -134,13 +134,13 @@ const RegisterStaff = () => {
           </div>
 
           {/* Divider */}
-          <div className="my-8 border-t border-gray-200"></div>
+          <div className="my-8 border-t border-outline-variant"></div>
 
           {/* Security Section */}
           <div className="mb-6">
-            <h2 className="font-bold text-gray-800 text-lg">Security</h2>
+            <h2 className="font-bold text-on-surface text-lg">Security</h2>
 
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-on-surface-variant">
               Create login credentials for the staff member.
             </p>
           </div>
@@ -148,7 +148,7 @@ const RegisterStaff = () => {
           {/* Passwords */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-              <label className="block text-sm font-semibold text-gray-600 mb-2">
+              <label className="block text-sm font-semibold text-on-surface-variant mb-2">
                 Password
               </label>
 
@@ -158,13 +158,13 @@ const RegisterStaff = () => {
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="********"
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-teal-500"
+                className="w-full border border-outline-variant rounded-xl px-4 py-3 outline-none focus:border-primary"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-600 mb-2">
+              <label className="block text-sm font-semibold text-on-surface-variant mb-2">
                 Confirm Password
               </label>
 
@@ -174,7 +174,7 @@ const RegisterStaff = () => {
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 placeholder="********"
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-teal-500"
+                className="w-full border border-outline-variant rounded-xl px-4 py-3 outline-none focus:border-primary"
                 required
               />
             </div>
@@ -184,7 +184,7 @@ const RegisterStaff = () => {
           <div className="flex justify-end gap-3 mt-10">
             <button
               type="button"
-              className="px-6 py-3 rounded-xl border border-gray-300 font-medium hover:bg-gray-50"
+              className="px-6 py-3 rounded-xl border border-outline-variant font-medium hover:bg-surface-container-low"
               onClick={() => navigate(-1)}
             >
               Cancel
@@ -192,7 +192,7 @@ const RegisterStaff = () => {
 
             <button
               type="submit"
-              className="bg-teal-600 text-white px-8 py-3 rounded-xl font-semibold hover:bg-teal-700 transition"
+              className="bg-primary text-white px-8 py-3 rounded-xl font-semibold hover:bg-on-primary-container transition"
             >
               Register Staff
             </button>

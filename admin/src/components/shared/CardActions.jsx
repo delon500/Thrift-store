@@ -7,7 +7,7 @@ const CardActions = ({ icon, color, name, description, to, comingSoon }) => {
   const content = (
     <>
       {comingSoon ? (
-        <span className="absolute right-3 top-3 rounded-full bg-gray-200 px-2 py-1 text-[10px] font-bold uppercase text-gray-500">
+        <span className="absolute right-3 top-3 rounded-full bg-surface-container-high px-2 py-1 text-[10px] font-bold uppercase text-on-surface-variant">
           Coming soon
         </span>
       ) : null}
@@ -16,7 +16,7 @@ const CardActions = ({ icon, color, name, description, to, comingSoon }) => {
       </div>
       <div className="flex flex-col gap-2">
         <h2 className="text-sm sm:text-xl font-bold">{name}</h2>
-        <p className="text-xs text-gray-500">{description}</p>
+        <p className="text-xs text-on-surface-variant">{description}</p>
       </div>
     </>
   );

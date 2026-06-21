@@ -83,10 +83,10 @@ const AddItems = () => {
   return (
     <form onSubmit={handleSubmit}>
       <div className="flex flex-col gap-2">
-        <h1 className="text-sm sm:text-2xl font-black text-teal-600">
+        <h1 className="text-sm sm:text-2xl font-black text-primary">
           Add Items
         </h1>
-        <p className="text-sm sm:text-sm font-medium text-gray-500">
+        <p className="text-sm sm:text-sm font-medium text-on-surface-variant">
           Manage the school store inventory, verify pickups, and set up your
           shopfront.
         </p>
@@ -94,10 +94,10 @@ const AddItems = () => {
 
       <div className="flex flex-col sm:flex-row gap-6 w-full">
         <div className="w-full sm:w-[60%]">
-          <div className="mt-10 bg-white p-4 border-gray-300 border-2 rounded-2xl">
+          <div className="mt-10 bg-white p-4 border-outline-variant border-2 rounded-2xl">
             <div className="flex gap-2 items-center mb-4">
               <img src={icons.product_image_icons} alt="" />
-              <p className="font-bold text-xl text-teal-600">Product Image</p>
+              <p className="font-bold text-xl text-primary">Product Image</p>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-6">
@@ -148,30 +148,30 @@ const AddItems = () => {
               type="button"
               onClick={handleAnalyze}
               disabled={analyzeProductMutation.isPending}
-              className="w-full mt-4 shadow-md bg-teal-600 text-white rounded-md p-2 cursor-pointer disabled:opacity-60"
+              className="w-full mt-4 shadow-md bg-primary text-white rounded-md p-2 cursor-pointer disabled:opacity-60"
             >
               {analyzeProductMutation.isPending
                 ? "Analyzing..."
                 : "Auto-fill with AI"}
             </button>
 
-            <span className="text-gray-500 italic text-xs">
+            <span className="text-on-surface-variant italic text-xs">
               Tip: Bright, natural light works best for displaying item
               condition.
             </span>
           </div>
 
-          <div className="mt-10 bg-white p-4 border-gray-300 border-2 rounded-2xl">
+          <div className="mt-10 bg-white p-4 border-outline-variant border-2 rounded-2xl">
             <div className="flex gap-2 items-center mb-4">
               <img src={icons.product_description_icon} alt="" />
-              <p className="font-bold text-xl text-teal-600">
+              <p className="font-bold text-xl text-primary">
                 Product Description
               </p>
             </div>
 
-            <p className="text-gray-500 font-light mb-4">ITEM DETAILS</p>
+            <p className="text-on-surface-variant font-light mb-4">ITEM DETAILS</p>
             <textarea
-              className="w-full px-3 py-2 border border-gray-300 rounded-sm h-[200px] outline-none placeholder:text-sm"
+              className="w-full px-3 py-2 border border-outline-variant rounded-sm h-[200px] outline-none placeholder:text-sm"
               placeholder="Describe the brand, model, size, or any specific features that make this item great for campus life..."
               value={formData.description}
               onChange={(e) => setField("description", e.target.value)}
@@ -188,17 +188,17 @@ const AddItems = () => {
         </div>
 
         <div className="w-full sm:w-[40%]">
-          <div className="mt-10 bg-white p-4 border-gray-300 border-2 rounded-2xl">
+          <div className="mt-10 bg-white p-4 border-outline-variant border-2 rounded-2xl">
             <div className="flex gap-2 items-center mb-4">
               <img src={icons.basic_info_icon} alt="" />
-              <p className="font-bold text-xl text-teal-600">Product Details</p>
+              <p className="font-bold text-xl text-primary">Product Details</p>
             </div>
 
             <div className="flex flex-col gap-2">
               <p>PRODUCT TITLE</p>
               <input
                 type="text"
-                className="w-full border-2 border-gray-300 rounded-md p-2"
+                className="w-full border-2 border-outline-variant rounded-md p-2"
                 placeholder="e.g. TI-84 Plus CE Graphing Calculator"
                 value={formData.name}
                 onChange={(e) => setField("name", e.target.value)}
@@ -209,7 +209,7 @@ const AddItems = () => {
               <p>CATEGORY</p>
               <input
                 type="text"
-                className="w-full border-2 border-gray-300 rounded-md p-2"
+                className="w-full border-2 border-outline-variant rounded-md p-2"
                 placeholder="e.g. School Items"
                 value={formData.category}
                 onChange={(e) => setField("category", e.target.value)}
@@ -221,7 +221,7 @@ const AddItems = () => {
                 <p>Price</p>
                 <input
                   type="number"
-                  className="w-full border-2 border-gray-300 rounded-md p-2"
+                  className="w-full border-2 border-outline-variant rounded-md p-2"
                   placeholder="e.g. 12000"
                   value={formData.price}
                   onChange={(e) => setField("price", e.target.value)}
@@ -232,7 +232,7 @@ const AddItems = () => {
                 <p>Gender</p>
                 <input
                   type="text"
-                  className="w-full border-2 border-gray-300 rounded-md p-2"
+                  className="w-full border-2 border-outline-variant rounded-md p-2"
                   placeholder="e.g. Unisex"
                   value={formData.gender}
                   onChange={(e) => setField("gender", e.target.value)}
@@ -244,7 +244,7 @@ const AddItems = () => {
               <div className="flex flex-col gap-2 w-full">
                 <p>Status</p>
                 <select
-                  className="w-full border-2 border-gray-300 rounded-md p-2"
+                  className="w-full border-2 border-outline-variant rounded-md p-2"
                   value={formData.status}
                   onChange={(e) => setField("status", e.target.value)}
                 >
@@ -257,7 +257,7 @@ const AddItems = () => {
               <div className="flex flex-col gap-2 w-full">
                 <p>School Name</p>
                 <select
-                  className="w-full border-2 border-gray-300 rounded-md p-2"
+                  className="w-full border-2 border-outline-variant rounded-md p-2"
                   value={formData.schoolId}
                   onChange={handleSchoolChange}
                 >
@@ -277,7 +277,7 @@ const AddItems = () => {
               <div className="flex flex-col gap-2 w-full">
                 <p>Listing Type</p>
                 <select
-                  className="w-full border-2 border-gray-300 rounded-md p-2"
+                  className="w-full border-2 border-outline-variant rounded-md p-2"
                   value={formData.listing_type}
                   onChange={(e) => setField("listing_type", e.target.value)}
                 >
@@ -294,7 +294,7 @@ const AddItems = () => {
                 <p>Age</p>
                 <input
                   type="text"
-                  className="w-full border-2 border-gray-300 rounded-md p-2"
+                  className="w-full border-2 border-outline-variant rounded-md p-2"
                   placeholder="e.g. 14-15 years"
                   value={formData.age}
                   onChange={(e) => setField("age", e.target.value)}
@@ -305,7 +305,7 @@ const AddItems = () => {
             <div className="flex flex-col gap-2 mt-3">
               <p>Condition</p>
               <select
-                className="w-full border-2 border-gray-300 rounded-md p-2"
+                className="w-full border-2 border-outline-variant rounded-md p-2"
                 value={formData.condition}
                 onChange={(e) => setField("condition", e.target.value)}
               >

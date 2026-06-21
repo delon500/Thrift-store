@@ -1,6 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
 import { analyzeProduct, createProduct } from "../api/productApi";
-import useAuthStore from "../../auth/store/authStore";
 
 export const useCreateProduct = () => {
   return useMutation({

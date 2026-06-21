@@ -36,7 +36,7 @@ const LoginForm = () => {
   };
   return (
     <form
-      className="border border-gray-300 p-6 sm:p-10 lg:p-20 flex flex-col justify-center bg-white"
+      className="border border-outline-variant p-6 sm:p-10 lg:p-20 flex flex-col justify-center bg-white"
       onSubmit={handleSubmit}
     >
       <div className="flex flex-col gap-2">
@@ -61,7 +61,7 @@ const LoginForm = () => {
             placeholder="admin@example.com"
             value={formData.email}
             onChange={handleChange}
-            className="w-full rounded-md border-2 px-4 py-3 text-sm border-gray-300 placeholder:text-slate-400 border-surface-container-high focus:border-primary"
+            className="w-full rounded-md border-2 px-4 py-3 text-sm border-outline-variant placeholder:text-slate-400 border-surface-container-high focus:border-primary"
           />
         </div>
 
@@ -78,7 +78,7 @@ const LoginForm = () => {
             placeholder="••••••••"
             value={formData.password}
             onChange={handleChange}
-            className="w-full rounded-md border-2 px-4 py-3 text-sm border-gray-300 placeholder:text-slate-400 border-surface-container-high focus:border-primary"
+            className="w-full rounded-md border-2 px-4 py-3 text-sm border-outline-variant placeholder:text-slate-400 border-surface-container-high focus:border-primary"
           />
         </div>
       </div>

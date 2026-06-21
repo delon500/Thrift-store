@@ -1,4 +1,3 @@
-import React from "react";
 import { register_user_action_card } from "../../../data/data";
 import CardActions from "../../../components/shared/CardActions";
 
@@ -7,10 +6,10 @@ const RegisterUsersHomePage = () => {
     <div>
       {/* Heading */}
       <div className="flex flex-col gap-2">
-        <h1 className="text-sm sm:text-2xl font-black text-teal-600">
+        <h1 className="text-sm sm:text-2xl font-black text-primary">
           Register Users
         </h1>
-        <p className="text-sm sm:text-sm font-medium text-gray-500">
+        <p className="text-sm sm:text-sm font-medium text-on-surface-variant">
           Select the type of profile you want to create. Each option below opens
           its own dedicated registration page, keeping the process simple.
           focused. and easier to manage.

@@ -69,17 +69,17 @@ const SettingsPage = () => {
   };
 
   const inputClass =
-    "w-40 rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-teal-600 disabled:bg-gray-50 disabled:text-gray-400";
+    "w-40 rounded-lg border border-outline-variant bg-white px-4 py-3 text-sm outline-none focus:border-primary disabled:bg-surface-container-low disabled:text-on-surface-variant";
 
   if (isLoading || !form) {
-    return <p className="p-6 text-gray-500">Loading settings...</p>;
+    return <p className="p-6 text-on-surface-variant">Loading settings...</p>;
   }
 
   return (
     <form onSubmit={handleSubmit} className="max-w-2xl p-6">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-black text-teal-600">Settings</h1>
-        <p className="text-sm font-medium text-gray-500">
+        <h1 className="text-2xl font-black text-primary">Settings</h1>
+        <p className="text-sm font-medium text-on-surface-variant">
           Platform-wide checkout configuration.
         </p>
       </div>
@@ -90,16 +90,16 @@ const SettingsPage = () => {
         </p>
       ) : null}
 
-      <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-6">
+      <section className="mt-6 rounded-2xl border border-outline-variant bg-white p-6">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="font-bold text-gray-800">Service fee</p>
-            <p className="text-sm text-gray-500">
+            <p className="font-bold text-on-surface">Service fee</p>
+            <p className="text-sm text-on-surface-variant">
               Flat fee (ZAR) added to every order with items.
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-gray-500">R</span>
+            <span className="text-on-surface-variant">R</span>
             <input
               type="number"
               step="0.01"
@@ -114,12 +114,12 @@ const SettingsPage = () => {
           </div>
         </div>
 
-        <hr className="my-5 border-gray-100" />
+        <hr className="my-5 border-outline-variant" />
 
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="font-bold text-gray-800">Checkout expiry</p>
-            <p className="text-sm text-gray-500">
+            <p className="font-bold text-on-surface">Checkout expiry</p>
+            <p className="text-sm text-on-surface-variant">
               Minutes a checkout holds its items before the hold lapses.
             </p>
           </div>
@@ -139,22 +139,22 @@ const SettingsPage = () => {
               }
               className={inputClass}
             />
-            <span className="text-gray-500">min</span>
+            <span className="text-on-surface-variant">min</span>
           </div>
         </div>
       </section>
 
-      <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-6">
-        <p className="font-bold text-gray-800">Payment methods</p>
-        <p className="text-sm text-gray-500">
+      <section className="mt-6 rounded-2xl border border-outline-variant bg-white p-6">
+        <p className="font-bold text-on-surface">Payment methods</p>
+        <p className="text-sm text-on-surface-variant">
           Which PayFast methods customers can choose at checkout.
         </p>
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
           {catalog.map((method) => (
             <label
               key={method.id}
-              className={`flex items-center gap-3 rounded-lg border border-gray-200 px-4 py-3 ${
-                canEdit ? "cursor-pointer hover:bg-gray-50" : ""
+              className={`flex items-center gap-3 rounded-lg border border-outline-variant px-4 py-3 ${
+                canEdit ? "cursor-pointer hover:bg-surface-container-low" : ""
               }`}
             >
               <input
@@ -162,9 +162,9 @@ const SettingsPage = () => {
                 checked={form.enabled.has(method.id)}
                 disabled={!canEdit}
                 onChange={() => toggleMethod(method.id)}
-                className="h-4 w-4 accent-teal-600"
+                className="h-4 w-4 accent-primary"
               />
-              <span className="text-sm font-semibold text-gray-700">
+              <span className="text-sm font-semibold text-on-surface">
                 {method.label}
               </span>
             </label>
@@ -177,7 +177,7 @@ const SettingsPage = () => {
           <button
             type="submit"
             disabled={updateSettings.isPending}
-            className="rounded-lg bg-teal-600 px-5 py-2.5 text-sm font-bold text-white disabled:opacity-60"
+            className="rounded-lg bg-primary px-5 py-2.5 text-sm font-bold text-white disabled:opacity-60"
           >
             {updateSettings.isPending ? "Saving..." : "Save changes"}
           </button>

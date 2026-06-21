@@ -101,8 +101,8 @@ const ReportsPage = () => {
   return (
     <div className="p-6">
       <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-black text-teal-600">Reports</h1>
-        <p className="text-sm font-medium text-gray-500">
+        <h1 className="text-2xl font-black text-primary">Reports</h1>
+        <p className="text-sm font-medium text-on-surface-variant">
           Download CSV exports you can open in Excel or Google Sheets.
         </p>
       </div>
@@ -111,17 +111,17 @@ const ReportsPage = () => {
         {REPORTS.map((report) => (
           <div
             key={report.key}
-            className="flex flex-col justify-between gap-4 rounded-2xl border border-gray-200 bg-white p-6"
+            className="flex flex-col justify-between gap-4 rounded-2xl border border-outline-variant bg-white p-6"
           >
             <div>
-              <h2 className="text-lg font-black text-gray-800">{report.name}</h2>
-              <p className="mt-1 text-sm text-gray-500">{report.description}</p>
+              <h2 className="text-lg font-black text-on-surface">{report.name}</h2>
+              <p className="mt-1 text-sm text-on-surface-variant">{report.description}</p>
             </div>
             <button
               type="button"
               onClick={() => handleDownload(report)}
               disabled={busy === report.key}
-              className="w-fit rounded-lg bg-teal-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-60"
+              className="w-fit rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white disabled:opacity-60"
             >
               {busy === report.key ? "Preparing..." : "Download CSV"}
             </button>

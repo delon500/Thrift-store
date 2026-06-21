@@ -84,13 +84,13 @@ const AccountPage = () => {
   };
 
   const inputClass =
-    "rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-teal-600";
+    "rounded-lg border border-outline-variant px-3 py-2 text-sm outline-none focus:border-primary";
 
   return (
     <div className="p-6">
       <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-black text-teal-600">Account</h1>
-        <p className="text-sm font-medium text-gray-500">
+        <h1 className="text-2xl font-black text-primary">Account</h1>
+        <p className="text-sm font-medium text-on-surface-variant">
           Manage your profile, password, and platform details.
         </p>
       </div>
@@ -99,13 +99,13 @@ const AccountPage = () => {
         {/* Profile */}
         <form
           onSubmit={handleProfileSave}
-          className="rounded-2xl border border-gray-200 bg-white p-6"
+          className="rounded-2xl border border-outline-variant bg-white p-6"
         >
-          <h2 className="text-lg font-black text-gray-800">Profile</h2>
+          <h2 className="text-lg font-black text-on-surface">Profile</h2>
           <div className="mt-4 grid gap-4">
             <Banner message={profileMsg} />
             <label className="grid gap-1 text-sm">
-              <span className="font-semibold text-gray-600">Full name</span>
+              <span className="font-semibold text-on-surface-variant">Full name</span>
               <input
                 value={profile.full_name}
                 onChange={(e) =>
@@ -115,15 +115,15 @@ const AccountPage = () => {
               />
             </label>
             <label className="grid gap-1 text-sm">
-              <span className="font-semibold text-gray-600">Email</span>
+              <span className="font-semibold text-on-surface-variant">Email</span>
               <input
                 value={me?.email || ""}
                 disabled
-                className={`${inputClass} bg-gray-50 text-gray-500`}
+                className={`${inputClass} bg-surface-container-low text-on-surface-variant`}
               />
             </label>
             <label className="grid gap-1 text-sm">
-              <span className="font-semibold text-gray-600">Contact number</span>
+              <span className="font-semibold text-on-surface-variant">Contact number</span>
               <input
                 value={profile.contact_number}
                 onChange={(e) =>
@@ -135,7 +135,7 @@ const AccountPage = () => {
             <button
               type="submit"
               disabled={updateMe.isPending}
-              className="mt-1 w-fit rounded-lg bg-teal-600 px-4 py-2 font-bold text-white disabled:opacity-60"
+              className="mt-1 w-fit rounded-lg bg-primary px-4 py-2 font-bold text-white disabled:opacity-60"
             >
               {updateMe.isPending ? "Saving..." : "Save profile"}
             </button>
@@ -145,13 +145,13 @@ const AccountPage = () => {
         {/* Password */}
         <form
           onSubmit={handlePasswordSave}
-          className="rounded-2xl border border-gray-200 bg-white p-6"
+          className="rounded-2xl border border-outline-variant bg-white p-6"
         >
-          <h2 className="text-lg font-black text-gray-800">Change password</h2>
+          <h2 className="text-lg font-black text-on-surface">Change password</h2>
           <div className="mt-4 grid gap-4">
             <Banner message={passwordMsg} />
             <label className="grid gap-1 text-sm">
-              <span className="font-semibold text-gray-600">Current password</span>
+              <span className="font-semibold text-on-surface-variant">Current password</span>
               <input
                 type="password"
                 value={passwords.current_password}
@@ -162,7 +162,7 @@ const AccountPage = () => {
               />
             </label>
             <label className="grid gap-1 text-sm">
-              <span className="font-semibold text-gray-600">New password</span>
+              <span className="font-semibold text-on-surface-variant">New password</span>
               <input
                 type="password"
                 value={passwords.new_password}
@@ -173,7 +173,7 @@ const AccountPage = () => {
               />
             </label>
             <label className="grid gap-1 text-sm">
-              <span className="font-semibold text-gray-600">Confirm new password</span>
+              <span className="font-semibold text-on-surface-variant">Confirm new password</span>
               <input
                 type="password"
                 value={passwords.confirm_password}
@@ -186,7 +186,7 @@ const AccountPage = () => {
             <button
               type="submit"
               disabled={changePassword.isPending}
-              className="mt-1 w-fit rounded-lg bg-teal-600 px-4 py-2 font-bold text-white disabled:opacity-60"
+              className="mt-1 w-fit rounded-lg bg-primary px-4 py-2 font-bold text-white disabled:opacity-60"
             >
               {changePassword.isPending ? "Saving..." : "Change password"}
             </button>
@@ -195,20 +195,20 @@ const AccountPage = () => {
       </div>
 
       {/* Platform info */}
-      <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-6">
-        <h2 className="text-lg font-black text-gray-800">Platform</h2>
+      <div className="mt-6 rounded-2xl border border-outline-variant bg-white p-6">
+        <h2 className="text-lg font-black text-on-surface">Platform</h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-3 text-sm">
           <div>
-            <p className="text-gray-400">Role</p>
-            <p className="font-bold capitalize text-gray-800">{me?.role || "—"}</p>
+            <p className="text-on-surface-variant">Role</p>
+            <p className="font-bold capitalize text-on-surface">{me?.role || "—"}</p>
           </div>
           <div>
-            <p className="text-gray-400">Member since</p>
-            <p className="font-bold text-gray-800">{formatDate(me?.created_at)}</p>
+            <p className="text-on-surface-variant">Member since</p>
+            <p className="font-bold text-on-surface">{formatDate(me?.created_at)}</p>
           </div>
           <div>
-            <p className="text-gray-400">Account status</p>
-            <p className="font-bold capitalize text-gray-800">{me?.status || "—"}</p>
+            <p className="text-on-surface-variant">Account status</p>
+            <p className="font-bold capitalize text-on-surface">{me?.status || "—"}</p>
           </div>
         </div>
       </div>
