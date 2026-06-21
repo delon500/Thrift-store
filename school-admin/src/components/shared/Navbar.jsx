@@ -29,7 +29,7 @@ const Navbar = () => {
           >
             <Menu size={20} aria-hidden="true" />
           </button>
-          <p className="font-bold text-on-surface">Collections</p>
+          <p className="font-bold text-on-surface">School Thrift</p>
         </div>
 
         <div className="flex items-center gap-3">

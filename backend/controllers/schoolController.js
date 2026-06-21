@@ -43,6 +43,54 @@ const fetchScopedOrder = async (institutionId, orderReference) => {
   return { ...orderResult.rows[0], items: itemsResult.rows };
 };
 
+// GET /api/school/dashboard — at-a-glance counts for this school's collection desk.
+const getDashboardStats = async (req, res) => {
+  try {
+    const institutionId = req.user.institution_id;
+
+    const statsResult = await pool.query(
+      `SELECT
+        COUNT(*) FILTER (WHERE status IN ('ready_for_collection', 'paid')) AS ready_count,
+        COALESCE(
+          SUM(total) FILTER (WHERE status IN ('ready_for_collection', 'paid')),
+          0
+        )::text AS ready_value,
+        COUNT(*) FILTER (
+          WHERE status = 'collected' AND collected_at::date = CURRENT_DATE
+        ) AS collected_today,
+        COUNT(*) FILTER (WHERE status = 'collected') AS collected_total
+       FROM collection_orders
+       WHERE institution_id = $1`,
+      [institutionId],
+    );
+
+    const recentResult = await pool.query(
+      `SELECT order_reference, user_full_name, total::text AS total, collected_at
+       FROM collection_orders
+       WHERE institution_id = $1 AND status = 'collected'
+       ORDER BY collected_at DESC NULLS LAST
+       LIMIT 5`,
+      [institutionId],
+    );
+
+    const row = statsResult.rows[0];
+
+    return res.json({
+      stats: {
+        ready_count: Number(row.ready_count),
+        ready_value: row.ready_value,
+        collected_today: Number(row.collected_today),
+        collected_total: Number(row.collected_total),
+      },
+      recent: recentResult.rows,
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Failed to load dashboard", error: error.message });
+  }
+};
+
 // GET /api/school/orders?status= — this school's orders, newest first.
 const listSchoolOrders = async (req, res) => {
   try {
@@ -201,4 +249,4 @@ const markCollected = async (req, res) => {
   }
 };
 
-export { listSchoolOrders, lookupByReference, markCollected };
+export { getDashboardStats, listSchoolOrders, lookupByReference, markCollected };

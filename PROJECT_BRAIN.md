@@ -151,6 +151,14 @@ export + logout) and `Navbar` (sticky top + mobile drawer); rewrote `SchoolLayou
 (canvas bg, sidebar+content); redesigned `LoginPage` as a split-screen (keeps the
 `school`/`university` role gate + inline error); branded `NotFound`. `eslint src` clean,
 build passes. NB CollectionsPage itself is still old teal/gray → redesigned in step 3.
+2 ✅ Dashboard — backend `GET /api/school/dashboard` (`getDashboardStats` in
+`schoolController` + route) returns `{stats:{ready_count, ready_value, collected_today,
+collected_total}, recent:[last 5 collected]}`, all institution-scoped (uses `FILTER` aggregates;
+enum labels `paid`/`ready_for_collection`/`collected` verified valid). New `features/dashboard`
+(api/hook/page): `DashboardPage` = 4 SummaryCards + "Ready for collection" quick list (reuses
+`useReadyOrders`) + "Recent collections". Router: `/school` index → Dashboard, Collections moved
+to `/school/collections`; Sidebar NAV gained Dashboard; Navbar label → "School Thrift". Lint
+clean, build passes, backend syntax-checked.
 
 
 **ACTIVE: Customer UI/UX redesign on branch `frontend-redesign`** (off
