@@ -9,7 +9,6 @@ import {
   Tag,
   Sparkles,
   User,
-  Hash,
   ShieldCheck,
 } from "lucide-react";
 import { useGetProducts } from "../../products/hooks/useProduct";
@@ -232,7 +231,6 @@ const Product = () => {
             <Spec icon={Tag} label="Category" value={product.category} />
             <Spec icon={Sparkles} label="Condition" value={product.condition} />
             <Spec icon={User} label="Gender" value={product.gender} />
-            <Spec icon={Hash} label="Reference" value={product.reference_number} />
           </div>
 
           <div className="mt-5 flex gap-3">

@@ -308,6 +308,14 @@ notifications table + an institution-scoped fan-out); lint-clean ~17 pre-existin
 errors.
 
 ## 9. Conventions & constraints (do NOT break)
+- **Reference numbers are the post-payment collection credential — never show them to a
+  buyer until that order is paid.** `GET /products` omits product `reference_number`
+  entirely (shoppers never see it); the product page/cart/checkout-summary show no
+  reference; Orders list, OrderDetail (incl. the QR pass + item refs), and the checkout
+  return screen reveal the reference only when status ∈ {ready_for_collection, paid,
+  collected}. `order_reference` still rides in the order URL for navigation/resume — that's
+  fine: collection security comes from the school verifying the order is paid, not from
+  hiding the string.
 - Don't re-add the dropped `collection_order_items` unique index (decision above).
 - Keep ITN signature blank-field handling intact.
 - Apply migrations 001–009 in order; never auto-commit `.env`, `node_modules/`,

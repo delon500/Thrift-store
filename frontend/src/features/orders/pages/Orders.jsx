@@ -21,6 +21,10 @@ const STATUS = {
 
 const statusLabel = (status) => STATUS[status]?.label || status;
 
+// The order reference is the collection credential — only revealed once paid.
+const PAID_STATUSES = ["ready_for_collection", "paid", "collected"];
+const isPaid = (status) => PAID_STATUSES.includes(status);
+
 const formatDate = (value) =>
   value ? new Date(value).toLocaleDateString(undefined, { dateStyle: "medium" }) : "";
 
@@ -166,7 +170,9 @@ const Orders = () => {
                     {formatDate(order.created_at)}
                   </p>
                   <h2 className="text-lg font-bold text-on-surface">
-                    {order.order_reference}
+                    {isPaid(order.status)
+                      ? order.order_reference
+                      : order.items[0]?.product_name || "Order"}
                   </h2>
                   <p className="flex items-center gap-1 text-sm text-on-surface-variant">
                     <MapPin size={14} aria-hidden="true" />

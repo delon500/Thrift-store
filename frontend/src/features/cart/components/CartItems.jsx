@@ -13,7 +13,6 @@ const CartItems = ({
   schoolName,
   price,
   quantity,
-  referenceNumber,
   listingType,
   condition,
   onClick,
@@ -59,9 +58,6 @@ const CartItems = ({
               {condition}
             </span>
           ) : null}
-          <span className="rounded-full bg-surface-container-low px-2.5 py-0.5 text-on-surface-variant">
-            Ref: {referenceNumber}
-          </span>
         </div>
 
         <div className="mt-3 flex items-center justify-between">

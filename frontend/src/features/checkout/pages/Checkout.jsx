@@ -127,7 +127,7 @@ const Checkout = () => {
           />
           <h1 className="mt-4 text-2xl font-bold text-on-surface">{heading}</h1>
           <p className="mt-2 text-on-surface-variant">{body}</p>
-          {returnedOrderReference ? (
+          {paymentConfirmed && returnedOrderReference ? (
             <p className="mt-5 rounded-xl bg-surface-container-low px-4 py-3 font-semibold text-on-surface">
               Reference: {returnedOrderReference}
             </p>
@@ -251,9 +251,7 @@ const Checkout = () => {
               className="border-b border-outline-variant pb-3 last:border-0"
             >
               <p className="font-semibold text-on-surface">{item.name}</p>
-              <p className="text-sm text-on-surface-variant">
-                {item.schoolName} · {item.reference_number}
-              </p>
+              <p className="text-sm text-on-surface-variant">{item.schoolName}</p>
               <p className="mt-1 font-semibold text-on-surface">
                 {formatPrice(item.price)}
               </p>

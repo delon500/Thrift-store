@@ -1,7 +1,7 @@
 import { Link, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { QRCodeSVG } from "qrcode.react";
-import { ArrowLeft, Check, X, MapPin } from "lucide-react";
+import { ArrowLeft, Check, X, MapPin, Lock } from "lucide-react";
 import { useMyOrder, useResumeOrder } from "../hooks/useOrders";
 import { submitToPayfast } from "../lib/submitToPayfast";
 import { formatPrice } from "../../../lib/money";
@@ -123,6 +123,8 @@ const OrderDetail = () => {
   const meta = STATUS_META[order.status] || { label: order.status, cls: "bg-surface-container-high text-on-surface-variant" };
   const readyToCollect = order.status === "ready_for_collection" || order.status === "paid";
   const isPending = order.status === "payment_pending";
+  // The reference + QR are the collection credential — only revealed once paid.
+  const revealed = readyToCollect || order.status === "collected";
 
   return (
     <div className="mx-auto max-w-[1000px]">
@@ -137,7 +139,7 @@ const OrderDetail = () => {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-on-surface sm:text-3xl">
-            {order.order_reference}
+            {revealed ? order.order_reference : "Your order"}
           </h1>
           <p className="mt-1 flex items-center gap-1.5 text-sm text-on-surface-variant">
             <MapPin size={15} aria-hidden="true" />
@@ -235,7 +237,8 @@ const OrderDetail = () => {
                       {item.product_name}
                     </p>
                     <p className="text-sm text-on-surface-variant">
-                      {item.listing_type} · {item.reference_number}
+                      {item.listing_type}
+                      {revealed ? ` · ${item.reference_number}` : ""}
                     </p>
                   </div>
                   <p className="shrink-0 font-semibold text-on-surface">
@@ -264,30 +267,38 @@ const OrderDetail = () => {
 
         <aside className="h-fit rounded-2xl border border-outline-variant bg-surface p-6 text-center lg:sticky lg:top-24">
           <h2 className="text-lg font-bold text-on-surface">Collection pass</h2>
-          <p className="mt-1 text-sm text-on-surface-variant">
-            {readyToCollect
-              ? "Show this at the school to collect."
-              : "Available once payment is confirmed."}
-          </p>
-          <div
-            className={`mx-auto mt-5 w-fit rounded-2xl border border-outline-variant bg-white p-4 ${
-              readyToCollect ? "" : "opacity-40"
-            }`}
-          >
-            <QRCodeSVG
-              value={order.order_reference}
-              size={168}
-              fgColor="#17150f"
-              bgColor="#ffffff"
-              aria-label={`QR code for ${order.order_reference}`}
-            />
-          </div>
-          <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
-            Reference
-          </p>
-          <p className="text-lg font-bold tracking-wide text-on-surface">
-            {order.order_reference}
-          </p>
+          {revealed ? (
+            <>
+              <p className="mt-1 text-sm text-on-surface-variant">
+                Show this at the school to collect.
+              </p>
+              <div className="mx-auto mt-5 w-fit rounded-2xl border border-outline-variant bg-white p-4">
+                <QRCodeSVG
+                  value={order.order_reference}
+                  size={168}
+                  fgColor="#17150f"
+                  bgColor="#ffffff"
+                  aria-label={`QR code for ${order.order_reference}`}
+                />
+              </div>
+              <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
+                Reference
+              </p>
+              <p className="text-lg font-bold tracking-wide text-on-surface">
+                {order.order_reference}
+              </p>
+            </>
+          ) : (
+            <div className="mt-5 flex flex-col items-center gap-3 py-6">
+              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant">
+                <Lock size={24} aria-hidden="true" />
+              </span>
+              <p className="max-w-[15rem] text-sm text-on-surface-variant">
+                Your collection reference and QR code unlock here once your
+                payment is confirmed.
+              </p>
+            </div>
+          )}
         </aside>
       </div>
     </div>
