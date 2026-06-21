@@ -169,6 +169,15 @@ step 3): `html5-qrcode@^2.3.8` + `components/shared/QrScanner.jsx` — a camera 
 decodes the buyer's pass (plain `order_reference`) and calls `loadReference()`. Collections page
 got a "Scan" button next to Verify. NB camera needs HTTPS in prod (works on localhost in dev).
 **No old teal/gray utilities remain anywhere in school-admin src.** Lint clean, build passes.
+4 ✅ Orders list + detail — backend: `listSchoolOrders` gained `q` (ILIKE ref/name/email) +
+`limit`/`offset` pagination (only paginates when `limit` present, so `useReadyOrders`/dashboard
+keep getting all rows) + returns `{orders, total}`; new `GET /school/orders/:orderReference`
+(`getOrderDetail`, reuses `fetchScopedOrder`). Frontend `features/orders` (api/hooks/pages +
+`lib/orderStatus.js` shared STATUS_TONE/formatStatus/ORDER_STATUSES): `OrdersPage` = debounced
+search + status filter + paginated table (added `components/shared/Pagination` + `lib/useDebouncedValue`),
+rows link to `OrderDetailPage` (items, buyer/payment/dates sidebar, collect action). `useMarkCollected`
+now also invalidates `school-orders`/`school-order`. Mounted `ToastContainer` in main.jsx (detail
+page uses toast). Sidebar gained Orders. Lint clean, build passes, backend syntax-checked.
 
 
 **ACTIVE: Customer UI/UX redesign on branch `frontend-redesign`** (off

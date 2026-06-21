@@ -91,7 +91,9 @@ const getDashboardStats = async (req, res) => {
   }
 };
 
-// GET /api/school/orders?status= — this school's orders, newest first.
+// GET /api/school/orders?status=&q=&limit=&offset= — this school's orders,
+// newest first. Pagination is applied only when `limit` is supplied, so callers
+// that just want the full ready-list (no limit) keep getting every row.
 const listSchoolOrders = async (req, res) => {
   try {
     const values = [req.user.institution_id];
@@ -100,6 +102,25 @@ const listSchoolOrders = async (req, res) => {
     if (req.query.status) {
       values.push(req.query.status);
       where += ` AND co.status = $${values.length}`;
+    }
+
+    if (req.query.q) {
+      values.push(`%${req.query.q}%`);
+      const idx = values.length;
+      where += ` AND (co.order_reference ILIKE $${idx} OR co.user_full_name ILIKE $${idx} OR co.user_email ILIKE $${idx})`;
+    }
+
+    const countResult = await pool.query(
+      `SELECT COUNT(*)::int AS total FROM collection_orders co WHERE ${where}`,
+      values,
+    );
+
+    let pagination = "";
+    if (req.query.limit) {
+      values.push(Number(req.query.limit));
+      pagination += ` LIMIT $${values.length}`;
+      values.push(Number(req.query.offset) || 0);
+      pagination += ` OFFSET $${values.length}`;
     }
 
     const result = await pool.query(
@@ -115,15 +136,35 @@ const listSchoolOrders = async (req, res) => {
        FROM collection_orders co
        LEFT JOIN payments p ON p.collection_order_id = co.id
        WHERE ${where}
-       ORDER BY co.created_at DESC`,
+       ORDER BY co.created_at DESC${pagination}`,
       values,
     );
 
-    return res.json({ orders: result.rows });
+    return res.json({ orders: result.rows, total: countResult.rows[0].total });
   } catch (error) {
     return res
       .status(500)
       .json({ message: "Failed to fetch orders", error: error.message });
+  }
+};
+
+// GET /api/school/orders/:orderReference — full order (buyer, items, payment).
+const getOrderDetail = async (req, res) => {
+  try {
+    const order = await fetchScopedOrder(
+      req.user.institution_id,
+      req.params.orderReference,
+    );
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    return res.json({ order });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Failed to load order", error: error.message });
   }
 };
 
@@ -249,4 +290,10 @@ const markCollected = async (req, res) => {
   }
 };
 
-export { getDashboardStats, listSchoolOrders, lookupByReference, markCollected };
+export {
+  getDashboardStats,
+  listSchoolOrders,
+  getOrderDetail,
+  lookupByReference,
+  markCollected,
+};

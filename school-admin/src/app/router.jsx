@@ -4,6 +4,8 @@ import ProtectedRoute from "../features/auth/components/ProtectedRoute";
 import SchoolLayout from "../layout/SchoolLayout";
 import DashboardPage from "../features/dashboard/pages/DashboardPage";
 import CollectionsPage from "../features/collections/pages/CollectionsPage";
+import OrdersPage from "../features/orders/pages/OrdersPage";
+import OrderDetailPage from "../features/orders/pages/OrderDetailPage";
 import NotFound from "../pages/NotFound";
 
 const router = createBrowserRouter([
@@ -20,6 +22,8 @@ const router = createBrowserRouter([
         children: [
           { index: true, element: <DashboardPage /> },
           { path: "collections", element: <CollectionsPage /> },
+          { path: "orders", element: <OrdersPage /> },
+          { path: "orders/:orderReference", element: <OrderDetailPage /> },
         ],
       },
     ],

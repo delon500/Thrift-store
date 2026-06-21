@@ -2,6 +2,7 @@ import express from "express";
 import {
   getDashboardStats,
   listSchoolOrders,
+  getOrderDetail,
   lookupByReference,
   markCollected,
 } from "../controllers/schoolController.js";
@@ -13,6 +14,7 @@ schoolRouter.use(protect, allowRoles("school", "university"));
 schoolRouter.get("/dashboard", getDashboardStats);
 schoolRouter.get("/orders", listSchoolOrders);
 schoolRouter.get("/lookup", lookupByReference);
+schoolRouter.get("/orders/:orderReference", getOrderDetail);
 schoolRouter.patch("/orders/:orderReference/collect", markCollected);
 
 export default schoolRouter;

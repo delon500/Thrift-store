@@ -1,11 +1,18 @@
 import { NavLink } from "react-router-dom";
-import { ShoppingBag, LayoutDashboard, PackageCheck, LogOut } from "lucide-react";
+import {
+  ShoppingBag,
+  LayoutDashboard,
+  PackageCheck,
+  ClipboardList,
+  LogOut,
+} from "lucide-react";
 import useAuthStore from "../../features/auth/store/authStore";
 
-// Nav items grow as each step lands (Orders, History, Account…).
+// Nav items grow as each step lands (History, Account…).
 const NAV = [
   { to: "/school", label: "Dashboard", Icon: LayoutDashboard, end: true },
   { to: "/school/collections", label: "Collections", Icon: PackageCheck },
+  { to: "/school/orders", label: "Orders", Icon: ClipboardList },
 ];
 
 const linkClass = ({ isActive }) =>
