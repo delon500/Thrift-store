@@ -1,18 +1,26 @@
-import React from "react";
-
-const RoleCard = ({ active, onClick, label, desc }) => {
+const RoleCard = ({ active, onClick, label, desc, icon: Icon }) => {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`text-left rounded-2xl border-2 p-4 transition-all cursor-pointer ${
+      aria-pressed={active}
+      className={`flex items-start gap-3 rounded-xl border p-3 text-left transition-colors ${
         active
-          ? "border-primary bg-primary-container/40 shadow-md"
-          : "border-surface-container-high bg-white hover:border-primary/40"
+          ? "border-primary bg-primary-container/40"
+          : "border-outline-variant bg-surface hover:border-primary/50"
       }`}
     >
-      <div className="font-semibold text-on-surface">{label}</div>
-      <div className="text-sm text-on-surface-variant mt-1">{desc}</div>
+      {Icon ? (
+        <Icon
+          size={18}
+          className={active ? "text-primary" : "text-on-surface-variant"}
+          aria-hidden="true"
+        />
+      ) : null}
+      <span className="min-w-0">
+        <span className="block font-semibold text-on-surface">{label}</span>
+        <span className="block text-xs text-on-surface-variant">{desc}</span>
+      </span>
     </button>
   );
 };

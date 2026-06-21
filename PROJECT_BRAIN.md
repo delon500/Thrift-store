@@ -118,7 +118,12 @@ restyled PayFast method radios + return/confirm states; shared `lib/money.js` `f
 `/orders/:orderReference` ([OrderDetail], route added) — vertical **status stepper**
 (placed→paid→ready→collected, with failed/cancelled), **QR code** of the reference
 (`qrcode.react`), items, totals, resume-payment. Added `useMyOrder` (polls while pending) +
-shared `orders/lib/submitToPayfast.js`. 5 ⬜ Auth pages. 6 ⬜ New pages ("How collection
+shared `orders/lib/submitToPayfast.js`. 5 ✅ Auth pages — split-screen `AuthPage` (emerald brand panel + value props, login/register
+tabs), restyled `LoginForm`/`RegisterForm`/`RoleCard`/`Input` (clean lucide inputs, sentence
+case, fixed duplicate `name` props + removed a stray console.log). **DECISION:** staff/admin
+stay **invite-only** (super_admin creates them via `registerAdmin`) — public self-registration
+is only parent/student/school/university (privilege-escalation risk otherwise). 6 ⬜ New
+pages ("How collection
 works", restyle Wishlist). 7 ⬜ Cleanup (delete PNG assets + old `ProductCard`, finish token
 migration, a11y/QA). NB other pages still use the old `--color-*`-named tokens (now holding
 new values) + raw teal in spots — they look recolored but not yet re-laid-out until migrated.
