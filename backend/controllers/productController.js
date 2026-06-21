@@ -300,7 +300,9 @@ const getProducts = async (req, res) => {
     );
 
     const imagesResult = await pool.query(
-      `SELECT product_id, image_url FROM product_images`,
+      `SELECT product_id, image_url
+       FROM product_images
+       ORDER BY product_id, sort_order`,
     );
 
     const grouped = imagesResult.rows.reduce((acc, img) => {
