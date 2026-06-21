@@ -134,6 +134,24 @@ COMPLETE on `admin-redesign`** — no PNG refs left, `eslint src` clean, build p
 NB `admin-redesign` is stacked on `frontend-redesign`; its PR diff is admin-only once that
 merges first (else it includes the customer redesign too).
 
+**ACTIVE: School-admin app build-out + redesign on branch `school-admin-redesign`** (stacked on
+`admin-redesign`). The app was minimally scaffolded (auth + one Collections page on old
+teal/gray styling; backend `school` routes: `GET /school/orders?status=`, `GET /school/lookup`,
+`PATCH /school/orders/:ref/collect`). Goal: a complete, redesigned staff app in the shared
+marketplace look. **Feature set:** Dashboard, Collections (+ QR scan), Orders list+detail,
+Collection history (+CSV), read-only Inventory (optional), Account, redesigned shell+login.
+**Step plan:** 1 Foundations+shell+login · 2 Dashboard (needs stats endpoint) · 3 Collections
+redesign + QR · 4 Orders list+detail (needs search/pagination + detail endpoint) · 5 History+export
+· 6 Inventory read-only (optional, needs endpoint) · 7 Account + final polish.
+1 ✅ Foundations + shell + login — `index.css` tokens → marketplace palette + focus ring;
+added `lucide-react@^1.21.0`; ported shared UI kit `components/shared/ui.jsx` (PageHeader,
+Badge, SummaryCard w/ optional Icon, Modal, input/table classes); built `Sidebar` (lucide,
+data-driven `NAV` array — Collections only for now, grows per step — + shared `SidebarNav`
+export + logout) and `Navbar` (sticky top + mobile drawer); rewrote `SchoolLayout`
+(canvas bg, sidebar+content); redesigned `LoginPage` as a split-screen (keeps the
+`school`/`university` role gate + inline error); branded `NotFound`. `eslint src` clean,
+build passes. NB CollectionsPage itself is still old teal/gray → redesigned in step 3.
+
 
 **ACTIVE: Customer UI/UX redesign on branch `frontend-redesign`** (off
 `payments-collection-flow`). Direction = **modern secondhand-marketplace** (warm canvas

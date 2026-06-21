@@ -1,29 +1,19 @@
 import { Outlet } from "react-router-dom";
-import useAuthStore from "../features/auth/store/authStore";
+import Sidebar from "../components/shared/Sidebar";
+import Navbar from "../components/shared/Navbar";
 
 const SchoolLayout = () => {
-  const user = useAuthStore((state) => state.user);
-  const logout = useAuthStore((state) => state.logout);
-
   return (
-    <div className="min-h-screen notebook-grid">
-      <header className="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4">
-        <div>
-          <h1 className="text-lg font-black text-teal-600">School Collections</h1>
-          <p className="text-xs text-gray-500">
-            {user?.institution_name || user?.full_name || "School staff"}
-          </p>
+    <div className="min-h-screen bg-background">
+      <div className="flex">
+        <Sidebar />
+        <div className="flex min-h-screen w-full min-w-0 flex-col">
+          <Navbar />
+          <main className="flex-1 px-4 py-6 sm:px-6">
+            <Outlet />
+          </main>
         </div>
-        <button
-          onClick={logout}
-          className="rounded-lg px-3 py-2 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50"
-        >
-          Logout
-        </button>
-      </header>
-      <main>
-        <Outlet />
-      </main>
+      </div>
     </div>
   );
 };
