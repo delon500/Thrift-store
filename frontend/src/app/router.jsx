@@ -11,9 +11,6 @@ import NotFoundPage from "../pages/NotFoundPage";
 // the login entry; each page loads on demand (Suspense fallback in PublicLayout).
 const HomePage = lazy(() => import("../pages/HomePage"));
 const Cart = lazy(() => import("../features/cart/pages/Cart"));
-const SellItemHomePage = lazy(
-  () => import("../features/sell/pages/SellItemHomePage"),
-);
 const WishlistPage = lazy(() => import("../features/wishlist/pages/WishlistPage"));
 const Product = lazy(() => import("../features/home/pages/Product"));
 const LostAndFound = lazy(() => import("../features/lostItems/pages/LostAndFound"));
@@ -43,7 +40,6 @@ const router = createBrowserRouter([
         children: [
           { path: "products", element: <HomePage /> },
           { path: "cart", element: <Cart /> },
-          { path: "sell", element: <SellItemHomePage /> },
           { path: "wishlist", element: <WishlistPage /> },
           { path: "products/:id", element: <Product /> },
           { path: "lost-found", element: <LostAndFound /> },

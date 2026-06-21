@@ -1,29 +1,33 @@
-import React from "react";
 import useAuthStore from "../../auth/store/authStore";
 import { useProductStore } from "../../products/store/productStore";
-import ProductCard from "../../home/components/ProductCard";
+import MarketProductCard from "../../home/components/MarketProductCard";
+import { useDocumentTitle } from "../../../lib/useDocumentTitle";
 
 const ThriftStore = () => {
+  useDocumentTitle("Thrift store");
   const user = useAuthStore((state) => state.user);
   const productData = useProductStore((state) => state.products);
-  const filteredProducts = Array.isArray(productData)
+  const filtered = Array.isArray(productData)
     ? productData.filter((product) => product.listing_type === "Thrift Store")
     : [];
-  return (
-    <div className="mt-3">
-      <div>
-        <h1 className="font-headline-lg text-headline-lg text-on-surface mb-4 hidden lg:block">
-          {user?.institution_name} Thrift Store
-        </h1>
-        <p className="font-body-lg text-label-caps text-outline max-w-2xl hidden lg:block">
-          Thrift Store products
-        </p>
-      </div>
 
-      <div className="mt-10">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 gap-y-6">
-          {filteredProducts.map((product) => (
-            <ProductCard
+  return (
+    <div className="mx-auto max-w-[1100px]">
+      <h1 className="text-2xl font-bold text-on-surface sm:text-3xl">
+        {user?.institution_name || "School"} thrift store
+      </h1>
+      <p className="mt-1 text-on-surface-variant">
+        Pre-loved uniforms, books, and gear at fair prices.
+      </p>
+
+      {filtered.length === 0 ? (
+        <p className="mt-10 text-on-surface-variant">
+          No thrift items available right now.
+        </p>
+      ) : (
+        <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+          {filtered.map((product) => (
+            <MarketProductCard
               key={product.id}
               id={product.id}
               image={product.image}
@@ -32,10 +36,11 @@ const ThriftStore = () => {
               schoolName={product.schoolName}
               schoolId={product.schoolId}
               listing_type={product.listing_type}
+              condition={product.condition}
             />
           ))}
         </div>
-      </div>
+      )}
     </div>
   );
 };

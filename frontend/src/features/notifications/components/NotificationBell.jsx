@@ -12,7 +12,7 @@ import { timeAgo } from "../lib/timeAgo";
 const TYPE_ACCENT = {
   order_ready: "bg-primary",
   payment_failed: "bg-error",
-  registration_approved: "bg-green-500",
+  registration_approved: "bg-primary",
 };
 
 const NotificationBell = () => {
