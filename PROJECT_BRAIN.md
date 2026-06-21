@@ -122,7 +122,10 @@ Institutions uses `Badge` tones. NB after the recolor the tables already matched
 classes, so no per-table rewrite was needed. 4 ✅ Forms — all 5 Register* pages + AddItems + the two hub pages
 (RegisterUsersHomePage, ItemManagementHomePage) now use the shared `PageHeader` (forms were
 already token-recolored + in card wrappers). AddItems still imports the PNG `icons`/`images`
-for its upload UI + the hub `CardActions` use PNG icons → handled in step 6. 5 ⬜ Auth + Account + Settings + Notifications + Registrations + Reports.
+for its upload UI + the hub `CardActions` use PNG icons → handled in step 6. 5 ✅ Auth + Account + Settings + Notifications + Registrations + Reports — admin AuthPage
+rebuilt as a split-screen (emerald brand panel + value props) with a cleaned-up `LoginForm`
+(removed console.log, token inputs, loading state); all remaining pages (+ RegisteredUsers
+hub) on the shared `PageHeader`. **Every admin page now uses PageHeader.**
 6 ⬜ Cleanup (PNG assets, dead code, finish tokens). lucide-react installed in admin.
 
 

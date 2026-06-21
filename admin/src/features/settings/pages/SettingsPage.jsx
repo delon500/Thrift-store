@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { useSettings, useUpdateSettings } from "../hooks/useSettings";
+import { PageHeader } from "../../../components/shared/ui";
 import { useMe } from "../../auth/hook/useAuth";
 
 const SettingsPage = () => {
@@ -76,13 +77,11 @@ const SettingsPage = () => {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-2xl p-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-black text-primary">Settings</h1>
-        <p className="text-sm font-medium text-on-surface-variant">
-          Platform-wide checkout configuration.
-        </p>
-      </div>
+    <form onSubmit={handleSubmit} className="max-w-2xl">
+      <PageHeader
+        title="Settings"
+        subtitle="Platform-wide checkout configuration."
+      />
 
       {!canEdit ? (
         <p className="mt-4 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-700">

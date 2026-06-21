@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMe } from "../../auth/hook/useAuth";
 import { useChangePassword, useUpdateMe } from "../hooks/useAccount";
+import { PageHeader } from "../../../components/shared/ui";
 
 const formatDate = (value) =>
   value ? new Date(value).toLocaleDateString(undefined, { dateStyle: "long" }) : "—";
@@ -87,15 +88,13 @@ const AccountPage = () => {
     "rounded-lg border border-outline-variant px-3 py-2 text-sm outline-none focus:border-primary";
 
   return (
-    <div className="p-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-black text-primary">Account</h1>
-        <p className="text-sm font-medium text-on-surface-variant">
-          Manage your profile, password, and platform details.
-        </p>
-      </div>
+    <div>
+      <PageHeader
+        title="Account"
+        subtitle="Manage your profile, password, and platform details."
+      />
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         {/* Profile */}
         <form
           onSubmit={handleProfileSave}

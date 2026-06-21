@@ -4,6 +4,7 @@ import {
   useRegistrations,
   useRejectRegistration,
 } from "../hooks/useRegistrations";
+import { PageHeader } from "../../../components/shared/ui";
 
 const roleStyles = {
   student: "bg-primary-container text-on-primary-container",
@@ -44,13 +45,11 @@ const RegistrationRequests = () => {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-black text-primary">Registration Requests</h1>
-        <p className="text-sm font-medium text-on-surface-variant">
-          Approve or reject people who signed up and are waiting to access the app.
-        </p>
-      </div>
+    <div>
+      <PageHeader
+        title="Registration requests"
+        subtitle="Approve or reject people who signed up and are waiting to access the app."
+      />
 
       {isError ? (
         <p className="mt-4 text-sm font-semibold text-red-600">

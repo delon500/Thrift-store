@@ -1,19 +1,16 @@
 import CardActions from "../../../components/shared/CardActions";
 import { registered_user_action_card } from "../../../data/data";
+import { PageHeader } from "../../../components/shared/ui";
 
 const RegisteredUsersHomePage = () => {
   return (
-    <div className="mt-3">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-sm sm:text-2xl font-black text-primary">
-          Registered Users
-        </h1>
-        <p className="text-sm font-medium text-on-surface-variant">
-          Browse everyone registered on the platform, grouped by type.
-        </p>
-      </div>
+    <div>
+      <PageHeader
+        title="Registered users"
+        subtitle="Browse everyone registered on the platform, grouped by type."
+      />
 
-      <div className="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter mb-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter mb-12">
         {registered_user_action_card.map((action, index) => (
           <CardActions
             key={index}

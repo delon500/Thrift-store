@@ -5,6 +5,7 @@ import {
   useNotifications,
 } from "../hooks/useNotifications";
 import { timeAgo } from "../lib/timeAgo";
+import { PageHeader } from "../../../components/shared/ui";
 
 const TYPE_ACCENT = {
   registration_pending: "bg-blue-500",
@@ -26,14 +27,11 @@ const NotificationsPage = () => {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-black text-primary">Notifications</h1>
-          <p className="text-sm font-medium text-on-surface-variant">
-            New registrations to approve and payments to investigate.
-          </p>
-        </div>
+    <div>
+      <PageHeader
+        title="Notifications"
+        subtitle="New registrations to approve and payments to investigate."
+      >
         {unread > 0 ? (
           <button
             type="button"
@@ -43,7 +41,7 @@ const NotificationsPage = () => {
             Mark all read
           </button>
         ) : null}
-      </div>
+      </PageHeader>
 
       <div className="mt-6 overflow-hidden rounded-xl border border-outline-variant bg-white">
         {isLoading ? (

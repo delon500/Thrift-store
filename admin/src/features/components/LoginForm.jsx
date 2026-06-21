@@ -4,90 +4,71 @@ import { toast } from "react-toastify";
 import useAuthStore from "../auth/store/authStore";
 import { useLogin } from "../auth/hook/useAuth";
 
+const inputClass =
+  "w-full rounded-xl border border-outline-variant bg-surface px-4 py-3 text-sm text-on-surface outline-none focus:border-primary";
+
+const Field = ({ label, children }) => (
+  <div>
+    <label className="mb-1.5 block text-sm font-semibold text-on-surface-variant">
+      {label}
+    </label>
+    {children}
+  </div>
+);
+
 const LoginForm = () => {
   const setAuth = useAuthStore((state) => state.setAuth);
-  const token = useAuthStore((state) => state.token);
   const loginMutation = useLogin();
-  console.log(token);
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
   const navigate = useNavigate();
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+  const [formData, setFormData] = useState({ email: "", password: "" });
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     try {
       const data = await loginMutation.mutateAsync(formData);
       setAuth(data);
-
       toast.success("Login successful");
       navigate("/admin");
     } catch (error) {
       toast.error(error?.response?.data?.message || "Login failed");
     }
   };
+
   return (
-    <form
-      className="border border-outline-variant p-6 sm:p-10 lg:p-20 flex flex-col justify-center bg-white"
-      onSubmit={handleSubmit}
-    >
-      <div className="flex flex-col gap-2">
-        <h1 className="text-center font-bold text-primary text-lg">
-          Thrift School
-        </h1>
-        <span className="text-md font-normal text-center">
-          Administrator Portal
-        </span>
-      </div>
-
-      {/* Inputs */}
-
-      <div className="mt-6 flex flex-col gap-4">
-        <div className="space-y-1">
-          <label className="block text-sm font-semibold text-slate-600 mb-2 ml-1">
-            EMAIL
-          </label>
-          <input
-            type="email"
-            name="email"
-            placeholder="admin@example.com"
-            value={formData.email}
-            onChange={handleChange}
-            className="w-full rounded-md border-2 px-4 py-3 text-sm border-outline-variant placeholder:text-slate-400 border-surface-container-high focus:border-primary"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <div className="flex justify-between mb-2 px-1">
-            <label className="text-sm font-semibold text-slate-600">
-              PASSWORD
-            </label>{" "}
-          </div>
-
-          <input
-            name="password"
-            type="password"
-            placeholder="••••••••"
-            value={formData.password}
-            onChange={handleChange}
-            className="w-full rounded-md border-2 px-4 py-3 text-sm border-outline-variant placeholder:text-slate-400 border-surface-container-high focus:border-primary"
-          />
-        </div>
-      </div>
-
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <Field label="Email">
+        <input
+          type="email"
+          name="email"
+          placeholder="admin@example.com"
+          value={formData.email}
+          onChange={handleChange}
+          aria-label="Email"
+          className={inputClass}
+        />
+      </Field>
+      <Field label="Password">
+        <input
+          type="password"
+          name="password"
+          placeholder="••••••••"
+          value={formData.password}
+          onChange={handleChange}
+          aria-label="Password"
+          className={inputClass}
+        />
+      </Field>
       <button
         type="submit"
-        className="bg-primary py-2 px-5 w-full mt-6 text-white text-sm shadow-md rounded-md"
+        disabled={loginMutation.isPending}
+        className="w-full rounded-full bg-primary py-3.5 font-semibold text-on-primary transition-colors hover:bg-on-primary-container disabled:opacity-60"
       >
-        Login
+        {loginMutation.isPending ? "Signing in..." : "Sign in"}
       </button>
     </form>
   );

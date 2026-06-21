@@ -6,6 +6,7 @@ import { getUsersByRole } from "../../registeredUsers/api/registeredUsersApi";
 import { getAdminProducts } from "../../inventory/api/inventoryApi";
 import { getPayments } from "../../payments/api/paymentsApi";
 import { downloadCsv, toCsv } from "../lib/csv";
+import { PageHeader } from "../../../components/shared/ui";
 
 const REPORTS = [
   {
@@ -99,15 +100,13 @@ const ReportsPage = () => {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-black text-primary">Reports</h1>
-        <p className="text-sm font-medium text-on-surface-variant">
-          Download CSV exports you can open in Excel or Google Sheets.
-        </p>
-      </div>
+    <div>
+      <PageHeader
+        title="Reports"
+        subtitle="Download CSV exports you can open in Excel or Google Sheets."
+      />
 
-      <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
         {REPORTS.map((report) => (
           <div
             key={report.key}
