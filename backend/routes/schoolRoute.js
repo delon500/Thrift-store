@@ -3,6 +3,7 @@ import {
   getDashboardStats,
   listSchoolOrders,
   getOrderDetail,
+  getSchoolProducts,
   lookupByReference,
   markCollected,
 } from "../controllers/schoolController.js";
@@ -12,6 +13,7 @@ const schoolRouter = express.Router();
 
 schoolRouter.use(protect, allowRoles("school", "university"));
 schoolRouter.get("/dashboard", getDashboardStats);
+schoolRouter.get("/products", getSchoolProducts);
 schoolRouter.get("/orders", listSchoolOrders);
 schoolRouter.get("/lookup", lookupByReference);
 schoolRouter.get("/orders/:orderReference", getOrderDetail);

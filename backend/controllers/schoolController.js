@@ -302,10 +302,88 @@ const markCollected = async (req, res) => {
   }
 };
 
+// GET /api/school/products?q=&status=&limit=&offset= — this school's own listed
+// items (read-only), newest first, with images. Pagination only when `limit` set.
+const getSchoolProducts = async (req, res) => {
+  try {
+    const values = [req.user.institution_id];
+    let where = "p.institution_id = $1";
+
+    if (req.query.status) {
+      values.push(req.query.status);
+      where += ` AND p.status = $${values.length}`;
+    }
+
+    if (req.query.q) {
+      values.push(`%${req.query.q}%`);
+      const idx = values.length;
+      where += ` AND (p.name ILIKE $${idx} OR p.reference_number ILIKE $${idx} OR p.category ILIKE $${idx})`;
+    }
+
+    const countResult = await pool.query(
+      `SELECT COUNT(*)::int AS total FROM products p WHERE ${where}`,
+      values,
+    );
+
+    let pagination = "";
+    if (req.query.limit) {
+      values.push(Number(req.query.limit));
+      pagination += ` LIMIT $${values.length}`;
+      values.push(Number(req.query.offset) || 0);
+      pagination += ` OFFSET $${values.length}`;
+    }
+
+    const result = await pool.query(
+      `SELECT
+        p.id,
+        p.name,
+        p.reference_number,
+        p.price::text AS price,
+        p.status,
+        p.category,
+        p."condition",
+        p.listing_type,
+        p.created_at
+       FROM products p
+       WHERE ${where}
+       ORDER BY p.created_at DESC${pagination}`,
+      values,
+    );
+
+    const ids = result.rows.map((row) => row.id);
+    let grouped = {};
+    if (ids.length > 0) {
+      const images = await pool.query(
+        `SELECT product_id, image_url
+         FROM product_images
+         WHERE product_id = ANY($1::uuid[])
+         ORDER BY product_id, sort_order ASC`,
+        [ids],
+      );
+      grouped = images.rows.reduce((acc, img) => {
+        (acc[img.product_id] ||= []).push(img.image_url);
+        return acc;
+      }, {});
+    }
+
+    const products = result.rows.map((row) => ({
+      ...row,
+      image: grouped[row.id] || [],
+    }));
+
+    return res.json({ products, total: countResult.rows[0].total });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Failed to load products", error: error.message });
+  }
+};
+
 export {
   getDashboardStats,
   listSchoolOrders,
   getOrderDetail,
+  getSchoolProducts,
   lookupByReference,
   markCollected,
 };

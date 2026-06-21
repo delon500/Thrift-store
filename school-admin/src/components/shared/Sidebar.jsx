@@ -5,6 +5,7 @@ import {
   PackageCheck,
   ClipboardList,
   History,
+  Boxes,
   LogOut,
 } from "lucide-react";
 import useAuthStore from "../../features/auth/store/authStore";
@@ -15,6 +16,7 @@ const NAV = [
   { to: "/school/collections", label: "Collections", Icon: PackageCheck },
   { to: "/school/orders", label: "Orders", Icon: ClipboardList },
   { to: "/school/history", label: "History", Icon: History },
+  { to: "/school/inventory", label: "Inventory", Icon: Boxes },
 ];
 
 const linkClass = ({ isActive }) =>

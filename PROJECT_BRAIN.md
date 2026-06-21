@@ -184,6 +184,13 @@ and accepts `collectedFrom`/`collectedTo` (filter `collected_at::date`). Fronten
 with `status=collected` + date range + search + pagination) with an **Export CSV** that fetches
 ALL matching rows (no limit) and downloads. `getOrders` passes the date params. Router `/school/history`
 + Sidebar History item. Lint clean, build passes, backend syntax-checked.
+6 ✅ Inventory (read-only) — backend `GET /school/products` (`getSchoolProducts`): institution-scoped
+products with q/status filters + limit/offset pagination + cover images (mirrors admin product
+shape), returns `{products, total}`. Frontend `features/inventory` (api/hook/page): `InventoryPage`
+= responsive card grid (image, name, reference, listing_type, product-status `Badge`, condition,
+price) + debounced search + product_status filter + pagination. Router `/school/inventory` +
+Sidebar Inventory item. Read-only (no edit/delete — that stays in the platform admin app). Lint
+clean, build passes, backend syntax-checked.
 
 
 **ACTIVE: Customer UI/UX redesign on branch `frontend-redesign`** (off
