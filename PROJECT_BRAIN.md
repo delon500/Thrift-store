@@ -257,6 +257,14 @@ a dead tunnel).
   testing (dev DB 2→1 parents); ORD-2026-000002 was wrongly cancelled then reverted.
 - The backend dev server is currently run via a Claude-started background process
   (the user's `npm run dev` had closed) — stop it before starting your own (port 5000).
+- **PayFast method selection (Option A, decided):** the customer chooses card/EFT/etc. **on
+  PayFast's hosted page**, not on our site. The checkout is now a single "Continue to PayFast"
+  button (auto-redirects via `submitToPayfast`); accepted methods are shown as info only. The
+  frontend still sends `payment_method = paymentMethods[0].id` purely to satisfy the API —
+  it does NOT constrain PayFast (we don't send PayFast's `payment_method` field; `custom_str1`
+  is just a passthrough). So `payments.payment_method` is cosmetic/approximate. (Option B —
+  pre-select by sending PayFast's `payment_method` code — was declined.) Also: the catalog
+  product images are now ordered by `sort_order` so image 1 is the cover.
 - **PayFast (local dev) — recurring:** the ITN needs a public URL; a **cloudflared
   tunnel** proxies PayFast→localhost:5000 and `PAYFAST_NOTIFY_URL` must point at the
   *current* tunnel + `/api/payments/payfast/itn`. `trycloudflare` quick-tunnels are
