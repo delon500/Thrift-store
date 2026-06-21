@@ -29,6 +29,7 @@ const Footer = () => {
               <li><Link to="/products" className={linkClass}>Browse all</Link></li>
               <li><Link to="/thrift-store" className={linkClass}>Thrift store</Link></li>
               <li><Link to="/lost-found" className={linkClass}>Lost &amp; found</Link></li>
+              <li><Link to="/how-it-works" className={linkClass}>How it works</Link></li>
             </ul>
           </div>
 
@@ -48,6 +49,12 @@ const Footer = () => {
               <li>2. Get a reference number</li>
               <li>3. Collect it at your school</li>
             </ol>
+            <Link
+              to="/how-it-works"
+              className="mt-3 inline-block text-sm font-semibold text-primary hover:underline"
+            >
+              Learn more
+            </Link>
           </div>
         </div>
 

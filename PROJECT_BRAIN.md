@@ -122,9 +122,9 @@ shared `orders/lib/submitToPayfast.js`. 5 ✅ Auth pages — split-screen `AuthP
 tabs), restyled `LoginForm`/`RegisterForm`/`RoleCard`/`Input` (clean lucide inputs, sentence
 case, fixed duplicate `name` props + removed a stray console.log). **DECISION:** staff/admin
 stay **invite-only** (super_admin creates them via `registerAdmin`) — public self-registration
-is only parent/student/school/university (privilege-escalation risk otherwise). 6 ⬜ New
-pages ("How collection
-works", restyle Wishlist). 7 ⬜ Cleanup (delete PNG assets + old `ProductCard`, finish token
+is only parent/student/school/university (privilege-escalation risk otherwise). 6 ✅ New
+pages — NEW `/how-it-works` ([HowItWorks], 4 steps + FAQ, footer-linked); Wishlist restyled
+(MarketProductCard + rich empty state). 7 ⬜ Cleanup (delete PNG assets + old `ProductCard`, finish token
 migration, a11y/QA). NB other pages still use the old `--color-*`-named tokens (now holding
 new values) + raw teal in spots — they look recolored but not yet re-laid-out until migrated.
 

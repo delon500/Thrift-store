@@ -25,6 +25,7 @@ const OrderDetail = lazy(() => import("../features/orders/pages/OrderDetail"));
 const NotificationsPage = lazy(
   () => import("../features/notifications/pages/NotificationsPage"),
 );
+const HowItWorks = lazy(() => import("../features/info/pages/HowItWorks"));
 
 const router = createBrowserRouter([
   {
@@ -52,6 +53,7 @@ const router = createBrowserRouter([
           { path: "orders", element: <Orders /> },
           { path: "orders/:orderReference", element: <OrderDetail /> },
           { path: "notifications", element: <NotificationsPage /> },
+          { path: "how-it-works", element: <HowItWorks /> },
         ],
       },
     ],
