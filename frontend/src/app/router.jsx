@@ -21,6 +21,7 @@ const ThriftStore = lazy(() => import("../features/thriftStore/pages/ThriftStore
 const Settings = lazy(() => import("../features/settings/pages/Settings"));
 const Checkout = lazy(() => import("../features/checkout/pages/Checkout"));
 const Orders = lazy(() => import("../features/orders/pages/Orders"));
+const OrderDetail = lazy(() => import("../features/orders/pages/OrderDetail"));
 const NotificationsPage = lazy(
   () => import("../features/notifications/pages/NotificationsPage"),
 );
@@ -49,6 +50,7 @@ const router = createBrowserRouter([
           { path: "settings", element: <Settings /> },
           { path: "checkout", element: <Checkout /> },
           { path: "orders", element: <Orders /> },
+          { path: "orders/:orderReference", element: <OrderDetail /> },
           { path: "notifications", element: <NotificationsPage /> },
         ],
       },

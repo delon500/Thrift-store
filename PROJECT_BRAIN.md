@@ -114,8 +114,11 @@ PublicLayout (canvas), real Footer (was a stub), `MarketProductCard` + catalog (
 formatted price, image fallback, wishlist, related via `MarketProductCard`). 3 ✅ Cart +
 Checkout (rich empty states, sticky summary, `CartItems` row redesign, confirm-on-clear,
 restyled PayFast method radios + return/confirm states; shared `lib/money.js` `formatPrice`).
-4 ⬜ My Orders + NEW order/collection detail
-(status stepper + QR of the reference). 5 ⬜ Auth pages. 6 ⬜ New pages ("How collection
+4 ✅ My Orders (cards link to detail) + **NEW** order/collection detail page
+`/orders/:orderReference` ([OrderDetail], route added) — vertical **status stepper**
+(placed→paid→ready→collected, with failed/cancelled), **QR code** of the reference
+(`qrcode.react`), items, totals, resume-payment. Added `useMyOrder` (polls while pending) +
+shared `orders/lib/submitToPayfast.js`. 5 ⬜ Auth pages. 6 ⬜ New pages ("How collection
 works", restyle Wishlist). 7 ⬜ Cleanup (delete PNG assets + old `ProductCard`, finish token
 migration, a11y/QA). NB other pages still use the old `--color-*`-named tokens (now holding
 new values) + raw teal in spots — they look recolored but not yet re-laid-out until migrated.
