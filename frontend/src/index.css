@@ -2,54 +2,47 @@
 @import "tailwindcss";
 
 @theme {
-  /* COLORS */
-  --color-inverse-on-surface: #e2f4f3;
-  --color-on-secondary-container: #6d6400;
-  --color-background: #ebfdfc;
-  --color-secondary-fixed-dim: #d6c953;
-  --color-on-error: #ffffff;
-  --color-surface-container-highest: #d4e6e5;
-  --color-on-primary: #ffffff;
-  --color-surface-dim: #ccdedd;
-  --color-on-primary-container: #00433f;
+  /* COLORS — marketplace palette (warm canvas, emerald primary, coral accent) */
+  --color-background: #faf8f3;
+  --color-on-background: #17150f;
+  --color-surface: #ffffff;
+  --color-surface-bright: #ffffff;
+  --color-surface-dim: #efeae1;
+  --color-surface-variant: #efeae1;
   --color-surface-container-lowest: #ffffff;
-  --color-on-secondary: #ffffff;
-  --color-surface-container-high: #daeceb;
-  --color-surface: #ebfdfc;
-  --color-on-surface-variant: #3d4947;
-  --color-tertiary-fixed-dim: #ffb3ae;
-  --color-tertiary: #b3272a;
-  --color-secondary-container: #f0e269;
-  --color-outline-variant: #bdc9c6;
-  --color-outline: #6d7a77;
-  --color-on-secondary-fixed: #1f1c00;
-  --color-on-primary-fixed: #00201d;
-  --color-inverse-surface: #233333;
-  --color-error: #ba1a1a;
-  --color-primary-container: #4db6ac;
-  --color-on-tertiary: #ffffff;
-  --color-on-secondary-fixed-variant: #4e4800;
-  --color-surface-variant: #d4e6e5;
-  --color-on-tertiary-fixed: #410004;
-  --color-error-container: #ffdad6;
-  --color-surface-tint: #006a63;
-  --color-on-tertiary-fixed-variant: #910816;
-  --color-on-error-container: #93000a;
-  --color-on-surface: #0e1e1e;
-  --color-on-background: #0e1e1e;
-  --color-surface-container-low: #e5f7f6;
-  --color-primary: #006a63;
+  --color-surface-container-low: #f6f2ec;
+  --color-surface-container: #f1ece4;
+  --color-surface-container-high: #ece6dc;
+  --color-surface-container-highest: #e6e0d4;
+  --color-on-surface: #17150f;
+  --color-on-surface-variant: #6b655c;
+  --color-outline: #8a8478;
+  --color-outline-variant: #e8e3da;
+
+  --color-primary: #0f7a52;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #d9f0e4;
+  --color-on-primary-container: #0a5c3d;
+  --color-surface-tint: #0f7a52;
   --color-inverse-primary: #71d7cd;
-  --color-surface-bright: #ebfdfc;
-  --color-tertiary-fixed: #ffdad7;
-  --color-surface-container: #dff1f0;
-  --color-on-primary-fixed-variant: #00504a;
-  --color-tertiary-container: #ff8079;
-  --color-primary-fixed-dim: #71d7cd;
-  --color-primary-fixed: #8ef4e9;
-  --color-on-tertiary-container: #7e000f;
-  --color-secondary-fixed: #f3e56c;
-  --color-secondary: #686000;
+
+  --color-secondary: #6b655c;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #efeae1;
+  --color-on-secondary-container: #2c2a25;
+
+  --color-tertiary: #e8590c;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #fde3d3;
+  --color-on-tertiary-container: #7a2e05;
+
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+
+  --color-inverse-surface: #2c2a25;
+  --color-inverse-on-surface: #f6f2ec;
 
   /* RADIUS */
   --radius: 1rem;
@@ -116,11 +109,8 @@ body {
   vertical-align: middle;
 }
 .notebook-grid {
-  background-image: radial-gradient(#bdc9c6 0.5px, transparent 0.5px);
+  background-image: radial-gradient(#e3ddd1 0.5px, transparent 0.5px);
   background-size: 24px 24px;
-}
-.sticker-shadow {
-  filter: drop-shadow(4px 4px 0px rgba(0, 106, 99, 0.1));
 }
 .paper-curl {
   position: relative;
@@ -134,24 +124,24 @@ body {
   height: 0;
   border-style: solid;
   border-width: 0 0 20px 20px;
-  border-color: transparent transparent #d4e6e5 transparent;
+  border-color: transparent transparent #ece6dc transparent;
 }
 
 .paper-grid {
-  background-image: radial-gradient(#bdc9c6 1px, transparent 1px);
+  background-image: radial-gradient(#e3ddd1 1px, transparent 1px);
   background-size: 24px 24px;
 }
 .sticker-shadow {
-  filter: drop-shadow(4px 4px 0px rgba(0, 106, 99, 0.2));
+  filter: drop-shadow(4px 4px 0px rgba(15, 122, 82, 0.18));
 }
 .button-tactile {
-  box-shadow: 0 4px 0 0 #00433f;
+  box-shadow: 0 4px 0 0 #0a5c3d;
 }
 .button-tactile:active {
-  box-shadow: 0 0 0 0 #00433f;
+  box-shadow: 0 0 0 0 #0a5c3d;
   transform: translateY(4px);
 }
 .notebook-pattern {
-  background-image: radial-gradient(#bdc9c6 1px, transparent 1px);
+  background-image: radial-gradient(#e3ddd1 1px, transparent 1px);
   background-size: 24px 24px;
 }

@@ -71,7 +71,7 @@ const HomePage = () => {
   const hasActiveFilters = listingFilter || conditionFilter;
 
   return (
-    <div className="mt-3 rounded-3xl bg-[var(--mk-canvas)] p-4 sm:p-6">
+    <div className="mx-auto max-w-[1100px]">
       <header className="mb-6">
         <h1 className="text-2xl font-bold text-[var(--mk-ink)] sm:text-3xl">
           {user?.institution_name || "School"} thrift store

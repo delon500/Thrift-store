@@ -101,6 +101,22 @@ Four independently-run apps (no root `package.json` — install/run each separat
   `~/.claude/skills/persistent-project-memory-system/`.
 
 ## 6. Active work / status
+**ACTIVE: Customer UI/UX redesign on branch `frontend-redesign`** (off
+`payments-collection-flow`). Direction = **modern secondhand-marketplace** (warm canvas
+`#faf8f3`, emerald primary `#0f7a52`, coral accent `#e8590c`; `--mk-*` vars in `index.css`
++ the core `@theme` color tokens remapped to this palette app-wide). Using **lucide-react**
+for icons (installed) — moving off the PNG `assets/icon/icons.js` (user OK'd deleting them in
+the final cleanup step). User reviews each step before the next. **Step plan:**
+1 ✅ Foundations + app shell — palette app-wide, lucide, redesigned Navbar (full-width top
+bar, logo, search, cart/wishlist/bell/account), Sidebar (clean rail), mobile drawer,
+PublicLayout (canvas), real Footer (was a stub), `MarketProductCard` + catalog (`/products`).
+2 ⬜ Product detail page. 3 ⬜ Cart + Checkout. 4 ⬜ My Orders + NEW order/collection detail
+(status stepper + QR of the reference). 5 ⬜ Auth pages. 6 ⬜ New pages ("How collection
+works", restyle Wishlist). 7 ⬜ Cleanup (delete PNG assets + old `ProductCard`, finish token
+migration, a11y/QA). NB other pages still use the old `--color-*`-named tokens (now holding
+new values) + raw teal in spots — they look recolored but not yet re-laid-out until migrated.
+
+
 **Just done: Customer frontend "professionalism" pass (committed).** Branded 404
 ([NotFoundPage] real page + CTA, doubles as router errorElement), working **mobile nav**
 (filled the empty drawer in `Navbar` + shared `components/shared/navItems.js` now powering

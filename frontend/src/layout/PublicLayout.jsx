@@ -15,11 +15,11 @@ const PublicLayout = () => {
   }, [products, setProducts]);
 
   return (
-    <div className="min-h-screen notebook-grid">
-      <div className="flex w-full">
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <div className="mx-auto flex w-full max-w-[1400px]">
         <Sidebar />
-        <main className="px-0 sm:px-[1vw] md:px-[2vw] lg:px-[3vw] w-full">
-          <Navbar />
+        <main className="w-full min-w-0 px-4 py-6 sm:px-6">
           <Suspense fallback={<PageLoader />}>
             <Outlet />
           </Suspense>

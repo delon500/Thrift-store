@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
+import { Package, Settings, LogOut } from "lucide-react";
 import useAuthStore from "../../features/auth/store/authStore";
-import { icons } from "../../assets/icon/icons";
 
 const initialsOf = (name) =>
   (name || "")
@@ -63,8 +63,8 @@ const AccountMenu = () => {
             onClick={() => setOpen(false)}
             className="flex items-center gap-3 px-4 py-3 text-sm text-on-surface hover:bg-surface-container-low"
           >
-            <img src={icons.order_icon} alt="" className="h-5 w-5" />
-            My Orders
+            <Package size={18} aria-hidden="true" />
+            My orders
           </NavLink>
           <NavLink
             to="/settings"
@@ -72,7 +72,7 @@ const AccountMenu = () => {
             onClick={() => setOpen(false)}
             className="flex items-center gap-3 px-4 py-3 text-sm text-on-surface hover:bg-surface-container-low"
           >
-            <img src={icons.inactive_settings_icon} alt="" className="h-5 w-5" />
+            <Settings size={18} aria-hidden="true" />
             Settings
           </NavLink>
           <button
@@ -84,7 +84,7 @@ const AccountMenu = () => {
             }}
             className="flex w-full items-center gap-3 px-4 py-3 text-sm font-semibold text-error hover:bg-surface-container-low"
           >
-            <img src={icons.logout} alt="" className="h-5 w-5" />
+            <LogOut size={18} aria-hidden="true" />
             Logout
           </button>
         </div>
