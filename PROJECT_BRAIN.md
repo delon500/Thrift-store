@@ -201,6 +201,12 @@ Account item. Final sweep: only intentional `bg-black/40` modal scrims remain. *
 REDESIGN COMPLETE on `school-admin-redesign`** — full nav (Dashboard·Collections·Orders·History·
 Inventory·Account) on one design system; lint clean, build passes, 27 backend unit tests pass.
 
+**PRs OPENED (stacked, user merges; origin already contains `payments-collection-flow` so PR #8
+landed):** all 3 redesign branches pushed to `origin`. **#9** `frontend-redesign → main` (13 commits,
+customer redesign + 2 nav/bugfix), **#10** `admin-redesign → frontend-redesign` (7), **#11**
+`school-admin-redesign → admin-redesign` (8). Stacked bases keep each diff scoped — **after #9
+merges, retarget #10 to `main`; after #10, retarget #11 to `main`.** Repo `delon500/Thrift-store`.
+
 
 **ACTIVE: Customer UI/UX redesign on branch `frontend-redesign`** (off
 `payments-collection-flow`). Direction = **modern secondhand-marketplace** (warm canvas
