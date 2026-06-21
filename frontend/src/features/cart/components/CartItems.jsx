@@ -1,5 +1,11 @@
-import { icons } from "../../../assets/icon/icons";
-import { useProductStore } from "../../products/store/productStore.js";
+import { Trash2 } from "lucide-react";
+import { formatPrice } from "../../../lib/money";
+
+const FALLBACK =
+  "data:image/svg+xml;charset=utf-8," +
+  encodeURIComponent(
+    `<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='100%' height='100%' fill='%23f1efe8'/></svg>`,
+  );
 
 const CartItems = ({
   image,
@@ -10,66 +16,60 @@ const CartItems = ({
   referenceNumber,
   listingType,
   condition,
-  status,
   onClick,
   isRemoving,
 }) => {
-  const currency = useProductStore((state) => state.currency);
-
-  const imageSrc = Array.isArray(image) ? image[0] : image;
+  const imageSrc = (Array.isArray(image) ? image[0] : image) || FALLBACK;
 
   return (
-    <div className="bg-white rounded-lg p-6 flex flex-col sm:flex-row gap-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-2 border-teal-50 relative overflow-hidden">
+    <div className="flex gap-4 rounded-2xl border border-outline-variant bg-surface p-4">
       <img
-        className="w-full h-32 sm:w-24 sm:h-24 object-cover rounded-lg border-4 border-white shadow-md rotate-[-2deg]"
+        className="h-24 w-24 shrink-0 rounded-xl border border-outline-variant object-cover"
         alt={name}
         src={imageSrc}
+        loading="lazy"
+        onError={(event) => {
+          event.currentTarget.src = FALLBACK;
+        }}
       />
 
-      <div>
-        <h3 className="font-headline-md text-xl text-primary">{name}</h3>
-        <p className="text-on-surface-variant font-body-md">{schoolName}</p>
-        <p className="mt-2 text-xs font-bold uppercase text-outline">
-          Ref: {referenceNumber}
-        </p>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h3 className="truncate font-semibold text-on-surface">{name}</h3>
+            <p className="text-sm text-on-surface-variant">{schoolName}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClick}
+            aria-label="Remove from cart"
+            disabled={isRemoving}
+            className="shrink-0 rounded-full p-2 text-on-surface-variant transition-colors hover:bg-error-container/40 hover:text-error disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Trash2 size={18} aria-hidden="true" />
+          </button>
+        </div>
 
-        <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold">
-          <span className="rounded-full bg-surface-container-low px-3 py-1 text-primary">
+        <div className="mt-2 flex flex-wrap gap-1.5 text-xs font-semibold">
+          <span className="rounded-full bg-primary-container px-2.5 py-0.5 text-on-primary-container">
             {listingType}
           </span>
-          <span className="rounded-full bg-surface-container-low px-3 py-1 text-on-surface-variant">
-            {condition}
-          </span>
-          <span className="rounded-full bg-primary-fixed px-3 py-1 text-on-primary-fixed">
-            {status}
+          {condition ? (
+            <span className="rounded-full bg-surface-container-high px-2.5 py-0.5 text-on-surface-variant">
+              {condition}
+            </span>
+          ) : null}
+          <span className="rounded-full bg-surface-container-low px-2.5 py-0.5 text-on-surface-variant">
+            Ref: {referenceNumber}
           </span>
         </div>
 
-        <div className="flex items-center gap-4 mt-4">
-          <span className="font-headline-md text-2xl text-on-surface">
-            {currency}
-            {price}
+        <div className="mt-3 flex items-center justify-between">
+          <span className="text-lg font-bold text-on-surface">
+            {formatPrice(price)}
           </span>
-          <span className="text-sm text-on-surface-variant">
-            Qty: {quantity}
-          </span>
+          <span className="text-sm text-on-surface-variant">Qty {quantity}</span>
         </div>
-      </div>
-
-      <div className="absolute sm:top-4 sm:right-4 bottom-8 right-8">
-        <button
-          type="button"
-          onClick={onClick}
-          aria-label="Remove from cart"
-          disabled={isRemoving}
-          className="disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <img
-            src={icons.remove_icon}
-            alt=""
-            className="w-5 h-5 cursor-pointer"
-          />
-        </button>
       </div>
     </div>
   );
