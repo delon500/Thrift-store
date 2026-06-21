@@ -101,6 +101,20 @@ Four independently-run apps (no root `package.json` — install/run each separat
   `~/.claude/skills/persistent-project-memory-system/`.
 
 ## 6. Active work / status
+**ACTIVE: Admin app redesign on branch `admin-redesign`** (stacked on `frontend-redesign` so
+the working tree keeps the customer redesign; admin/ is otherwise the same on both). Same
+marketplace design language as the customer app (emerald `#0f7a52`, warm canvas `#faf8f3`,
+**lucide-react**, M3 tokens). User reviews each step. **Step plan:**
+1 ✅ Foundations + app shell — admin `index.css` tokens remapped to the marketplace palette +
+focus ring; `Sidebar` rebuilt (lucide, declarative groups/links, role-gated, logout) with a
+shared `SidebarNav` export; `Navbar` (sticky top bar + mobile drawer reusing `SidebarNav`);
+`AdminLayout` (canvas bg, sidebar+content, no notebook-grid); `NotificationBell` → lucide +
+tokens. 2 ⬜ Dashboard (AdminHome). 3 ⬜ Data-table list pages (RegisteredUsersList,
+Institutions, Payments, OrdersAndCollections, Inventory/ViewStore). 4 ⬜ Forms (Register*
++ AddItems). 5 ⬜ Auth + Account + Settings + Notifications + Registrations + Reports.
+6 ⬜ Cleanup (PNG assets, dead code, finish tokens). lucide-react installed in admin.
+
+
 **ACTIVE: Customer UI/UX redesign on branch `frontend-redesign`** (off
 `payments-collection-flow`). Direction = **modern secondhand-marketplace** (warm canvas
 `#faf8f3`, emerald primary `#0f7a52`, coral accent `#e8590c`; `--mk-*` vars in `index.css`

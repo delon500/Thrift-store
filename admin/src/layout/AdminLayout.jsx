@@ -1,31 +1,26 @@
-import React from "react";
 import Navbar from "../components/shared/Navbar";
 import Sidebar from "../components/shared/Sidebar";
 import { Navigate, Outlet } from "react-router-dom";
 import useAuthStore from "../features/auth/store/authStore";
-import AuthPage from "../features/auth/pages/AuthPage";
 
 const AdminLayout = () => {
   const token = useAuthStore((state) => state.token);
-  const isAuthenticated = Boolean(token);
 
-  if (!isAuthenticated) {
+  if (!token) {
     return <Navigate to="/" replace />;
   }
 
   return (
-    <div className="min-h-screen notebook-grid">
-      <>
-        <Navbar />
-        <hr />
-
-        <main className="flex w-full">
-          <Sidebar />
-          <div className="w-[70%] mx-auto ml-[max(5vw, 25px)] my-8 text-gray-600 text-base">
+    <div className="min-h-screen bg-background">
+      <div className="flex">
+        <Sidebar />
+        <div className="flex min-h-screen w-full min-w-0 flex-col">
+          <Navbar />
+          <main className="flex-1 px-4 py-6 sm:px-6">
             <Outlet />
-          </div>
-        </main>
-      </>
+          </main>
+        </div>
+      </div>
     </div>
   );
 };
