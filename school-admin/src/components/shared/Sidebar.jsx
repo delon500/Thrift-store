@@ -6,17 +6,18 @@ import {
   ClipboardList,
   History,
   Boxes,
+  CircleUser,
   LogOut,
 } from "lucide-react";
 import useAuthStore from "../../features/auth/store/authStore";
 
-// Nav items grow as each step lands (Account…).
 const NAV = [
   { to: "/school", label: "Dashboard", Icon: LayoutDashboard, end: true },
   { to: "/school/collections", label: "Collections", Icon: PackageCheck },
   { to: "/school/orders", label: "Orders", Icon: ClipboardList },
   { to: "/school/history", label: "History", Icon: History },
   { to: "/school/inventory", label: "Inventory", Icon: Boxes },
+  { to: "/school/account", label: "Account", Icon: CircleUser },
 ];
 
 const linkClass = ({ isActive }) =>

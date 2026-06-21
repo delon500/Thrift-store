@@ -191,6 +191,15 @@ shape), returns `{products, total}`. Frontend `features/inventory` (api/hook/pag
 price) + debounced search + product_status filter + pagination. Router `/school/inventory` +
 Sidebar Inventory item. Read-only (no edit/delete — that stays in the platform admin app). Lint
 clean, build passes, backend syntax-checked.
+7 ✅ Account + final polish — account endpoints (`GET/PATCH /api/users/me`,
+`PATCH /api/users/me/password`) are gated only by `protect`, so school/university roles use them
+as-is (no backend change). Added `getMe`+`useMe` (auth), `setUser` (authStore, keeps navbar/sidebar
+name fresh), `features/account` (api/hooks/page mirroring admin): `AccountPage` = editable
+full_name/contact_number (email/institution read-only) + change-password, render-time form sync
+(no effect → satisfies `react-hooks/set-state-in-effect`). Router `/school/account` + Sidebar
+Account item. Final sweep: only intentional `bg-black/40` modal scrims remain. **SCHOOL-ADMIN
+REDESIGN COMPLETE on `school-admin-redesign`** — full nav (Dashboard·Collections·Orders·History·
+Inventory·Account) on one design system; lint clean, build passes, 27 backend unit tests pass.
 
 
 **ACTIVE: Customer UI/UX redesign on branch `frontend-redesign`** (off
