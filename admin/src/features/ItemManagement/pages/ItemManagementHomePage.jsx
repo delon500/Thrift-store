@@ -17,7 +17,7 @@ const ItemManagementHomePage = () => {
               name={action.name}
               description={action.description}
               color={action.color}
-              icon={action.icons}
+              Icon={action.Icon}
               to={action.to}
               comingSoon={action.comingSoon}
             />

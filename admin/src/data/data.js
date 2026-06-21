@@ -1,82 +1,91 @@
-// import { add_items } from "../assets/icons/icons";
-
-import { icons } from "../assets/icons/icons";
+import {
+  PackagePlus,
+  Boxes,
+  PackageCheck,
+  Store,
+  Shield,
+  School,
+  Users,
+  GraduationCap,
+  User,
+  ClipboardList,
+} from "lucide-react";
 
 // `to` is relative — CardActions prepends "/admin/".
 export const action_card = [
   {
-    name: "Add Items",
+    name: "Add items",
     description:
       "Upload a new lost-and-found or thrift item with photos and details, with AI auto-fill to speed things up.",
     color: "#dbf0ee",
-    icons: icons.add_items,
+    Icon: PackagePlus,
     to: "lost-and-found-management/add-items",
   },
   {
-    name: "Manage Inventory",
+    name: "Manage inventory",
     description:
       "View, edit, and remove items across all schools, and update prices or availability.",
     color: "#d4e6e5",
-    icons: icons.manage_shop_icon,
+    Icon: Boxes,
     to: "inventory",
   },
   {
-    name: "Pickup & Collections",
+    name: "Pickup & collections",
     description:
       "Verify reference numbers, track payments, and mark items as collected at the school.",
     color: "#d4e6e5",
-    icons: icons.payment_verification,
+    Icon: PackageCheck,
     to: "orders",
   },
   {
-    name: "View Store",
+    name: "View store",
     description:
       "Preview the live marketplace the way students and parents see it.",
     color: "#d4e6e5",
-    icons: icons.manage_shop_icon,
+    Icon: Store,
     to: "view-store",
   },
 ];
 
 export const register_user_action_card = [
   {
-    name: "Register Staff Members",
+    name: "Register staff members",
     description:
-      "Create a staff member prohle With the correct access, responsibilities, and internal platform visibility",
+      "Create a staff member profile with the correct access and platform visibility.",
     color: "#dbf0ee",
-    icons: icons.admin_staff_icon,
+    Icon: Shield,
     to: "/register-users/staff",
   },
   {
-    name: "Register School",
+    name: "Register school",
     description:
-      "Add a school profile with its main contact details and prepare it for onboarding into SchoolThrifties.",
+      "Add a school profile with its main contact details and prepare it for onboarding.",
     color: "#d4e6e5",
-    icons: icons.admin_school_icon,
+    Icon: School,
     to: "/register-users/school",
   },
   {
-    name: "Register Parents",
+    name: "Register parents",
     description:
-      "Create a patent prome tot learner-hnned activity, asset tracking. lost item workflows. and store access",
+      "Create a parent profile for learner activity, lost-item workflows, and store access.",
     color: "#ffe6e4",
-    icons: icons.admin_parent_icon,
+    Icon: Users,
     to: "/register-users/parent",
   },
   {
-    name: "Register University",
+    name: "Register university",
     description:
-      "Add a unwerstty prohEe With Its man contact details and prepare it for onboarding into SchoolThrifties.",
+      "Add a university profile with its main contact details and prepare it for onboarding.",
     color: "#d4e6e5",
-    icons: icons.admin_university_icon,
+    Icon: GraduationCap,
     to: "/register-users/university",
   },
   {
-    name: "Register Students",
+    name: "Register students",
     description:
-      "Register a university student profile and link the student to the correct university for EduThrift onboarding.",
+      "Register a student profile and link the student to the correct institution.",
     color: "#ffe6e4",
-    icons: icons.admin_student_icon,
+    Icon: User,
     to: "/register-users/student",
   },
 ];
@@ -85,53 +94,46 @@ export const register_user_action_card = [
 // the backend user role (admin = staff).
 export const registered_user_action_card = [
   {
-    name: "Registration Requests",
+    name: "Registration requests",
     description:
       "Review pending school, university, staff, parent, and student registration requests.",
     color: "#dbf0ee",
-    icons: icons.admin_register_users_icon,
+    Icon: ClipboardList,
     to: "registrations",
   },
   {
-    name: "Registered Schools",
+    name: "Registered schools",
     description: "View every school registered on the platform.",
     color: "#dbf0ee",
-    icons: icons.admin_school_icon,
+    Icon: School,
     to: "registered-users/school",
   },
   {
-    name: "Registered Universities",
+    name: "Registered universities",
     description: "View every university registered on the platform.",
     color: "#d4e6e5",
-    icons: icons.admin_university_icon,
+    Icon: GraduationCap,
     to: "registered-users/university",
   },
   {
-    name: "Staff Members",
+    name: "Staff members",
     description: "View platform staff and administrators.",
     color: "#d4e6e5",
-    icons: icons.admin_staff_icon,
+    Icon: Shield,
     to: "registered-users/admin",
   },
   {
-    name: "Registered Students",
+    name: "Registered students",
     description: "View every registered student.",
     color: "#ffe6e4",
-    icons: icons.admin_student_icon,
+    Icon: User,
     to: "registered-users/student",
   },
   {
-    name: "Registered Parents",
+    name: "Registered parents",
     description: "View every registered parent.",
     color: "#dbf0ee",
-    icons: icons.admin_parent_icon,
+    Icon: Users,
     to: "registered-users/parent",
   },
-];
-
-export const condition_card = [
-  { key: "Excellent", name: "Excellent", icon: icons.excellent_condition_icon },
-  { key: "Good", name: "Good", icon: icons.good_condition_icon },
-  { key: "Fair", name: "Fair", icon: icons.fair_condition_icon },
-  { key: "Poor", name: "Poor", icon: icons.poor_condition_icon },
 ];

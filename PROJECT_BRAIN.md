@@ -126,7 +126,13 @@ for its upload UI + the hub `CardActions` use PNG icons → handled in step 6. 5
 rebuilt as a split-screen (emerald brand panel + value props) with a cleaned-up `LoginForm`
 (removed console.log, token inputs, loading state); all remaining pages (+ RegisteredUsers
 hub) on the shared `PageHeader`. **Every admin page now uses PageHeader.**
-6 ⬜ Cleanup (PNG assets, dead code, finish tokens). lucide-react installed in admin.
+6 ✅ Cleanup — converted the last PNG-icon usages to lucide (`CardActions` + `data.js` action
+cards now carry a lucide `Icon`; AddItems section icons + image-upload placeholders → lucide
+dashed dropzones); deleted `assets/icons` + `assets/images`, dead `ConditionCard` + dead
+`ItemManagement/components/Input`, and the unused `condition_card` data. **ADMIN REDESIGN
+COMPLETE on `admin-redesign`** — no PNG refs left, `eslint src` clean, build passes.
+NB `admin-redesign` is stacked on `frontend-redesign`; its PR diff is admin-only once that
+merges first (else it includes the customer redesign too).
 
 
 **ACTIVE: Customer UI/UX redesign on branch `frontend-redesign`** (off

@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { images as uiImages } from "../../../assets/images/images";
-import { icons } from "../../../assets/icons/icons";
+import { ImagePlus, Plus, FileText, Info, ArrowRight } from "lucide-react";
 import { getInstitutions } from "../../institutions/api/institutionsApi";
 import { useProductStore } from "../../product/store/productStore";
 import {
@@ -92,21 +91,25 @@ const AddItems = () => {
         <div className="w-full sm:w-[60%]">
           <div className="mt-10 bg-white p-4 border-outline-variant border-2 rounded-2xl">
             <div className="flex gap-2 items-center mb-4">
-              <img src={icons.product_image_icons} alt="" />
-              <p className="font-bold text-xl text-primary">Product Image</p>
+              <ImagePlus size={20} className="text-primary" aria-hidden="true" />
+              <p className="font-bold text-xl text-primary">Product image</p>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-6">
               <div className="w-[50%]">
-                <label htmlFor="image1">
-                  <img
-                    src={
-                      !productImages.image1
-                        ? uiImages.main_upload_image
-                        : URL.createObjectURL(productImages.image1)
-                    }
-                    alt="main_upload_image"
-                  />
+                <label htmlFor="image1" className="block cursor-pointer">
+                  {productImages.image1 ? (
+                    <img
+                      src={URL.createObjectURL(productImages.image1)}
+                      alt="Main"
+                      className="aspect-square w-full rounded-xl border border-outline-variant object-cover"
+                    />
+                  ) : (
+                    <div className="flex aspect-square w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-outline-variant bg-surface-container-low text-on-surface-variant">
+                      <ImagePlus size={28} aria-hidden="true" />
+                      <span className="text-xs font-semibold">Add main photo</span>
+                    </div>
+                  )}
                   <input
                     onChange={(e) => {
                       setImage("image1", e.target.files[0]);
@@ -120,15 +123,18 @@ const AddItems = () => {
 
               <div className="flex sm:grid gap-2 grid-cols-2 w-[50%]">
                 {["image2", "image3", "image4", "image5"].map((key) => (
-                  <label htmlFor={key} key={key}>
-                    <img
-                      src={
-                        !productImages[key]
-                          ? uiImages.secondary_image
-                          : URL.createObjectURL(productImages[key])
-                      }
-                      alt=""
-                    />
+                  <label htmlFor={key} key={key} className="block cursor-pointer">
+                    {productImages[key] ? (
+                      <img
+                        src={URL.createObjectURL(productImages[key])}
+                        alt=""
+                        className="aspect-square w-full rounded-lg border border-outline-variant object-cover"
+                      />
+                    ) : (
+                      <div className="flex aspect-square w-full items-center justify-center rounded-lg border-2 border-dashed border-outline-variant bg-surface-container-low text-on-surface-variant">
+                        <Plus size={20} aria-hidden="true" />
+                      </div>
+                    )}
                     <input
                       onChange={(e) => setImage(key, e.target.files[0])}
                       type="file"
@@ -159,9 +165,9 @@ const AddItems = () => {
 
           <div className="mt-10 bg-white p-4 border-outline-variant border-2 rounded-2xl">
             <div className="flex gap-2 items-center mb-4">
-              <img src={icons.product_description_icon} alt="" />
+              <FileText size={20} className="text-primary" aria-hidden="true" />
               <p className="font-bold text-xl text-primary">
-                Product Description
+                Product description
               </p>
             </div>
 
@@ -178,16 +184,16 @@ const AddItems = () => {
             type="submit"
             className="w-full lg:flex lg:items-center lg:justify-center lg:gap-2 shadow-md bg-primary text-white rounded-md p-2 mt-5 hidden cursor-pointer"
           >
-            Save Item To Shop
-            <img src={icons.product_add_shop_arrow_icon} alt="Arrow" />
+            Save item to shop
+            <ArrowRight size={18} aria-hidden="true" />
           </button>
         </div>
 
         <div className="w-full sm:w-[40%]">
           <div className="mt-10 bg-white p-4 border-outline-variant border-2 rounded-2xl">
             <div className="flex gap-2 items-center mb-4">
-              <img src={icons.basic_info_icon} alt="" />
-              <p className="font-bold text-xl text-primary">Product Details</p>
+              <Info size={20} className="text-primary" aria-hidden="true" />
+              <p className="font-bold text-xl text-primary">Product details</p>
             </div>
 
             <div className="flex flex-col gap-2">
@@ -318,8 +324,8 @@ const AddItems = () => {
             type="submit"
             className="w-full lg:hidden flex items-center justify-center gap-2 shadow-md bg-primary text-white rounded-md p-2 mt-5 cursor-pointer"
           >
-            Save Item To Shop
-            <img src={icons.product_add_shop_arrow_icon} alt="Arrow" />
+            Save item to shop
+            <ArrowRight size={18} aria-hidden="true" />
           </button>
         </div>
       </div>
