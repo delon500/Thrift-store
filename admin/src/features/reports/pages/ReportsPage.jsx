@@ -1,6 +1,15 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "react-toastify";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  ResponsiveContainer,
+} from "recharts";
 import useAuthStore from "../../auth/store/authStore";
 import { getOrders } from "../../orders/api/orderApi";
 import { getUsersByRole } from "../../registeredUsers/api/registeredUsersApi";
@@ -56,6 +65,8 @@ const ORDER_COLUMNS = [
   { label: "Status", get: (o) => o.status },
   { label: "Payment", get: (o) => o.payment_status },
   { label: "Method", get: (o) => o.payment_method },
+  { label: "Subtotal (R)", get: (o) => o.subtotal },
+  { label: "Service fee (R)", get: (o) => o.service_fee },
   { label: "Total (R)", get: (o) => o.total },
   { label: "Placed", get: (o) => formatDate(o.created_at) },
 ];
@@ -162,14 +173,32 @@ const OrdersReport = ({ token }) => {
   }
 
   const kpis = useMemo(() => {
-    const grossSales = filtered.reduce((sum, o) => sum + Number(o.total || 0), 0);
-    const paid = filtered.filter((o) =>
-      ["paid", "ready_for_collection", "collected"].includes(o.status),
-    ).length;
-    const collected = filtered.filter((o) => o.status === "collected").length;
-    const pending = filtered.filter((o) => o.status === "payment_pending").length;
-    return { count: filtered.length, grossSales, paid, collected, pending };
+    let grossSales = 0;
+    let itemSales = 0;
+    let fees = 0;
+    for (const o of filtered) {
+      grossSales += Number(o.total || 0);
+      itemSales += Number(o.subtotal || 0);
+      fees += Number(o.service_fee || 0);
+    }
+    return { count: filtered.length, grossSales, itemSales, fees };
   }, [filtered]);
+
+  const [groupBy, setGroupBy] = useState("day");
+  const chartData = useMemo(() => {
+    const map = new Map();
+    for (const o of filtered) {
+      const key =
+        groupBy === "day"
+          ? String(o.created_at).slice(0, 10)
+          : o.institution_name || "—";
+      map.set(key, (map.get(key) || 0) + Number(o.total || 0));
+    }
+    const arr = [...map.entries()].map(([label, revenue]) => ({ label, revenue }));
+    if (groupBy === "day") arr.sort((a, b) => (a.label < b.label ? -1 : 1));
+    else arr.sort((a, b) => b.revenue - a.revenue);
+    return arr;
+  }, [filtered, groupBy]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -246,9 +275,54 @@ const OrdersReport = ({ token }) => {
       <div className="mt-5 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <SummaryCard label="Orders" value={isLoading ? "—" : kpis.count} accent="text-primary" />
         <SummaryCard label="Gross sales" value={isLoading ? "—" : zar.format(kpis.grossSales)} />
-        <SummaryCard label="Paid" value={isLoading ? "—" : kpis.paid} />
-        <SummaryCard label="Collected" value={isLoading ? "—" : kpis.collected} />
+        <SummaryCard label="Item sales" value={isLoading ? "—" : zar.format(kpis.itemSales)} />
+        <SummaryCard label="Service fees" value={isLoading ? "—" : zar.format(kpis.fees)} />
       </div>
+
+      {!isLoading && filtered.length > 0 ? (
+        <section className="mt-6 rounded-2xl border border-outline-variant bg-white p-5">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="font-bold text-on-surface">Revenue</h2>
+            <div className="flex gap-1 rounded-full border border-outline-variant p-1">
+              {[
+                { key: "day", label: "Over time" },
+                { key: "school", label: "By school" },
+              ].map((option) => (
+                <button
+                  key={option.key}
+                  type="button"
+                  onClick={() => setGroupBy(option.key)}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                    groupBy === option.key
+                      ? "bg-primary text-white"
+                      : "text-on-surface-variant hover:bg-surface-container-low"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="mt-4 h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData} margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e8e3da" vertical={false} />
+                <XAxis
+                  dataKey="label"
+                  tick={{ fontSize: 11, fill: "#6b655c" }}
+                  interval="preserveStartEnd"
+                />
+                <YAxis tick={{ fontSize: 11, fill: "#6b655c" }} width={48} />
+                <Tooltip
+                  formatter={(value) => zar.format(value)}
+                  cursor={{ fill: "rgba(15,122,82,0.06)" }}
+                />
+                <Bar dataKey="revenue" fill="#0f7a52" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+      ) : null}
 
       <section className="mt-6 overflow-hidden rounded-xl border border-outline-variant bg-white">
         {isLoading ? (

@@ -36,6 +36,8 @@ const listOrders = async (req, res) => {
         co.status,
         co.user_full_name,
         co.user_email,
+        co.subtotal::text AS subtotal,
+        co.service_fee::text AS service_fee,
         co.total::text AS total,
         co.created_at,
         i.institution_name,
