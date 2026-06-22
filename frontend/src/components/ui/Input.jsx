@@ -1,30 +1,36 @@
-import { icons } from "../../assets/icon/icons.js";
+import { Search } from "lucide-react";
 
 const Input = ({
   placeholder,
   value,
   onChange,
+  onFocus,
   type = "text",
   isSearch = false,
   name = "",
 }) => {
   return (
-    <>
+    <div className="relative">
+      {isSearch ? (
+        <Search
+          size={18}
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-outline"
+          aria-hidden="true"
+        />
+      ) : null}
       <input
         type={type}
         placeholder={placeholder}
         value={value}
         onChange={onChange}
+        onFocus={onFocus}
         name={name}
         aria-label={placeholder}
-        className="w-full rounded-full border-2 px-4 py-3 text-sm outline-none transition-all bg-white text-on-surface placeholder:text-slate-400 border-surface-container-high focus:border-primary focus:shadow-[0_0_0_4px_rgba(0,106,99,0.08)] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400 "
+        className={`w-full rounded-xl border border-outline-variant bg-surface py-3 text-sm text-on-surface outline-none transition-colors focus:border-primary disabled:cursor-not-allowed disabled:bg-surface-container-low ${
+          isSearch ? "pl-10 pr-4" : "px-4"
+        }`}
       />
-      {isSearch && (
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-          <img src={icons.search_icon} alt="" />
-        </span>
-      )}
-    </>
+    </div>
   );
 };
 

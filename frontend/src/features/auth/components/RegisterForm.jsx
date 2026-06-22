@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Users, User, School, GraduationCap } from "lucide-react";
 import Input from "../../../components/ui/Input";
 import { roleCards } from "../../../data/data.js";
 import RoleCard from "./RoleCard";
@@ -8,6 +9,22 @@ import {
 } from "../hooks/useAuth.js";
 import { useQuery } from "@tanstack/react-query";
 import { getInstitutions } from "../../institutions/api/institutionApi.js";
+
+const ROLE_ICONS = {
+  parent: Users,
+  student: User,
+  school: School,
+  university: GraduationCap,
+};
+
+const Field = ({ label, children }) => (
+  <div>
+    <label className="mb-1.5 block text-sm font-semibold text-on-surface-variant">
+      {label}
+    </label>
+    {children}
+  </div>
+);
 
 const RegisterForm = () => {
   const parentStudentMutation = useRegisterParentStudent();
@@ -19,13 +36,11 @@ const RegisterForm = () => {
     contactNumber: "",
     institutionSearch: "",
     selectedInstitution: null,
-
     contactPerson: "",
     institutionName: "",
     institutionType: "",
     registrationNumber: "",
     institutionPhone: "",
-
     password: "",
     confirmPassword: "",
   });
@@ -41,11 +56,6 @@ const RegisterForm = () => {
   const filteredInstitutions = useMemo(() => {
     const query = formData.institutionSearch.trim().toLowerCase();
     if (!query) return institutions;
-    console.log(
-      institutions.filter((institution) =>
-        institution.institution_name.toLowerCase().includes(query),
-      ),
-    );
     return institutions.filter((institution) =>
       institution.institution_name.toLowerCase().includes(query),
     );
@@ -75,8 +85,8 @@ const RegisterForm = () => {
     setShowSuggestions(false);
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+  const handleChange = (event) => {
+    const { name, value } = event.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -86,8 +96,8 @@ const RegisterForm = () => {
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setMessage(null);
 
     try {
@@ -109,35 +119,33 @@ const RegisterForm = () => {
     }
   };
 
+  const submitting =
+    parentStudentMutation.isPending || institutionMutation.isPending;
+
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div>
-        <label className="block text-sm font-semibold text-slate-600 mb-3 ml-1">
-          REGISTER AS
-        </label>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {roleCards.map((role) => {
-            const active = formData.role === role.key;
-            return (
-              <RoleCard
-                key={role.key}
-                label={role.label}
-                desc={role.desc}
-                active={active}
-                onClick={() => handleRoleChange(role.key)}
-              />
-            );
-          })}
+        <p className="mb-2 text-sm font-semibold text-on-surface-variant">
+          Register as
+        </p>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {roleCards.map((role) => (
+            <RoleCard
+              key={role.key}
+              label={role.label}
+              desc={role.desc}
+              icon={ROLE_ICONS[role.key]}
+              active={formData.role === role.key}
+              onClick={() => handleRoleChange(role.key)}
+            />
+          ))}
         </div>
       </div>
 
       {isInstitutionAccount ? (
         <>
-          <div className="flex flex-col sm:flex-row space-x-5">
-            <div>
-              <label className="block text-sm font-semibold text-slate-600 mb-2 ml-1">
-                NAME / CONTACT PERSON
-              </label>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Contact person">
               <Input
                 name="contactPerson"
                 type="text"
@@ -145,12 +153,8 @@ const RegisterForm = () => {
                 value={formData.contactPerson}
                 onChange={handleChange}
               />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-slate-600 mb-2 ml-1">
-                CONTACT EMAIL
-              </label>
+            </Field>
+            <Field label="Contact email">
               <Input
                 name="email"
                 type="email"
@@ -158,26 +162,20 @@ const RegisterForm = () => {
                 value={formData.email}
                 onChange={handleChange}
               />
-            </div>
+            </Field>
           </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-slate-600 mb-2 ml-1">
-              CONTACT NUMBER
-            </label>
+          <Field label="Contact number">
             <Input
               name="contactNumber"
               type="tel"
-              placeholder="+27 123 456 789"
+              placeholder="+27 12 345 6789"
               value={formData.contactNumber}
               onChange={handleChange}
             />
-          </div>
+          </Field>
 
-          <div>
-            <label className="block text-sm font-semibold text-slate-600 mb-2 ml-1">
-              INSTITUTION NAME
-            </label>
+          <Field label="Institution name">
             <Input
               name="institutionName"
               type="text"
@@ -185,26 +183,19 @@ const RegisterForm = () => {
               value={formData.institutionName}
               onChange={handleChange}
             />
-          </div>
+          </Field>
 
-          <div className="flex flex-col sm:flex-row space-x-5 items-center">
-            <div>
-              <label className="block text-sm font-semibold text-slate-600 mb-2 ml-1">
-                REGISTRATION / INSTITUTION NUMBER
-              </label>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Registration number (optional)">
               <Input
                 name="registrationNumber"
                 type="text"
-                placeholder="#  OPTIONAL"
+                placeholder="#"
                 value={formData.registrationNumber}
                 onChange={handleChange}
               />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-slate-600 mb-2 ml-1">
-                INSTITUTION PHONE
-              </label>
+            </Field>
+            <Field label="Institution phone">
               <Input
                 name="institutionPhone"
                 type="tel"
@@ -212,104 +203,86 @@ const RegisterForm = () => {
                 value={formData.institutionPhone}
                 onChange={handleChange}
               />
-            </div>
+            </Field>
           </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-slate-600 mb-3 ml-1">
-              INSTITUTION TYPE
-            </label>
+          <Field label="Institution type">
             <select
               name="institutionType"
               value={formData.institutionType}
               onChange={handleChange}
-              className="w-full rounded-full border-2 px-4 py-3 text-sm outline-none transition-all bg-white text-on-surface placeholder:text-slate-400 border-surface-container-high focus:border-primary focus:shadow-[0_0_0_4px_rgba(0,106,99,0.08)] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400 "
+              className="w-full rounded-xl border border-outline-variant bg-surface px-4 py-3 text-sm text-on-surface outline-none focus:border-primary"
             >
-              <option value="#">Select Type</option>
+              <option value="">Select type</option>
               <option value="public">Public</option>
               <option value="private">Private</option>
               <option value="Independent">Independent</option>
-              <option value="public University">Public University</option>
-              <option value="private University">Private University</option>
+              <option value="public University">Public university</option>
+              <option value="private University">Private university</option>
             </select>
-          </div>
+          </Field>
         </>
       ) : (
         <>
-          <div className="flex flex-col sm:flex-row space-x-5">
-            <div>
-              <label className="block text-sm font-semibold text-slate-600 mb-2 ml-1">
-                FULL NAME
-              </label>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Full name">
               <Input
                 name="fullName"
                 type="text"
                 placeholder="Your name"
                 value={formData.fullName}
                 onChange={handleChange}
-                isSearch={false}
               />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-600 mb-2 ml-1">
-                EMAIL
-              </label>
+            </Field>
+            <Field label="Email">
               <Input
                 name="email"
                 type="email"
-                placeholder="johndoe@example.com"
+                placeholder="you@example.com"
                 value={formData.email}
                 onChange={handleChange}
-                isSearch={false}
               />
-            </div>
+            </Field>
           </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-slate-600 mb-2 ml-1">
-              CONTACT NUMBER
-            </label>
+          <Field label="Contact number">
             <Input
               name="contactNumber"
               type="tel"
-              placeholder="+27 123 456 789"
+              placeholder="+27 12 345 6789"
               value={formData.contactNumber}
               onChange={handleChange}
             />
-          </div>
+          </Field>
 
           <div className="relative">
-            <label className="block text-sm font-semibold text-slate-600 mb-2 ml-1">
-              SEARCH FOR INSTITUTION
-            </label>
-            <Input
-              name="institutionSearch"
-              type="text"
-              placeholder="Type institution name"
-              value={formData.institutionSearch}
-              onChange={(e) => {
-                handleChange(e);
-                setShowSuggestions(true);
-              }}
-              onFocus={() => setShowSuggestions(true)}
-            />
-            {showSuggestions && formData.institutionSearch.trim() !== "" && (
-              <div className="absolute z-20 mt-2 w-full  rounded-2xl border border-surface-container-high bg-white shadow-lg max-h-56 overflow-auto">
+            <Field label="Your school or university">
+              <Input
+                name="institutionSearch"
+                type="text"
+                placeholder="Type to search..."
+                value={formData.institutionSearch}
+                onChange={(event) => {
+                  handleChange(event);
+                  setShowSuggestions(true);
+                }}
+                onFocus={() => setShowSuggestions(true)}
+              />
+            </Field>
+            {showSuggestions && formData.institutionSearch.trim() !== "" ? (
+              <div className="absolute z-20 mt-2 max-h-56 w-full overflow-auto rounded-xl border border-outline-variant bg-surface shadow-lg">
                 {filteredInstitutions.length > 0 ? (
                   filteredInstitutions.map((institution) => (
                     <button
                       key={institution.id}
                       type="button"
-                      onMouseDown={(e) => e.preventDefault()}
+                      onMouseDown={(event) => event.preventDefault()}
                       onClick={() => handleSelectInstitution(institution)}
-                      className="w-full text-left px-4 py-3 hover:bg-surface-container-low transition-colors border-b border-surface-container-low last:border-b-0 cursor-pointer"
+                      className="block w-full border-b border-outline-variant px-4 py-3 text-left transition-colors last:border-0 hover:bg-surface-container-low"
                     >
-                      <div className="font-semibold text-on-surface">
+                      <span className="font-semibold text-on-surface">
                         {institution.institution_name}
-                      </div>
-                      <div className="text-sm text-on-surface-variant">
-                        {institution.institution_name}
-                      </div>
+                      </span>
                     </button>
                   ))
                 ) : (
@@ -318,46 +291,38 @@ const RegisterForm = () => {
                   </div>
                 )}
               </div>
-            )}
+            ) : null}
           </div>
         </>
       )}
 
-      <div className="flex flex-col sm:flex-row space-x-5">
-        <div>
-          <label className="block text-sm font-semibold text-slate-600 mb-2 ml-1">
-            PASSWORD
-          </label>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Password">
           <Input
             name="password"
             type="password"
             placeholder="Create a password"
             value={formData.password}
             onChange={handleChange}
-            isSearch={false}
           />
-        </div>
-        <div>
-          <label className="block text-sm font-semibold text-slate-600 mb-2 ml-1">
-            CONFIRM PASSWORD
-          </label>
+        </Field>
+        <Field label="Confirm password">
           <Input
             name="confirmPassword"
             type="password"
             placeholder="Repeat password"
             value={formData.confirmPassword}
             onChange={handleChange}
-            isSearch={false}
           />
-        </div>
+        </Field>
       </div>
 
       {message ? (
         <div
-          className={`rounded-2xl border px-4 py-3 text-sm font-medium ${
+          className={`rounded-xl border px-4 py-3 text-sm font-medium ${
             message.type === "success"
-              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-              : "border-red-200 bg-red-50 text-red-700"
+              ? "border-primary/30 bg-primary-container/50 text-on-primary-container"
+              : "border-error/30 bg-error-container/50 text-on-error-container"
           }`}
         >
           {message.text}
@@ -366,9 +331,10 @@ const RegisterForm = () => {
 
       <button
         type="submit"
-        className="w-full bg-primary-container text-on-primary-container font-semibold py-4 rounded-full border-4 border-white shadow-[0_4px_0_0_rgba(0,0,0,0.1)] transition-all active:translate-y-1 active:shadow-none"
+        disabled={submitting}
+        className="w-full rounded-full bg-primary py-3.5 font-semibold text-on-primary transition-colors hover:bg-on-primary-container disabled:opacity-60"
       >
-        Submit Registration Request
+        {submitting ? "Submitting..." : "Submit registration"}
       </button>
     </form>
   );

@@ -1,42 +1,28 @@
 import { NavLink } from "react-router-dom";
-import { icons } from "../../assets/icon/icons";
-import useAuthStore from "../../features/auth/store/authStore";
 import { navItems } from "./navItems";
 
 const linkClass = ({ isActive }) =>
-  `flex items-center gap-3 px-6 py-3 rounded-full transition-transform font-['Lexend'] text-xs font-semibold hover:translate-x-1 ${
-    isActive ? "bg-teal-600 text-white" : "text-slate-600 hover:text-teal-600"
+  `flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
+    isActive
+      ? "bg-primary text-on-primary"
+      : "text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"
   }`;
 
 const Sidebar = () => {
-  const logout = useAuthStore((state) => state.logout);
-
   return (
-    <div className="w-64 p-4 min-h-screen bg-white/90 hidden md:block">
-      <div className="mt-20 flex flex-col gap-4">
-        {navItems.map((item) => (
-          <NavLink key={item.to} to={item.to} className={linkClass}>
-            {({ isActive }) => (
-              <>
-                <img
-                  src={isActive ? item.activeIcon : item.icon}
-                  alt=""
-                  className="w-6 h-6"
-                />
-                {item.label}
-              </>
-            )}
+    <aside className="hidden w-60 shrink-0 px-3 py-6 md:block">
+      <nav className="sticky top-24 flex flex-col gap-1">
+        <p className="px-4 pb-2 text-xs font-bold uppercase tracking-wide text-outline">
+          Browse
+        </p>
+        {navItems.map(({ to, label, Icon }) => (
+          <NavLink key={to} to={to} className={linkClass}>
+            <Icon size={18} strokeWidth={2} aria-hidden="true" />
+            {label}
           </NavLink>
         ))}
-        <button
-          onClick={logout}
-          className='flex items-center gap-3 px-6 py-3 rounded-full transition-transform font-["Lexend"] text-xs font-semibold text-slate-600 hover:text-teal-600 hover:translate-x-1 cursor-pointer'
-        >
-          <img src={icons.logout} alt="" className="w-6 h-6" />
-          Logout
-        </button>
-      </div>
-    </div>
+      </nav>
+    </aside>
   );
 };
 

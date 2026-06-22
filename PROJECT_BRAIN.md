@@ -101,6 +101,38 @@ Four independently-run apps (no root `package.json` — install/run each separat
   `~/.claude/skills/persistent-project-memory-system/`.
 
 ## 6. Active work / status
+**ACTIVE: Customer UI/UX redesign on branch `frontend-redesign`** (off
+`payments-collection-flow`). Direction = **modern secondhand-marketplace** (warm canvas
+`#faf8f3`, emerald primary `#0f7a52`, coral accent `#e8590c`; `--mk-*` vars in `index.css`
++ the core `@theme` color tokens remapped to this palette app-wide). Using **lucide-react**
+for icons (installed) — moving off the PNG `assets/icon/icons.js` (user OK'd deleting them in
+the final cleanup step). User reviews each step before the next. **Step plan:**
+1 ✅ Foundations + app shell — palette app-wide, lucide, redesigned Navbar (full-width top
+bar, logo, search, cart/wishlist/bell/account), Sidebar (clean rail), mobile drawer,
+PublicLayout (canvas), real Footer (was a stub), `MarketProductCard` + catalog (`/products`).
+2 ✅ Product detail page (gallery + thumbnails, sticky buy box, lucide spec rows,
+formatted price, image fallback, wishlist, related via `MarketProductCard`). 3 ✅ Cart +
+Checkout (rich empty states, sticky summary, `CartItems` row redesign, confirm-on-clear,
+restyled PayFast method radios + return/confirm states; shared `lib/money.js` `formatPrice`).
+4 ✅ My Orders (cards link to detail) + **NEW** order/collection detail page
+`/orders/:orderReference` ([OrderDetail], route added) — vertical **status stepper**
+(placed→paid→ready→collected, with failed/cancelled), **QR code** of the reference
+(`qrcode.react`), items, totals, resume-payment. Added `useMyOrder` (polls while pending) +
+shared `orders/lib/submitToPayfast.js`. 5 ✅ Auth pages — split-screen `AuthPage` (emerald brand panel + value props, login/register
+tabs), restyled `LoginForm`/`RegisterForm`/`RoleCard`/`Input` (clean lucide inputs, sentence
+case, fixed duplicate `name` props + removed a stray console.log). **DECISION:** staff/admin
+stay **invite-only** (super_admin creates them via `registerAdmin`) — public self-registration
+is only parent/student/school/university (privilege-escalation risk otherwise). 6 ✅ New
+pages — NEW `/how-it-works` ([HowItWorks], 4 steps + FAQ, footer-linked); Wishlist restyled
+(MarketProductCard + rich empty state). 7 ✅ Cleanup — migrated ThriftStore + LostAndFound to
+`MarketProductCard`; **removed the dead off-domain `features/sell` flow** (route + pages — it
+navigated to a non-existent route, customers don't sell in this model); deleted old
+`ProductCard`, `BreadCrumbs`, dead `App.jsx`, the **PNG `assets/icon` + `assets/images`**
+(now using lucide), trimmed `data.js` to just `roleCards`, removed unused helper CSS, and
+killed all raw `teal/slate` + `green-500`. **REDESIGN COMPLETE on `frontend-redesign`** —
+full `npx eslint src` clean, build passes, main bundle ~336kB. Not merged/pushed yet.
+
+
 **Just done: Customer frontend "professionalism" pass (committed).** Branded 404
 ([NotFoundPage] real page + CTA, doubles as router errorElement), working **mobile nav**
 (filled the empty drawer in `Navbar` + shared `components/shared/navItems.js` now powering
@@ -128,6 +160,18 @@ warning gone. Per-page `<title>` via a tiny `lib/useDocumentTitle` hook applied 
 (Product uses the item name). `loading="lazy"` on grid/related product images. NB
 `router.jsx` has an `eslint-disable react-refresh/only-export-components` header (it's route
 config, not a component module). Lint clean + build passes.
+
+Then **bugs & nav-chrome pass (committed):** fixed the **dead "Forgot Password?" link**
+(LoginForm linked to non-existent `/forgot-password`) → now an inline note "contact your
+school admin" (fits the admin-managed model); made the non-functional profile icon a real
+**account dropdown** (`components/shared/AccountMenu.jsx` — name/email + Settings + Logout,
+outside-click close); added **cart + wishlist count badges** to the Navbar (new cart icon →
+`/cart`, count from shared `["cart"]` query so it updates live; wishlist count from the
+store). Lint clean + build passes. **Not visually QA'd in a browser.** Remaining recommended
+frontend work (offered): collection UX (order stepper + QR of the reference), commerce polish
+(one `formatCurrency` helper, broken-image fallback, rich empty states), robustness
+(ErrorBoundary, confirm destructive actions, persist wishlist server-side), scale
+(server-side product search/pagination + `GET /products/:id`), frontend tests (Vitest+RTL).
 
 **Prior feature: Admin Settings — DONE (backend + admin frontend), committed.**
 Makes 3 previously-hardcoded values configurable platform-wide from the admin app:
@@ -213,6 +257,14 @@ a dead tunnel).
   testing (dev DB 2→1 parents); ORD-2026-000002 was wrongly cancelled then reverted.
 - The backend dev server is currently run via a Claude-started background process
   (the user's `npm run dev` had closed) — stop it before starting your own (port 5000).
+- **PayFast method selection (Option A, decided):** the customer chooses card/EFT/etc. **on
+  PayFast's hosted page**, not on our site. The checkout is now a single "Continue to PayFast"
+  button (auto-redirects via `submitToPayfast`); accepted methods are shown as info only. The
+  frontend still sends `payment_method = paymentMethods[0].id` purely to satisfy the API —
+  it does NOT constrain PayFast (we don't send PayFast's `payment_method` field; `custom_str1`
+  is just a passthrough). So `payments.payment_method` is cosmetic/approximate. (Option B —
+  pre-select by sending PayFast's `payment_method` code — was declined.) Also: the catalog
+  product images are now ordered by `sort_order` so image 1 is the cover.
 - **PayFast (local dev) — recurring:** the ITN needs a public URL; a **cloudflared
   tunnel** proxies PayFast→localhost:5000 and `PAYFAST_NOTIFY_URL` must point at the
   *current* tunnel + `/api/payments/payfast/itn`. `trycloudflare` quick-tunnels are
@@ -243,13 +295,27 @@ Settings endpoints: `GET /api/admin/settings` → `{settings, payment_method_cat
 `order_ready`/`payment_failed`/`registration_approved`; admin `registration_pending`/
 `payment_failed`.
 
+**PR flow:** work ships from `payments-collection-flow` → `main` via PRs the **user merges**
+(no `gh`/token in env; PRs are created via the GitHub API using the git-credential `gho_`
+token — write `.git/PR_BODY.md`, POST to `/repos/delon500/Thrift-store/pulls`). Merged so
+far: **#6** (payments/notifications/admin-settings), **#7** (SMTP). **#8 OPEN** = customer
+frontend professionalism pass (4 commits). After a merge, local `main` is stale — diff PRs
+against `origin/main`, not local `main`.
+
 **Deferred / candidate next features:** per-**institution** settings (current Admin Settings
 is global); a **school-staff** notifications surface (school-admin app — reuse the
 notifications table + an institution-scoped fan-out); lint-clean ~17 pre-existing admin
-errors; SMTP; **open the PR** (`github.com/delon500/Thrift-store` →
-`payments-collection-flow`, base `main`).
+errors.
 
 ## 9. Conventions & constraints (do NOT break)
+- **Reference numbers are the post-payment collection credential — never show them to a
+  buyer until that order is paid.** `GET /products` omits product `reference_number`
+  entirely (shoppers never see it); the product page/cart/checkout-summary show no
+  reference; Orders list, OrderDetail (incl. the QR pass + item refs), and the checkout
+  return screen reveal the reference only when status ∈ {ready_for_collection, paid,
+  collected}. `order_reference` still rides in the order URL for navigation/resume — that's
+  fine: collection security comes from the school verifying the order is paid, not from
+  hiding the string.
 - Don't re-add the dropped `collection_order_items` unique index (decision above).
 - Keep ITN signature blank-field handling intact.
 - Apply migrations 001–009 in order; never auto-commit `.env`, `node_modules/`,

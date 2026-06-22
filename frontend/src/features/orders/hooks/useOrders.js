@@ -22,6 +22,22 @@ export const useMyOrders = () => {
   });
 };
 
+// Single order for the detail page. Polls while not yet in a terminal state so
+// a still-pending order updates live (e.g. once the PayFast ITN lands).
+export const useMyOrder = (orderReference) => {
+  const token = useAuthStore((state) => state.token);
+
+  return useQuery({
+    queryKey: ["order", orderReference],
+    queryFn: () => getMyOrder({ orderReference, token }),
+    enabled: !!token && !!orderReference,
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      return status && TERMINAL_STATUSES.includes(status) ? false : 4000;
+    },
+  });
+};
+
 export const useResumeOrder = () => {
   const token = useAuthStore((state) => state.token);
 

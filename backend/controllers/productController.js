@@ -286,7 +286,6 @@ const getProducts = async (req, res) => {
         p.gender,
         p.price::text AS price,
         p.status,
-        p.reference_number,
         p.category,
         p.institution_id AS "schoolId",
         i.institution_name AS "schoolName",
@@ -296,11 +295,15 @@ const getProducts = async (req, res) => {
        FROM products p
        JOIN institutions i ON i.id = p.institution_id
        WHERE p.institution_id = $1 AND p.status = 'Available'`,
+      // NB: the product reference_number is intentionally NOT exposed to
+      // shoppers — it's the collection credential, revealed only after payment.
       [user.institution_id],
     );
 
     const imagesResult = await pool.query(
-      `SELECT product_id, image_url FROM product_images`,
+      `SELECT product_id, image_url
+       FROM product_images
+       ORDER BY product_id, sort_order`,
     );
 
     const grouped = imagesResult.rows.reduce((acc, img) => {

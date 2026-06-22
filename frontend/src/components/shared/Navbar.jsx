@@ -1,68 +1,111 @@
 import { useState } from "react";
-import Input from "../ui/Input";
-import { icons } from "../../assets/icon/icons";
 import { NavLink, useNavigate } from "react-router-dom";
+import {
+  Search,
+  Heart,
+  ShoppingBag,
+  Menu,
+  X,
+  Package,
+  Settings,
+  LogOut,
+} from "lucide-react";
 import { useProductStore } from "../../features/products/store/productStore";
 import useAuthStore from "../../features/auth/store/authStore";
+import { useWishlistStore } from "../../features/wishlist/store/wishlistStore";
+import { useServerCart } from "../../features/cart/hooks/useCart";
 import NotificationBell from "../../features/notifications/components/NotificationBell";
+import AccountMenu from "./AccountMenu";
 import { navItems } from "./navItems";
 
-const drawerLinkClass = ({ isActive }) =>
-  `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-colors ${
-    isActive ? "bg-teal-600 text-white" : "text-slate-600 hover:bg-teal-50"
-  }`;
+const CountBadge = ({ count }) =>
+  count > 0 ? (
+    <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-on-primary">
+      {count > 9 ? "9+" : count}
+    </span>
+  ) : null;
+
+const iconButton =
+  "relative rounded-full p-2 text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-on-surface";
 
 const Navbar = () => {
-  const [menuToggle, setMenuToggle] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
   const searchQuery = useProductStore((state) => state.searchQuery);
   const setSearchQuery = useProductStore((state) => state.setSearchQuery);
   const logout = useAuthStore((state) => state.logout);
+  const wishlistCount = useWishlistStore((state) => state.wishlistItems.length);
+  const { data: cart } = useServerCart();
+  const cartCount = cart?.items?.length || 0;
 
-  const closeMenu = () => setMenuToggle(false);
+  const closeMenu = () => setMenuOpen(false);
+
+  const searchInput = (extraClass = "") => (
+    <div className={`relative ${extraClass}`}>
+      <Search
+        size={18}
+        className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-outline"
+        aria-hidden="true"
+      />
+      <input
+        value={searchQuery}
+        onChange={(event) => setSearchQuery(event.target.value)}
+        placeholder="Search items..."
+        aria-label="Search items"
+        className="w-full rounded-full border border-outline-variant bg-surface-container-low py-2.5 pl-10 pr-4 text-sm text-on-surface outline-none focus:border-primary"
+      />
+    </div>
+  );
 
   return (
-    <header className="w-full z-50 flex justify-between items-center px-4 md:px-8 py-1 bg-white/90  backdrop-blur-md border-teal-200 shadow-[0_4px_10px_rgba(77,182,172,0.15)] md:rounded-full mt-0 md:mt-2">
-      <div className="flex items-center justify-between w-full">
-        <div className="flex-1 md:max-w-[250px] lg:max-w-md relative hidden sm:block">
-          <Input
-            placeholder="Search for 'Backpack'..."
-            type="text"
-            onChange={(e) => setSearchQuery(e.target.value)}
-            value={searchQuery}
-            isSearch={true}
-          />
-        </div>
-        <div className="flex items-center gap-6">
+    <header className="sticky top-0 z-40 border-b border-outline-variant bg-surface/90 backdrop-blur">
+      <div className="mx-auto flex max-w-[1400px] items-center gap-4 px-4 py-3 sm:px-6">
+        <NavLink to="/products" className="flex shrink-0 items-center gap-2">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-on-primary">
+            <ShoppingBag size={18} aria-hidden="true" />
+          </span>
+          <span className="hidden text-lg font-extrabold tracking-tight text-on-surface sm:block">
+            School Thrift
+          </span>
+        </NavLink>
+
+        {searchInput("mx-auto hidden w-full max-w-md sm:block")}
+
+        <div className="ml-auto flex items-center gap-1 sm:gap-2">
           <button
             type="button"
             onClick={() => navigate("/wishlist")}
-            aria-label="Wishlist"
-            className="cursor-pointer"
+            aria-label={
+              wishlistCount > 0 ? `Wishlist, ${wishlistCount} items` : "Wishlist"
+            }
+            className={iconButton}
           >
-            <img src={icons.wishlist_icon} alt="" />
+            <Heart size={20} aria-hidden="true" />
+            <CountBadge count={wishlistCount} />
           </button>
-          <NotificationBell />
-          <div className="relative group">
-            <img
-              src={icons.profile_icon}
-              alt="Profile"
-              className="cursor-pointer w-8 h-8"
-            />
-          </div>
           <button
             type="button"
-            onClick={() => setMenuToggle(true)}
-            aria-label="Open menu"
-            className="cursor-pointer block md:hidden"
+            onClick={() => navigate("/cart")}
+            aria-label={cartCount > 0 ? `Cart, ${cartCount} items` : "Cart"}
+            className={iconButton}
           >
-            <img src={icons.menu_bar_icon} alt="" className="w-9" />
+            <ShoppingBag size={20} aria-hidden="true" />
+            <CountBadge count={cartCount} />
+          </button>
+          <NotificationBell />
+          <AccountMenu />
+          <button
+            type="button"
+            onClick={() => setMenuOpen(true)}
+            aria-label="Open menu"
+            className={`${iconButton} md:hidden`}
+          >
+            <Menu size={22} aria-hidden="true" />
           </button>
         </div>
       </div>
 
-      {/* Mobile navigation drawer */}
-      {menuToggle ? (
+      {menuOpen ? (
         <div
           className="fixed inset-0 z-[998] bg-black/40 md:hidden"
           onClick={closeMenu}
@@ -70,65 +113,73 @@ const Navbar = () => {
         />
       ) : null}
       <aside
-        className={`fixed top-0 right-0 bottom-0 z-[999] w-72 max-w-[85vw] bg-white shadow-xl transition-transform duration-300 ease-in-out md:hidden ${
-          menuToggle ? "translate-x-0" : "translate-x-full"
+        className={`fixed right-0 top-0 bottom-0 z-[999] w-72 max-w-[85vw] bg-surface shadow-xl transition-transform duration-300 ease-in-out md:hidden ${
+          menuOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4">
-          <span className="font-black text-teal-600">Menu</span>
+        <div className="flex items-center justify-between border-b border-outline-variant px-4 py-4">
+          <span className="font-extrabold text-on-surface">Menu</span>
           <button
             type="button"
             onClick={closeMenu}
             aria-label="Close menu"
-            className="text-2xl leading-none text-gray-400 hover:text-gray-700"
+            className={iconButton}
           >
-            ×
+            <X size={20} aria-hidden="true" />
           </button>
         </div>
 
-        <div className="p-4">
-          <Input
-            placeholder="Search for 'Backpack'..."
-            type="text"
-            onChange={(e) => setSearchQuery(e.target.value)}
-            value={searchQuery}
-            isSearch={true}
-          />
-        </div>
+        <div className="p-4">{searchInput("w-full")}</div>
 
         <nav className="flex flex-col gap-1 px-3">
-          {navItems.map((item) => (
+          {navItems.map(({ to, label, Icon }) => (
             <NavLink
-              key={item.to}
-              to={item.to}
+              key={to}
+              to={to}
               onClick={closeMenu}
-              className={drawerLinkClass}
+              className={({ isActive }) =>
+                `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${
+                  isActive
+                    ? "bg-primary text-on-primary"
+                    : "text-on-surface-variant hover:bg-surface-container-low"
+                }`
+              }
             >
-              {({ isActive }) => (
-                <>
-                  <img
-                    src={isActive ? item.activeIcon : item.icon}
-                    alt=""
-                    className="w-6 h-6"
-                  />
-                  {item.label}
-                </>
-              )}
+              <Icon size={18} aria-hidden="true" />
+              {label}
             </NavLink>
           ))}
         </nav>
 
-        <button
-          type="button"
-          onClick={() => {
-            closeMenu();
-            logout();
-          }}
-          className="mt-2 flex w-full items-center gap-3 px-7 py-3 text-sm font-semibold text-red-600 hover:bg-red-50"
-        >
-          <img src={icons.logout} alt="" className="w-6 h-6" />
-          Logout
-        </button>
+        <div className="mt-2 border-t border-outline-variant px-3 pt-2">
+          <NavLink
+            to="/orders"
+            onClick={closeMenu}
+            className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-on-surface-variant hover:bg-surface-container-low"
+          >
+            <Package size={18} aria-hidden="true" />
+            My orders
+          </NavLink>
+          <NavLink
+            to="/settings"
+            onClick={closeMenu}
+            className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-on-surface-variant hover:bg-surface-container-low"
+          >
+            <Settings size={18} aria-hidden="true" />
+            Settings
+          </NavLink>
+          <button
+            type="button"
+            onClick={() => {
+              closeMenu();
+              logout();
+            }}
+            className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-error hover:bg-error-container/40"
+          >
+            <LogOut size={18} aria-hidden="true" />
+            Logout
+          </button>
+        </div>
       </aside>
     </header>
   );
