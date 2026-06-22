@@ -5,6 +5,14 @@ import {
   parsePagination,
   USER_STATUSES,
 } from "../lib/adminRules.js";
+import {
+  getSettings,
+  getInstitutionOverrides,
+  invalidateSettingsCache,
+  PAYMENT_METHOD_CATALOG,
+  SETTING_KEYS,
+} from "../services/settingsService.js";
+import { validateSettingsPatch } from "../lib/settingsRules.js";
 
 const INSTITUTION_TYPES = ["public", "private", "independent"];
 const INSTITUTION_CATEGORIES = ["school", "university"];
@@ -195,4 +203,139 @@ const deleteInstitution = async (req, res) => {
   }
 };
 
-export { deleteInstitution, listInstitutions, updateInstitution };
+const findInstitution = async (id) => {
+  const result = await pool.query(
+    "SELECT id, institution_name FROM institutions WHERE id = $1",
+    [id],
+  );
+  return result.rows[0] || null;
+};
+
+// GET /api/admin/institutions/:id/settings — this institution's effective
+// settings, which keys it overrides, the global values to compare against, and
+// the payment-method catalog for the toggles.
+const getInstitutionSettings = async (req, res) => {
+  try {
+    const institution = await findInstitution(req.params.id);
+    if (!institution) {
+      return res.status(404).json({ message: "Institution not found" });
+    }
+
+    const [settings, overrides, global] = await Promise.all([
+      getSettings(institution.id),
+      getInstitutionOverrides(institution.id),
+      getSettings(null),
+    ]);
+
+    return res.json({
+      institution,
+      settings, // effective (override -> global -> default)
+      overrides, // only the keys this institution sets
+      global, // platform defaults to show alongside
+      payment_method_catalog: PAYMENT_METHOD_CATALOG,
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Failed to load institution settings", error: error.message });
+  }
+};
+
+// PUT /api/admin/institutions/:id/settings — set overrides (any of service_fee,
+// checkout_expiry_minutes, enabled_payment_methods) and/or clear them back to the
+// global default via `clear: ["key", ...]`. Super-admin only.
+const updateInstitutionSettings = async (req, res) => {
+  try {
+    const institution = await findInstitution(req.params.id);
+    if (!institution) {
+      return res.status(404).json({ message: "Institution not found" });
+    }
+
+    const { clear, ...patch } = req.body || {};
+    const clearKeys = Array.isArray(clear)
+      ? clear.filter((key) => SETTING_KEYS.includes(key))
+      : [];
+
+    let value = {};
+    if (Object.keys(patch).length > 0) {
+      const result = validateSettingsPatch(
+        patch,
+        PAYMENT_METHOD_CATALOG.map((method) => method.id),
+      );
+      if (result.error) return res.status(400).json({ message: result.error });
+      value = result.value;
+    }
+
+    if (clearKeys.length === 0 && Object.keys(value).length === 0) {
+      return res
+        .status(400)
+        .json({ message: "Provide settings to override or keys to clear" });
+    }
+
+    // A key can't be both set and cleared in one request.
+    const conflict = clearKeys.find((key) => key in value);
+    if (conflict) {
+      return res
+        .status(400)
+        .json({ message: `Cannot set and clear "${conflict}" at once` });
+    }
+
+    if (clearKeys.length > 0) {
+      await pool.query(
+        "DELETE FROM institution_settings WHERE institution_id = $1 AND key = ANY($2)",
+        [institution.id, clearKeys],
+      );
+    }
+
+    for (const [key, val] of Object.entries(value)) {
+      await pool.query(
+        `INSERT INTO institution_settings (institution_id, key, value, updated_at, updated_by)
+         VALUES ($1, $2, $3::jsonb, now(), $4)
+         ON CONFLICT (institution_id, key)
+         DO UPDATE SET value = EXCLUDED.value,
+                       updated_at = now(),
+                       updated_by = EXCLUDED.updated_by`,
+        [institution.id, key, JSON.stringify(val), req.user.id],
+      );
+    }
+
+    invalidateSettingsCache(institution.id);
+
+    logActivity({
+      action: "institution.settings.updated",
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      institutionId: institution.id,
+      entityType: "institution",
+      entityRef: institution.id,
+      description: `Updated settings for ${institution.institution_name}`,
+      metadata: { set: Object.keys(value), cleared: clearKeys },
+    });
+
+    const [settings, overrides, global] = await Promise.all([
+      getSettings(institution.id),
+      getInstitutionOverrides(institution.id),
+      getSettings(null),
+    ]);
+
+    return res.json({
+      message: "Institution settings updated",
+      institution,
+      settings,
+      overrides,
+      global,
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Failed to update institution settings", error: error.message });
+  }
+};
+
+export {
+  deleteInstitution,
+  listInstitutions,
+  updateInstitution,
+  getInstitutionSettings,
+  updateInstitutionSettings,
+};

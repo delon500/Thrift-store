@@ -23,17 +23,17 @@ export const SETTINGS_DEFAULTS = {
   enabled_payment_methods: PAYMENT_METHOD_CATALOG.map((method) => method.id),
 };
 
-const SETTING_KEYS = Object.keys(SETTINGS_DEFAULTS);
+export const SETTING_KEYS = Object.keys(SETTINGS_DEFAULTS);
 
 // Settings change rarely but are read on every cart calc / checkout, so a small
 // in-memory cache avoids a DB hit per request. Writes call invalidate below.
+// Effective value resolves: institution override -> global app_settings -> default.
 let cache = null;
 let cachedAt = 0;
+const instCache = new Map(); // institutionId -> { value, at }
 const CACHE_TTL_MS = 60000;
 
-export const getSettings = async () => {
-  if (cache && Date.now() - cachedAt < CACHE_TTL_MS) return cache;
-
+const readGlobalSettings = async () => {
   const merged = { ...SETTINGS_DEFAULTS };
   try {
     const { rows } = await pool.query(
@@ -46,25 +46,70 @@ export const getSettings = async () => {
   } catch (error) {
     console.error(`[settings] read failed, using defaults: ${error.message}`);
   }
+  return merged;
+};
 
-  cache = merged;
+const getGlobalSettings = async () => {
+  if (cache && Date.now() - cachedAt < CACHE_TTL_MS) return cache;
+  cache = await readGlobalSettings();
   cachedAt = Date.now();
   return cache;
 };
 
-export const invalidateSettingsCache = () => {
-  cache = null;
-  cachedAt = 0;
+// The raw override rows for one institution as { key: value } (only keys it sets).
+export const getInstitutionOverrides = async (institutionId) => {
+  const overrides = {};
+  if (!institutionId) return overrides;
+  try {
+    const { rows } = await pool.query(
+      "SELECT key, value FROM institution_settings WHERE institution_id = $1 AND key = ANY($2)",
+      [institutionId, SETTING_KEYS],
+    );
+    for (const row of rows) {
+      if (row.key in SETTINGS_DEFAULTS && row.value !== null) {
+        overrides[row.key] = row.value;
+      }
+    }
+  } catch (error) {
+    console.error(`[settings] institution read failed: ${error.message}`);
+  }
+  return overrides;
 };
 
-export const getServiceFee = async () =>
-  Number((await getSettings()).service_fee);
+// Effective settings. Pass an institutionId to layer its overrides on top of the
+// global values; omit it (or pass null) for the platform-wide settings.
+export const getSettings = async (institutionId = null) => {
+  const global = await getGlobalSettings();
+  if (!institutionId) return global;
 
-export const getCheckoutExpiryMinutes = async () =>
-  Number((await getSettings()).checkout_expiry_minutes);
+  const hit = instCache.get(institutionId);
+  if (hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.value;
+
+  const value = { ...global, ...(await getInstitutionOverrides(institutionId)) };
+  instCache.set(institutionId, { value, at: Date.now() });
+  return value;
+};
+
+// No arg → clear everything (a global change shifts every institution's fallback).
+// With an id → clear just that institution's cache.
+export const invalidateSettingsCache = (institutionId = null) => {
+  if (institutionId) {
+    instCache.delete(institutionId);
+    return;
+  }
+  cache = null;
+  cachedAt = 0;
+  instCache.clear();
+};
+
+export const getServiceFee = async (institutionId = null) =>
+  Number((await getSettings(institutionId)).service_fee);
+
+export const getCheckoutExpiryMinutes = async (institutionId = null) =>
+  Number((await getSettings(institutionId)).checkout_expiry_minutes);
 
 // The catalog entries that are currently enabled, in catalog order.
-export const getEnabledPaymentMethods = async () => {
-  const enabled = (await getSettings()).enabled_payment_methods || [];
+export const getEnabledPaymentMethods = async (institutionId = null) => {
+  const enabled = (await getSettings(institutionId)).enabled_payment_methods || [];
   return PAYMENT_METHOD_CATALOG.filter((method) => enabled.includes(method.id));
 };
