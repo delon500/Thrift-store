@@ -41,9 +41,32 @@ const deleteInstitution = async ({ id, token }) => {
   return response.data;
 };
 
+// Per-institution settings (effective + overrides + global + catalog).
+const getInstitutionSettings = async ({ id, token }) => {
+  const response = await api.get(
+    `/admin/institutions/${id}/settings`,
+    authHeaders(token),
+  );
+
+  return response.data;
+};
+
+// body: { service_fee?, checkout_expiry_minutes?, enabled_payment_methods?, clear?: [] }
+const updateInstitutionSettings = async ({ id, body, token }) => {
+  const response = await api.put(
+    `/admin/institutions/${id}/settings`,
+    body,
+    authHeaders(token),
+  );
+
+  return response.data;
+};
+
 export {
   deleteInstitution,
   getAdminInstitutions,
   getInstitutions,
+  getInstitutionSettings,
   updateInstitution,
+  updateInstitutionSettings,
 };

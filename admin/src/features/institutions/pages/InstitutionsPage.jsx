@@ -3,7 +3,9 @@ import { toast } from "react-toastify";
 import {
   useDeleteInstitution,
   useInstitutions,
+  useInstitutionSettings,
   useUpdateInstitution,
+  useUpdateInstitutionSettings,
 } from "../hooks/useInstitutions";
 import { useDebouncedValue } from "../../../lib/useDebouncedValue";
 import Pagination from "../../../components/shared/Pagination";
@@ -123,6 +125,262 @@ const EditInstitutionModal = ({ institution, onClose }) => {
   );
 };
 
+const OverrideToggle = ({ checked, onChange }) => (
+  <label className="flex items-center gap-2 text-xs font-semibold text-on-surface-variant">
+    <input
+      type="checkbox"
+      checked={checked}
+      onChange={onChange}
+      className="h-4 w-4 accent-primary"
+    />
+    Override
+  </label>
+);
+
+// Per-institution overrides for service fee, checkout expiry, and payment
+// methods. Each setting can either use the global default or be overridden.
+const InstitutionSettingsModal = ({ institution, onClose }) => {
+  const { data, isLoading } = useInstitutionSettings(institution.id);
+  const updateMutation = useUpdateInstitutionSettings();
+  const catalog = data?.payment_method_catalog || [];
+
+  const [form, setForm] = useState(null);
+  const [override, setOverride] = useState(null);
+  const [initialOverrides, setInitialOverrides] = useState(null);
+  const [seeded, setSeeded] = useState(false);
+
+  if (data && !seeded) {
+    setSeeded(true);
+    const ov = data.overrides || {};
+    setInitialOverrides(ov);
+    setOverride({
+      service_fee: "service_fee" in ov,
+      checkout_expiry_minutes: "checkout_expiry_minutes" in ov,
+      enabled_payment_methods: "enabled_payment_methods" in ov,
+    });
+    setForm({
+      service_fee: String(data.settings.service_fee),
+      checkout_expiry_minutes: String(data.settings.checkout_expiry_minutes),
+      enabled: new Set(data.settings.enabled_payment_methods),
+    });
+  }
+
+  const toggleOverride = (key) =>
+    setOverride((current) => ({ ...current, [key]: !current[key] }));
+
+  const toggleMethod = (id) =>
+    setForm((current) => {
+      const enabled = new Set(current.enabled);
+      if (enabled.has(id)) enabled.delete(id);
+      else enabled.add(id);
+      return { ...current, enabled };
+    });
+
+  const handleSave = async () => {
+    const patch = {};
+    const clear = [];
+
+    if (override.service_fee) {
+      const fee = Number(form.service_fee);
+      if (!Number.isFinite(fee) || fee < 0 || fee > 1000) {
+        return toast.error("Service fee must be between 0 and 1000");
+      }
+      patch.service_fee = fee;
+    } else if ("service_fee" in initialOverrides) clear.push("service_fee");
+
+    if (override.checkout_expiry_minutes) {
+      const minutes = Number(form.checkout_expiry_minutes);
+      if (!Number.isInteger(minutes) || minutes < 5 || minutes > 1440) {
+        return toast.error("Checkout expiry must be 5–1440 minutes");
+      }
+      patch.checkout_expiry_minutes = minutes;
+    } else if ("checkout_expiry_minutes" in initialOverrides) {
+      clear.push("checkout_expiry_minutes");
+    }
+
+    if (override.enabled_payment_methods) {
+      if (form.enabled.size === 0) {
+        return toast.error("Enable at least one payment method");
+      }
+      patch.enabled_payment_methods = [...form.enabled];
+    } else if ("enabled_payment_methods" in initialOverrides) {
+      clear.push("enabled_payment_methods");
+    }
+
+    if (Object.keys(patch).length === 0 && clear.length === 0) {
+      return toast.info("No changes to save");
+    }
+
+    try {
+      await updateMutation.mutateAsync({
+        id: institution.id,
+        body: { ...patch, ...(clear.length ? { clear } : {}) },
+      });
+      toast.success("Institution settings saved");
+      onClose();
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Could not save settings");
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white p-6">
+        <div className="flex items-start justify-between">
+          <div>
+            <h2 className="text-xl font-black text-primary">Institution settings</h2>
+            <p className="text-sm text-on-surface-variant">
+              {institution.institution_name} — overrides the platform defaults.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-2xl leading-none text-on-surface-variant hover:text-on-surface"
+          >
+            ×
+          </button>
+        </div>
+
+        {isLoading || !form ? (
+          <p className="mt-6 text-on-surface-variant">Loading settings...</p>
+        ) : (
+          <>
+            <section className="mt-5 rounded-2xl border border-outline-variant p-5">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="font-bold text-on-surface">Service fee</p>
+                  <p className="text-sm text-on-surface-variant">
+                    Global default: R{data.global.service_fee}
+                  </p>
+                </div>
+                <OverrideToggle
+                  checked={!!override.service_fee}
+                  onChange={() => toggleOverride("service_fee")}
+                />
+              </div>
+              {override.service_fee ? (
+                <div className="mt-3 flex items-center gap-2">
+                  <span className="text-on-surface-variant">R</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={form.service_fee}
+                    onChange={(e) =>
+                      setForm((c) => ({ ...c, service_fee: e.target.value }))
+                    }
+                    className="w-40 rounded-lg border border-outline-variant px-4 py-2.5 text-sm outline-none focus:border-primary"
+                  />
+                </div>
+              ) : (
+                <p className="mt-3 text-sm text-on-surface-variant">
+                  Using global default (R{data.global.service_fee}).
+                </p>
+              )}
+            </section>
+
+            <section className="mt-4 rounded-2xl border border-outline-variant p-5">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="font-bold text-on-surface">Checkout expiry</p>
+                  <p className="text-sm text-on-surface-variant">
+                    Global default: {data.global.checkout_expiry_minutes} min
+                  </p>
+                </div>
+                <OverrideToggle
+                  checked={!!override.checkout_expiry_minutes}
+                  onChange={() => toggleOverride("checkout_expiry_minutes")}
+                />
+              </div>
+              {override.checkout_expiry_minutes ? (
+                <div className="mt-3 flex items-center gap-2">
+                  <input
+                    type="number"
+                    step="1"
+                    min="5"
+                    max="1440"
+                    value={form.checkout_expiry_minutes}
+                    onChange={(e) =>
+                      setForm((c) => ({
+                        ...c,
+                        checkout_expiry_minutes: e.target.value,
+                      }))
+                    }
+                    className="w-40 rounded-lg border border-outline-variant px-4 py-2.5 text-sm outline-none focus:border-primary"
+                  />
+                  <span className="text-on-surface-variant">min</span>
+                </div>
+              ) : (
+                <p className="mt-3 text-sm text-on-surface-variant">
+                  Using global default ({data.global.checkout_expiry_minutes} min).
+                </p>
+              )}
+            </section>
+
+            <section className="mt-4 rounded-2xl border border-outline-variant p-5">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="font-bold text-on-surface">Payment methods</p>
+                  <p className="text-sm text-on-surface-variant">
+                    Which PayFast methods this institution offers.
+                  </p>
+                </div>
+                <OverrideToggle
+                  checked={!!override.enabled_payment_methods}
+                  onChange={() => toggleOverride("enabled_payment_methods")}
+                />
+              </div>
+              {override.enabled_payment_methods ? (
+                <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {catalog.map((method) => (
+                    <label
+                      key={method.id}
+                      className="flex cursor-pointer items-center gap-3 rounded-lg border border-outline-variant px-4 py-2.5 hover:bg-surface-container-low"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={form.enabled.has(method.id)}
+                        onChange={() => toggleMethod(method.id)}
+                        className="h-4 w-4 accent-primary"
+                      />
+                      <span className="text-sm font-semibold text-on-surface">
+                        {method.label}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-3 text-sm text-on-surface-variant">
+                  Using global default ({data.global.enabled_payment_methods.length} methods).
+                </p>
+              )}
+            </section>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-lg border border-outline-variant px-4 py-2 text-sm font-semibold text-on-surface-variant"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={updateMutation.isPending}
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white disabled:opacity-60"
+              >
+                {updateMutation.isPending ? "Saving..." : "Save settings"}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const InstitutionsPage = () => {
   const { data: me } = useMe();
   const canManage = me?.role === "super_admin";
@@ -132,6 +390,7 @@ const InstitutionsPage = () => {
   const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(1);
   const [editing, setEditing] = useState(null);
+  const [settingsFor, setSettingsFor] = useState(null);
 
   const debouncedQuery = useDebouncedValue(query);
 
@@ -293,6 +552,13 @@ const InstitutionsPage = () => {
                           </button>
                           <button
                             type="button"
+                            onClick={() => setSettingsFor(institution)}
+                            className="rounded-lg border border-outline-variant px-3 py-1.5 text-xs font-bold text-on-surface-variant hover:bg-surface-container-low"
+                          >
+                            Settings
+                          </button>
+                          <button
+                            type="button"
                             onClick={() => handleDelete(institution)}
                             disabled={deleteMutation.isPending}
                             className="rounded-lg border border-red-300 px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50 disabled:opacity-60"
@@ -316,6 +582,13 @@ const InstitutionsPage = () => {
         <EditInstitutionModal
           institution={editing}
           onClose={() => setEditing(null)}
+        />
+      ) : null}
+
+      {settingsFor ? (
+        <InstitutionSettingsModal
+          institution={settingsFor}
+          onClose={() => setSettingsFor(null)}
         />
       ) : null}
     </div>
