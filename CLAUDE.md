@@ -28,8 +28,9 @@ Four independently-run apps. **There is no root `package.json`** — install and
 | `admin/`       | Platform admin app         | React 19 + Vite               | http://localhost:5174  |
 | `school-admin/`| School staff app (collections) | React 19 + Vite           | http://localhost:5175  |
 
-All three React apps talk to the API at `http://localhost:5000/api` (hardcoded in each app's
-`src/lib/axios.js`).
+All three React apps talk to the API via the shared `src/lib/axios.js`, whose base URL is
+`import.meta.env.VITE_API_URL || "http://localhost:5000/api"` — env-driven, falling back to
+localhost in dev. Set `VITE_API_URL` per app for other environments.
 
 ## Running locally
 
@@ -54,7 +55,10 @@ ES modules. Entry: `backend/server.js`. Layout:
 - `middleware/` — `authMiddleware.js` (`protect` = JWT required; `allowRoles(...roles)`), `multer.js`
 - `routes/` — one Express router per resource, mounted in `server.js`
 - `services/` — `payfastService.js` (signature build/verify), `emailService.js` (nodemailer)
-- `db/migrations/` — SQL migrations, **applied manually, in filename order** (no migration runner)
+- `db/migrations/` — SQL migrations (incremental deltas on the base schema), in filename order.
+  Apply with the runner: `npm run migrate` (pending only), `npm run migrate:status`,
+  `npm run migrate:baseline` (adopt the runner on an already-migrated DB). `db/migrate.js` tracks
+  applied files in a `schema_migrations` table.
 
 Route groups (all under `/api`): `auth`, `institutions`, `parents`, `students`, `users`,
 `products`, `cart`, `checkout`, `payments`, `orders` (a user's own orders), `admin/orders`,
@@ -113,10 +117,15 @@ All three apps share the same structure and libraries:
 ## Gotchas
 
 - **`backend/.env` changes need a full backend restart** — nodemon watches `.js`, not `.env`.
-- **`node_modules` is not in the root `.gitignore`** — be careful not to commit dependencies or
-  build output (`dist/`).
-- **DB migrations are manual** — apply `backend/db/migrations/*.sql` in order against the existing
-  base schema.
+- **Don't commit dependencies or build output.** `node_modules` and `dist` are git-ignored (root
+  `.gitignore` + each app's own `.gitignore`), but a new app/folder won't be until it has a
+  `.gitignore` — confirm before committing build artifacts.
+- **DB migrations are deltas on a base schema** — apply with `npm run migrate` (tracks applied
+  files in `schema_migrations`). On a DB that was already migrated by hand, run
+  `npm run migrate:baseline` once to adopt the runner. `db/schema.sql` is the full `pg_dump` used
+  for fresh DBs (and the integration test DB).
 - **PayFast ITN signatures must include blank fields** when verifying (PayFast signs every posted
   field); outgoing payment requests omit them. See `services/payfastService.js`.
-- Verify changes against the running app/DB where practical; the backend has no integration tests.
+- Verify changes against the running app/DB where practical. The backend has both unit tests
+  (`npm test`, no DB) and integration tests (`npm run test:integration`, throwaway DB) — but they
+  don't cover every controller, so don't assume a passing suite means a path is exercised.
