@@ -16,10 +16,11 @@ const fetchScopedOrder = async (institutionId, orderReference) => {
       co.total::text AS total,
       co.created_at,
       i.institution_name,
-      p.status AS payment_status
+      (SELECT p.status FROM payments p
+        WHERE p.collection_order_id = co.id
+        ORDER BY p.created_at DESC LIMIT 1) AS payment_status
      FROM collection_orders co
      JOIN institutions i ON i.id = co.institution_id
-     LEFT JOIN payments p ON p.collection_order_id = co.id
      WHERE co.institution_id = $1 AND co.order_reference = $2`,
     [institutionId, orderReference],
   );
@@ -144,9 +145,10 @@ const listSchoolOrders = async (req, res) => {
         co.total::text AS total,
         co.created_at,
         co.collected_at,
-        p.status AS payment_status
+        (SELECT p.status FROM payments p
+          WHERE p.collection_order_id = co.id
+          ORDER BY p.created_at DESC LIMIT 1) AS payment_status
        FROM collection_orders co
-       LEFT JOIN payments p ON p.collection_order_id = co.id
        WHERE ${where}
        ORDER BY co.created_at DESC${pagination}`,
       values,
