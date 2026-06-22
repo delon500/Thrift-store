@@ -116,7 +116,7 @@ const getCart = async (req, res) => {
   try {
     const cart = await getOrCreateActiveCart(pool, req.user.id);
     const rows = await getCartRows(pool, cart.id);
-    const serviceFee = await getServiceFee();
+    const serviceFee = await getServiceFee(req.user.institution_id);
 
     return res.json(
       serializeCart({ cartId: cart.id, status: cart.status, rows, serviceFee }),
@@ -165,7 +165,7 @@ const addCartItem = async (req, res) => {
     );
 
     const rows = await getCartRows(pool, cart.id);
-    const serviceFee = await getServiceFee();
+    const serviceFee = await getServiceFee(req.user.institution_id);
 
     return res
       .status(201)
@@ -190,7 +190,7 @@ const removeCartItem = async (req, res) => {
     );
 
     const rows = await getCartRows(pool, cart.id);
-    const serviceFee = await getServiceFee();
+    const serviceFee = await getServiceFee(req.user.institution_id);
 
     return res.json(
       serializeCart({ cartId: cart.id, status: cart.status, rows, serviceFee }),
@@ -274,8 +274,8 @@ const checkoutCart = async (req, res) => {
       [req.user.id],
     );
     const user = userResult.rows[0];
-    const summary = calculateCartSummary(rows, await getServiceFee());
     const institutionId = products[0].institution_id;
+    const summary = calculateCartSummary(rows, await getServiceFee(institutionId));
 
     const orderResult = await client.query(
       `INSERT INTO collection_orders (
