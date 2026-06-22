@@ -16,6 +16,7 @@ import { getUsersByRole } from "../../registeredUsers/api/registeredUsersApi";
 import { getAdminProducts } from "../../inventory/api/inventoryApi";
 import { getPayments } from "../../payments/api/paymentsApi";
 import { downloadCsv, toCsv } from "../lib/csv";
+import { exportPdf } from "../lib/pdf";
 import { Badge, PageHeader, SummaryCard } from "../../../components/shared/ui";
 import Pagination from "../../../components/shared/Pagination";
 
@@ -163,15 +164,36 @@ const OrdersReport = ({ token }) => {
       toast.info("Nothing to export for these filters.");
       return;
     }
-    const filterPairs = [
-      ["Date range", `${from || "start"} to ${to || "now"}`],
-      ["Status", status || "All"],
-      ["School", school || "All"],
-    ];
     downloadCsv(
       `orders-report-${new Date().toISOString().slice(0, 10)}.csv`,
-      `${metaCsv("Orders", filterPairs, filtered.length)}\n\n${toCsv(filtered, ORDER_COLUMNS)}`,
+      `${metaCsv("Orders", orderFilterPairs(), filtered.length)}\n\n${toCsv(filtered, ORDER_COLUMNS)}`,
     );
+  };
+
+  const orderFilterPairs = () => [
+    ["Date range", `${from || "start"} to ${to || "now"}`],
+    ["Status", status || "All"],
+    ["School", school || "All"],
+  ];
+
+  const handleExportPdf = () => {
+    if (filtered.length === 0) {
+      toast.info("Nothing to export for these filters.");
+      return;
+    }
+    exportPdf({
+      title: "Orders",
+      filename: `orders-report-${new Date().toISOString().slice(0, 10)}`,
+      meta: [["Generated", new Date().toLocaleString()], ...orderFilterPairs(), ["Rows", String(filtered.length)]],
+      summary: [
+        ["Orders", String(kpis.count)],
+        ["Gross sales", zar.format(kpis.grossSales)],
+        ["Item sales", zar.format(kpis.itemSales)],
+        ["Service fees", zar.format(kpis.fees)],
+      ],
+      columns: ORDER_COLUMNS,
+      rows: filtered,
+    });
   };
 
   return (
@@ -207,13 +229,22 @@ const OrdersReport = ({ token }) => {
             ))}
           </select>
         </label>
-        <button
-          type="button"
-          onClick={handleExport}
-          className="ml-auto rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-white"
-        >
-          Export CSV
-        </button>
+        <div className="ml-auto flex gap-2">
+          <button
+            type="button"
+            onClick={handleExport}
+            className="rounded-lg border border-primary px-4 py-2.5 text-sm font-bold text-primary hover:bg-surface-container-low"
+          >
+            CSV
+          </button>
+          <button
+            type="button"
+            onClick={handleExportPdf}
+            className="rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-white"
+          >
+            PDF
+          </button>
+        </div>
       </div>
 
       {isError ? (
@@ -394,19 +425,35 @@ const ReportWorkspace = ({ token, config }) => {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
+  const filterPairs = () => [
+    ...(config.dateField ? [["Date range", `${from || "start"} to ${to || "now"}`]] : []),
+    ...config.selectFilters.map((f) => [f.label, selects[f.key] || "All"]),
+  ];
+
   const handleExport = () => {
     if (filtered.length === 0) {
       toast.info("Nothing to export for these filters.");
       return;
     }
-    const filterPairs = [
-      ...(config.dateField ? [["Date range", `${from || "start"} to ${to || "now"}`]] : []),
-      ...config.selectFilters.map((f) => [f.label, selects[f.key] || "All"]),
-    ];
     downloadCsv(
       `${config.filename}-${new Date().toISOString().slice(0, 10)}.csv`,
-      `${metaCsv(config.reportName, filterPairs, filtered.length)}\n\n${toCsv(filtered, config.columns)}`,
+      `${metaCsv(config.reportName, filterPairs(), filtered.length)}\n\n${toCsv(filtered, config.columns)}`,
     );
+  };
+
+  const handleExportPdf = () => {
+    if (filtered.length === 0) {
+      toast.info("Nothing to export for these filters.");
+      return;
+    }
+    exportPdf({
+      title: config.reportName,
+      filename: `${config.filename}-${new Date().toISOString().slice(0, 10)}`,
+      meta: [["Generated", new Date().toLocaleString()], ...filterPairs(), ["Rows", String(filtered.length)]],
+      summary: kpis.map((kpi) => [kpi.label, String(kpi.value)]),
+      columns: config.columns,
+      rows: filtered,
+    });
   };
 
   return (
@@ -441,13 +488,22 @@ const ReportWorkspace = ({ token, config }) => {
             </select>
           </label>
         ))}
-        <button
-          type="button"
-          onClick={handleExport}
-          className="ml-auto rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-white"
-        >
-          Export CSV
-        </button>
+        <div className="ml-auto flex gap-2">
+          <button
+            type="button"
+            onClick={handleExport}
+            className="rounded-lg border border-primary px-4 py-2.5 text-sm font-bold text-primary hover:bg-surface-container-low"
+          >
+            CSV
+          </button>
+          <button
+            type="button"
+            onClick={handleExportPdf}
+            className="rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-white"
+          >
+            PDF
+          </button>
+        </div>
       </div>
 
       {isError ? (
