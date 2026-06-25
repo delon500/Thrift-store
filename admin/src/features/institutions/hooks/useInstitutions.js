@@ -1,12 +1,38 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import useAuthStore from "../../auth/store/authStore";
 import {
+  createInstitutionStaff,
   deleteInstitution,
   getAdminInstitutions,
   getInstitutionSettings,
+  getInstitutionStaff,
   updateInstitution,
   updateInstitutionSettings,
 } from "../api/institutionsApi";
+
+export const useInstitutionStaff = (id) => {
+  const token = useAuthStore((state) => state.token);
+
+  return useQuery({
+    queryKey: ["admin-institution-staff", id],
+    queryFn: () => getInstitutionStaff({ id, token }),
+    enabled: !!token && !!id,
+  });
+};
+
+export const useCreateInstitutionStaff = () => {
+  const token = useAuthStore((state) => state.token);
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, body }) => createInstitutionStaff({ id, body, token }),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["admin-institution-staff", variables.id],
+      });
+    },
+  });
+};
 
 export const useInstitutionSettings = (id) => {
   const token = useAuthStore((state) => state.token);

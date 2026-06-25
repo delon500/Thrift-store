@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { toast } from "react-toastify";
 import {
+  useCreateInstitutionStaff,
   useDeleteInstitution,
   useInstitutions,
   useInstitutionSettings,
+  useInstitutionStaff,
   useUpdateInstitution,
   useUpdateInstitutionSettings,
 } from "../hooks/useInstitutions";
@@ -322,6 +324,194 @@ const InstitutionSettingsModal = ({ institution, onClose }) => {
   );
 };
 
+const ACCOUNT_TONE = {
+  approved: "success",
+  pending: "warning",
+  suspended: "warning",
+  rejected: "danger",
+};
+
+const AccountField = ({ label, children }) => (
+  <label className="grid gap-1 text-sm">
+    <span className="font-semibold text-on-surface-variant">{label}</span>
+    {children}
+  </label>
+);
+
+// Lists an institution's login accounts and lets a super-admin add more. Every
+// account gets the institution's role (school/university).
+const InstitutionAccountsModal = ({ institution, onClose }) => {
+  const { data, isLoading } = useInstitutionStaff(institution.id);
+  const createMutation = useCreateInstitutionStaff();
+  const accounts = data?.users || [];
+
+  const empty = {
+    full_name: "",
+    email: "",
+    contact_number: "",
+    password: "",
+    confirm_password: "",
+  };
+  const [form, setForm] = useState(empty);
+  const setField = (key) => (e) =>
+    setForm((current) => ({ ...current, [key]: e.target.value }));
+
+  const handleCreate = async (event) => {
+    event.preventDefault();
+    if (form.password !== form.confirm_password) {
+      return toast.error("Passwords do not match");
+    }
+    if (form.password.length < 6) {
+      return toast.error("Password must be at least 6 characters");
+    }
+    try {
+      await createMutation.mutateAsync({ id: institution.id, body: form });
+      toast.success("Account created");
+      setForm(empty);
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Could not create account");
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white p-6">
+        <div className="flex items-start justify-between">
+          <div>
+            <h2 className="text-xl font-black text-primary">Institution accounts</h2>
+            <p className="text-sm text-on-surface-variant">
+              {institution.institution_name} — accounts get the{" "}
+              <span className="font-semibold capitalize">
+                {institution.institution_category}
+              </span>{" "}
+              role.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-2xl leading-none text-on-surface-variant hover:text-on-surface"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="mt-5">
+          <p className="text-sm font-bold text-on-surface">Existing accounts</p>
+          {isLoading ? (
+            <p className="mt-2 text-sm text-on-surface-variant">Loading...</p>
+          ) : accounts.length === 0 ? (
+            <p className="mt-2 text-sm text-on-surface-variant">
+              No accounts yet — add one below.
+            </p>
+          ) : (
+            <div className="mt-2 overflow-hidden rounded-xl border border-outline-variant">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-surface-container-low text-xs uppercase text-on-surface-variant">
+                  <tr>
+                    <th className="px-4 py-2">Name</th>
+                    <th className="px-4 py-2">Email</th>
+                    <th className="px-4 py-2">Role</th>
+                    <th className="px-4 py-2">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {accounts.map((account) => (
+                    <tr key={account.id} className="border-t border-outline-variant">
+                      <td className="px-4 py-2 font-medium text-on-surface">
+                        {account.full_name}
+                      </td>
+                      <td className="px-4 py-2">{account.email}</td>
+                      <td className="px-4 py-2 capitalize">{account.role}</td>
+                      <td className="px-4 py-2">
+                        <Badge
+                          tone={ACCOUNT_TONE[account.status] || "neutral"}
+                          className="capitalize"
+                        >
+                          {account.status}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        <form
+          onSubmit={handleCreate}
+          className="mt-6 rounded-2xl border border-outline-variant p-5"
+        >
+          <p className="font-bold text-on-surface">Add account</p>
+          <div className="mt-3 grid gap-4 sm:grid-cols-2">
+            <AccountField label="Full name">
+              <input
+                value={form.full_name}
+                onChange={setField("full_name")}
+                className={inputClass}
+                required
+              />
+            </AccountField>
+            <AccountField label="Email">
+              <input
+                type="email"
+                value={form.email}
+                onChange={setField("email")}
+                className={inputClass}
+                required
+              />
+            </AccountField>
+            <AccountField label="Contact number">
+              <input
+                value={form.contact_number}
+                onChange={setField("contact_number")}
+                className={inputClass}
+                required
+              />
+            </AccountField>
+            <div className="hidden sm:block" />
+            <AccountField label="Password">
+              <input
+                type="password"
+                value={form.password}
+                onChange={setField("password")}
+                className={inputClass}
+                required
+              />
+            </AccountField>
+            <AccountField label="Confirm password">
+              <input
+                type="password"
+                value={form.confirm_password}
+                onChange={setField("confirm_password")}
+                className={inputClass}
+                required
+              />
+            </AccountField>
+          </div>
+          <div className="mt-5 flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg border border-outline-variant px-4 py-2 text-sm font-semibold text-on-surface-variant"
+            >
+              Close
+            </button>
+            <button
+              type="submit"
+              disabled={createMutation.isPending}
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white disabled:opacity-60"
+            >
+              {createMutation.isPending ? "Creating..." : "Create account"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 const InstitutionsPage = () => {
   const { data: me } = useMe();
   const canManage = me?.role === "super_admin";
@@ -332,6 +522,7 @@ const InstitutionsPage = () => {
   const [page, setPage] = useState(1);
   const [editing, setEditing] = useState(null);
   const [settingsFor, setSettingsFor] = useState(null);
+  const [accountsFor, setAccountsFor] = useState(null);
 
   const debouncedQuery = useDebouncedValue(query);
 
@@ -493,6 +684,13 @@ const InstitutionsPage = () => {
                           </button>
                           <button
                             type="button"
+                            onClick={() => setAccountsFor(institution)}
+                            className="rounded-lg border border-outline-variant px-3 py-1.5 text-xs font-bold text-on-surface-variant hover:bg-surface-container-low"
+                          >
+                            Accounts
+                          </button>
+                          <button
+                            type="button"
                             onClick={() => setSettingsFor(institution)}
                             className="rounded-lg border border-outline-variant px-3 py-1.5 text-xs font-bold text-on-surface-variant hover:bg-surface-container-low"
                           >
@@ -530,6 +728,13 @@ const InstitutionsPage = () => {
         <InstitutionSettingsModal
           institution={settingsFor}
           onClose={() => setSettingsFor(null)}
+        />
+      ) : null}
+
+      {accountsFor ? (
+        <InstitutionAccountsModal
+          institution={accountsFor}
+          onClose={() => setAccountsFor(null)}
         />
       ) : null}
     </div>

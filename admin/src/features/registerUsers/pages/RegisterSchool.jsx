@@ -17,8 +17,6 @@ const RegisterSchool = () => {
     institutionPhone: "",
     institutionType: "private",
     institutionCategory: "school",
-    password: "",
-    confirmPassword: "",
   });
 
   const handleChange = (e) => {
@@ -41,9 +39,6 @@ const RegisterSchool = () => {
         registration_number: formData.registrationNumber,
         institution_phone: formData.institutionPhone,
         institution_type: formData.institutionType,
-        role: formData.role,
-        password: formData.password,
-        confirm_password: formData.confirmPassword,
         institution_category: formData.institutionCategory,
       },
       token,
@@ -54,7 +49,7 @@ const RegisterSchool = () => {
     <div className="w-full">
       <PageHeader
         title="Register school"
-        subtitle="Create a school institution account. It can sign in once approved."
+        subtitle="Register the school. Add login accounts for it afterwards from Institutions."
       />
 
       <form onSubmit={handleSubmit}>
@@ -187,53 +182,6 @@ const RegisterSchool = () => {
               placeholder="TA-001"
               className="w-full border border-outline-variant rounded-xl px-4 py-3 outline-none focus:border-primary"
             />
-          </div>
-
-          {/* Divider */}
-          <div className="my-8 border-t border-outline-variant"></div>
-
-          {/* Security Section */}
-          <div className="mb-6">
-            <h2 className="font-bold text-on-surface text-lg">Security</h2>
-
-            <p className="text-sm text-on-surface-variant">
-              Create login credentials for the staff member.
-            </p>
-          </div>
-
-          {/* Passwords */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div>
-              <label className="block text-sm font-semibold text-on-surface-variant mb-2">
-                Password
-              </label>
-
-              <input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="********"
-                className="w-full border border-outline-variant rounded-xl px-4 py-3 outline-none focus:border-primary"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-on-surface-variant mb-2">
-                Confirm Password
-              </label>
-
-              <input
-                type="password"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                placeholder="********"
-                className="w-full border border-outline-variant rounded-xl px-4 py-3 outline-none focus:border-primary"
-                required
-              />
-            </div>
           </div>
 
           {/* Buttons */}
