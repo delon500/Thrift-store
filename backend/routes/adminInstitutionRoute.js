@@ -5,6 +5,8 @@ import {
   updateInstitution,
   getInstitutionSettings,
   updateInstitutionSettings,
+  listInstitutionUsers,
+  createInstitutionUser,
 } from "../controllers/adminInstitutionController.js";
 import { allowRoles, protect } from "../middleware/authMiddleware.js";
 
@@ -19,6 +21,14 @@ adminInstitutionRouter.put(
   "/:id/settings",
   allowRoles("super_admin"),
   updateInstitutionSettings,
+);
+
+// Per-institution accounts: admin can read, super-admin can create.
+adminInstitutionRouter.get("/:id/staff", listInstitutionUsers);
+adminInstitutionRouter.post(
+  "/:id/staff",
+  allowRoles("super_admin"),
+  createInstitutionUser,
 );
 
 // Editing / deleting institutions is super-admin only.

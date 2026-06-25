@@ -1,4 +1,5 @@
 import pool from "../config/db.js";
+import bcrypt from "bcrypt";
 import { logActivity } from "../services/activityLog.js";
 import {
   institutionDeleteError,
@@ -205,10 +206,101 @@ const deleteInstitution = async (req, res) => {
 
 const findInstitution = async (id) => {
   const result = await pool.query(
-    "SELECT id, institution_name FROM institutions WHERE id = $1",
+    "SELECT id, institution_name, institution_category FROM institutions WHERE id = $1",
     [id],
   );
   return result.rows[0] || null;
+};
+
+// GET /api/admin/institutions/:id/staff — the institution's staff accounts
+// (its school/university-role logins), not its buyers.
+const listInstitutionUsers = async (req, res) => {
+  try {
+    const institution = await findInstitution(req.params.id);
+    if (!institution) {
+      return res.status(404).json({ message: "Institution not found" });
+    }
+
+    const result = await pool.query(
+      `SELECT id, full_name, email, contact_number, role, status, created_at
+       FROM users
+       WHERE institution_id = $1 AND role IN ('school', 'university')
+       ORDER BY created_at DESC`,
+      [institution.id],
+    );
+
+    return res.json({ institution, users: result.rows });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Failed to load accounts", error: error.message });
+  }
+};
+
+// POST /api/admin/institutions/:id/staff — create a login for the institution.
+// The role is the institution's category (school|university); the account is
+// approved immediately. Super-admin only.
+const createInstitutionUser = async (req, res) => {
+  try {
+    const institution = await findInstitution(req.params.id);
+    if (!institution) {
+      return res.status(404).json({ message: "Institution not found" });
+    }
+
+    const { full_name, email, contact_number, password, confirm_password } =
+      req.body;
+
+    if (!full_name || !email || !contact_number || !password) {
+      return res.status(400).json({
+        message: "Full name, email, contact number and password are required",
+      });
+    }
+    if (confirm_password !== undefined && password !== confirm_password) {
+      return res.status(400).json({ message: "Passwords do not match" });
+    }
+    if (String(password).length < 6) {
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 6 characters" });
+    }
+
+    const existing = await pool.query("SELECT id FROM users WHERE email = $1", [
+      email,
+    ]);
+    if (existing.rows.length > 0) {
+      return res.status(400).json({ message: "Email already exists" });
+    }
+
+    const password_hash = await bcrypt.hash(password, 10);
+    const role = institution.institution_category; // school | university
+
+    const result = await pool.query(
+      `INSERT INTO users (
+        role, full_name, email, contact_number, password_hash, institution_id, status
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, 'approved')
+      RETURNING id, role, full_name, email, contact_number, status, created_at`,
+      [role, full_name, email, contact_number, password_hash, institution.id],
+    );
+
+    logActivity({
+      action: "institution.user.created",
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      institutionId: institution.id,
+      entityType: "user",
+      entityRef: email,
+      description: `Created ${role} account ${email} for ${institution.institution_name}`,
+    });
+
+    return res
+      .status(201)
+      .json({ message: "Account created", user: result.rows[0] });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Failed to create account", error: error.message });
+  }
 };
 
 // GET /api/admin/institutions/:id/settings — this institution's effective
@@ -338,4 +430,6 @@ export {
   updateInstitution,
   getInstitutionSettings,
   updateInstitutionSettings,
+  listInstitutionUsers,
+  createInstitutionUser,
 };
