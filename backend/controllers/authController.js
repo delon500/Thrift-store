@@ -106,127 +106,6 @@ const registerStudentParent = async (req, res) => {
   }
 };
 
-const registerInstitution = async (req, res) => {
-  try {
-    const {
-      contact_person_name,
-      contact_email,
-      contact_number,
-      institution_name,
-      registration_number,
-      institution_phone,
-      institution_type,
-      password,
-      confirm_password,
-      role,
-    } = req.body;
-
-    if (
-      !contact_person_name ||
-      !contact_email ||
-      !contact_number ||
-      !institution_name ||
-      !institution_phone ||
-      !institution_type ||
-      !password ||
-      !confirm_password ||
-      !role
-    ) {
-      return res
-        .status(400)
-        .json({ message: "All required fields must be filled" });
-    }
-
-    if (!["school", "university"].includes(role)) {
-      return res.status(400).json({ message: "Invalid role" });
-    }
-
-    if (password !== confirm_password) {
-      return res.status(400).json({ message: "Passwords do not match" });
-    }
-
-    const existingInstitution = await pool.query(
-      "SELECT * FROM institutions WHERE contact_email = $1",
-      [contact_email],
-    );
-
-    if (existingInstitution.rows.length > 0) {
-      return res
-        .status(400)
-        .json({ message: "Institution email already exists" });
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    const password_hash = await bcrypt.hash(password, salt);
-
-    const institutionResult = await pool.query(
-      `INSERT INTO institutions (
-        institution_name, institution_type, registration_number,
-        contact_person_name, contact_email, contact_number, institution_phone, status
-      )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending')
-      RETURNING *`,
-      [
-        institution_name,
-        institution_type,
-        registration_number || null,
-        contact_person_name,
-        contact_email,
-        contact_number,
-        institution_phone,
-      ],
-    );
-
-    const institution = institutionResult.rows[0];
-
-    const userResult = await pool.query(
-      `INSERT INTO users (
-        role, full_name, email, contact_number, password_hash, institution_id, status
-      )
-      VALUES ($1, $2, $3, $4, $5, $6, 'pending')
-      RETURNING id, role, full_name, email, contact_number, institution_id, status`,
-      [
-        role,
-        contact_person_name,
-        contact_email,
-        contact_number,
-        password_hash,
-        institution.id,
-      ],
-    );
-    const createdUser = userResult.rows[0];
-
-    logActivity({
-      action: "user.register",
-      actorId: createdUser.id,
-      actorRole: role,
-      actorName: contact_person_name,
-      institutionId: institution.id,
-      entityType: "user",
-      entityId: createdUser.id,
-      entityRef: contact_email,
-      description: `${institution_name} registered as ${role}`,
-    });
-
-    notifyAdmins({
-      type: "registration_pending",
-      title: "New registration awaiting approval",
-      body: `${institution_name} registered as a ${role}.`,
-      entityType: "user",
-      entityRef: contact_email,
-      link: "/admin/registrations",
-    });
-
-    res.status(201).json({
-      message: "Institution registration successful. Awaiting admin approval.",
-      institution,
-      user: createdUser,
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-};
-
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -450,7 +329,6 @@ const adminLogin = async (req, res) => {
 };
 export {
   registerStudentParent,
-  registerInstitution,
   login,
   adminLogin,
   registerAdmin,
