@@ -19,6 +19,25 @@ const getImagesFromRequest = (req) => {
   return [image1, image2, image3, image4, image5].filter(Boolean);
 };
 
+// Institution staff (school/university) may only act on their OWN institution's
+// products; admins/super-admins act on any. Returns null when allowed, otherwise
+// an { status, message } error (404 — don't reveal another institution's product).
+const checkProductScope = async (req, productId) => {
+  if (["admin", "super_admin"].includes(req.user.role)) return null;
+
+  const result = await pool.query(
+    "SELECT institution_id FROM products WHERE id = $1",
+    [productId],
+  );
+  if (
+    result.rows.length === 0 ||
+    result.rows[0].institution_id !== req.user.institution_id
+  ) {
+    return { status: 404, message: "Product not found" };
+  }
+  return null;
+};
+
 const analyseProduct = async (req, res) => {
   try {
     const images = getImagesFromRequest(req);
@@ -122,9 +141,6 @@ const createProduct = async (req, res) => {
     const image3 = req.files?.image3?.[0];
     const image4 = req.files?.image4?.[0];
     const image5 = req.files?.image5?.[0];
-
-    console.log("BODY:", req.body);
-    console.log("FILES:", req.files);
 
     const images = [image1, image2, image3, image4, image5].filter(Boolean);
 
@@ -452,6 +468,11 @@ const listAdminProducts = async (req, res) => {
 // PATCH /api/products/:id — update editable product fields (admin only).
 const updateProduct = async (req, res) => {
   try {
+    const scopeError = await checkProductScope(req, req.params.id);
+    if (scopeError) {
+      return res.status(scopeError.status).json({ message: scopeError.message });
+    }
+
     if (req.body.status && !PRODUCT_STATUSES.includes(req.body.status)) {
       return res.status(400).json({ message: "Invalid product status" });
     }
@@ -517,6 +538,11 @@ const updateProduct = async (req, res) => {
 // product_images rows cascade; collection_order_items keep history (FK SET NULL).
 const deleteProduct = async (req, res) => {
   try {
+    const scopeError = await checkProductScope(req, req.params.id);
+    if (scopeError) {
+      return res.status(scopeError.status).json({ message: scopeError.message });
+    }
+
     const existing = await pool.query(
       "SELECT id, name, status FROM products WHERE id = $1",
       [req.params.id],
