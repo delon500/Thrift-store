@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { ImageOff } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ImageOff, Plus } from "lucide-react";
 import { PageHeader, Badge, inputClass } from "../../../components/shared/ui";
 import Pagination from "../../../components/shared/Pagination";
 import { useDebouncedValue } from "../../../lib/useDebouncedValue";
@@ -55,8 +56,16 @@ const InventoryPage = () => {
     <div>
       <PageHeader
         title="Inventory"
-        subtitle="Your school's listed items and their live status (read-only)."
-      />
+        subtitle="Your school's listed items and their live status."
+      >
+        <Link
+          to="/school/inventory/add"
+          className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-on-primary transition-colors hover:bg-on-primary-container"
+        >
+          <Plus size={16} aria-hidden="true" />
+          Add item
+        </Link>
+      </PageHeader>
 
       <div className="flex flex-col gap-3 sm:flex-row">
         <input

@@ -8,6 +8,7 @@ import OrdersPage from "../features/orders/pages/OrdersPage";
 import OrderDetailPage from "../features/orders/pages/OrderDetailPage";
 import HistoryPage from "../features/history/pages/HistoryPage";
 import InventoryPage from "../features/inventory/pages/InventoryPage";
+import AddItemPage from "../features/inventory/pages/AddItemPage";
 import AccountPage from "../features/account/pages/AccountPage";
 import NotFound from "../pages/NotFound";
 
@@ -29,6 +30,7 @@ const router = createBrowserRouter([
           { path: "orders/:orderReference", element: <OrderDetailPage /> },
           { path: "history", element: <HistoryPage /> },
           { path: "inventory", element: <InventoryPage /> },
+          { path: "inventory/add", element: <AddItemPage /> },
           { path: "account", element: <AccountPage /> },
         ],
       },
