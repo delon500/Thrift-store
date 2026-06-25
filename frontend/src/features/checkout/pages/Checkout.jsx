@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   XCircle,
   Loader2,
+  Clock,
   ShieldCheck,
   ShoppingBag,
   ArrowRight,
@@ -63,6 +64,18 @@ const Checkout = () => {
     }
   }, [paymentState, returnedOrderReference, cancelCheckout]);
 
+  // If the payment confirmation (PayFast ITN) hasn't arrived after a while, stop
+  // showing an endless spinner and reassure the buyer — the order still updates
+  // on its own once the confirmation lands.
+  const [confirmTimedOut, setConfirmTimedOut] = useState(false);
+  useEffect(() => {
+    if (isReturningSuccess && !paymentConfirmed && !paymentFailed) {
+      const timer = setTimeout(() => setConfirmTimedOut(true), 45000);
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [isReturningSuccess, paymentConfirmed, paymentFailed]);
+
   const handleContinue = async () => {
     try {
       const data = await createCheckoutMutation.mutateAsync({
@@ -109,6 +122,12 @@ const Checkout = () => {
       heading = "Payment not completed";
       body =
         "We couldn't confirm this payment. If money was deducted, please contact support; otherwise you can start a new checkout.";
+    } else if (isSuccess && confirmTimedOut) {
+      Icon = Clock;
+      iconColor = "text-tertiary";
+      heading = "Payment received — confirming it";
+      body =
+        "Your payment went through. Confirmation is taking a little longer than usual — you don't need to wait here. We'll update your order automatically, and you can track it under My orders.";
     } else if (isSuccess) {
       Icon = Loader2;
       iconColor = "text-tertiary";
