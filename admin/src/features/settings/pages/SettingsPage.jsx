@@ -11,8 +11,6 @@ const SettingsPage = () => {
   const { data, isLoading } = useSettings();
   const updateSettings = useUpdateSettings();
 
-  const catalog = data?.payment_method_catalog || [];
-
   // Seed the editable form from the fetched settings once they arrive. The
   // `seeded` flag stops a post-save refetch from clobbering the form.
   const [form, setForm] = useState(null);
@@ -22,18 +20,8 @@ const SettingsPage = () => {
     setForm({
       service_fee: String(data.settings.service_fee),
       checkout_expiry_minutes: String(data.settings.checkout_expiry_minutes),
-      enabled: new Set(data.settings.enabled_payment_methods),
     });
   }
-
-  const toggleMethod = (id) => {
-    setForm((current) => {
-      const enabled = new Set(current.enabled);
-      if (enabled.has(id)) enabled.delete(id);
-      else enabled.add(id);
-      return { ...current, enabled };
-    });
-  };
 
   const validate = () => {
     const fee = Number(form.service_fee);
@@ -43,9 +31,6 @@ const SettingsPage = () => {
     const minutes = Number(form.checkout_expiry_minutes);
     if (!Number.isInteger(minutes) || minutes < 5 || minutes > 1440) {
       return "Checkout expiry must be a whole number between 5 and 1440 minutes";
-    }
-    if (form.enabled.size === 0) {
-      return "Enable at least one payment method";
     }
     return null;
   };
@@ -61,7 +46,6 @@ const SettingsPage = () => {
       await updateSettings.mutateAsync({
         service_fee: Number(form.service_fee),
         checkout_expiry_minutes: Number(form.checkout_expiry_minutes),
-        enabled_payment_methods: [...form.enabled],
       });
       toast.success("Settings saved");
     } catch (err) {
@@ -140,34 +124,6 @@ const SettingsPage = () => {
             />
             <span className="text-on-surface-variant">min</span>
           </div>
-        </div>
-      </section>
-
-      <section className="mt-6 rounded-2xl border border-outline-variant bg-white p-6">
-        <p className="font-bold text-on-surface">Payment methods</p>
-        <p className="text-sm text-on-surface-variant">
-          Which PayFast methods customers can choose at checkout.
-        </p>
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {catalog.map((method) => (
-            <label
-              key={method.id}
-              className={`flex items-center gap-3 rounded-lg border border-outline-variant px-4 py-3 ${
-                canEdit ? "cursor-pointer hover:bg-surface-container-low" : ""
-              }`}
-            >
-              <input
-                type="checkbox"
-                checked={form.enabled.has(method.id)}
-                disabled={!canEdit}
-                onChange={() => toggleMethod(method.id)}
-                className="h-4 w-4 accent-primary"
-              />
-              <span className="text-sm font-semibold text-on-surface">
-                {method.label}
-              </span>
-            </label>
-          ))}
         </div>
       </section>
 

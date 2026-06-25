@@ -137,12 +137,11 @@ const OverrideToggle = ({ checked, onChange }) => (
   </label>
 );
 
-// Per-institution overrides for service fee, checkout expiry, and payment
-// methods. Each setting can either use the global default or be overridden.
+// Per-institution overrides for service fee and checkout expiry. Each setting
+// can either use the global default or be overridden.
 const InstitutionSettingsModal = ({ institution, onClose }) => {
   const { data, isLoading } = useInstitutionSettings(institution.id);
   const updateMutation = useUpdateInstitutionSettings();
-  const catalog = data?.payment_method_catalog || [];
 
   const [form, setForm] = useState(null);
   const [override, setOverride] = useState(null);
@@ -156,25 +155,15 @@ const InstitutionSettingsModal = ({ institution, onClose }) => {
     setOverride({
       service_fee: "service_fee" in ov,
       checkout_expiry_minutes: "checkout_expiry_minutes" in ov,
-      enabled_payment_methods: "enabled_payment_methods" in ov,
     });
     setForm({
       service_fee: String(data.settings.service_fee),
       checkout_expiry_minutes: String(data.settings.checkout_expiry_minutes),
-      enabled: new Set(data.settings.enabled_payment_methods),
     });
   }
 
   const toggleOverride = (key) =>
     setOverride((current) => ({ ...current, [key]: !current[key] }));
-
-  const toggleMethod = (id) =>
-    setForm((current) => {
-      const enabled = new Set(current.enabled);
-      if (enabled.has(id)) enabled.delete(id);
-      else enabled.add(id);
-      return { ...current, enabled };
-    });
 
   const handleSave = async () => {
     const patch = {};
@@ -196,15 +185,6 @@ const InstitutionSettingsModal = ({ institution, onClose }) => {
       patch.checkout_expiry_minutes = minutes;
     } else if ("checkout_expiry_minutes" in initialOverrides) {
       clear.push("checkout_expiry_minutes");
-    }
-
-    if (override.enabled_payment_methods) {
-      if (form.enabled.size === 0) {
-        return toast.error("Enable at least one payment method");
-      }
-      patch.enabled_payment_methods = [...form.enabled];
-    } else if ("enabled_payment_methods" in initialOverrides) {
-      clear.push("enabled_payment_methods");
     }
 
     if (Object.keys(patch).length === 0 && clear.length === 0) {
@@ -314,45 +294,6 @@ const InstitutionSettingsModal = ({ institution, onClose }) => {
               ) : (
                 <p className="mt-3 text-sm text-on-surface-variant">
                   Using global default ({data.global.checkout_expiry_minutes} min).
-                </p>
-              )}
-            </section>
-
-            <section className="mt-4 rounded-2xl border border-outline-variant p-5">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="font-bold text-on-surface">Payment methods</p>
-                  <p className="text-sm text-on-surface-variant">
-                    Which PayFast methods this institution offers.
-                  </p>
-                </div>
-                <OverrideToggle
-                  checked={!!override.enabled_payment_methods}
-                  onChange={() => toggleOverride("enabled_payment_methods")}
-                />
-              </div>
-              {override.enabled_payment_methods ? (
-                <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  {catalog.map((method) => (
-                    <label
-                      key={method.id}
-                      className="flex cursor-pointer items-center gap-3 rounded-lg border border-outline-variant px-4 py-2.5 hover:bg-surface-container-low"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={form.enabled.has(method.id)}
-                        onChange={() => toggleMethod(method.id)}
-                        className="h-4 w-4 accent-primary"
-                      />
-                      <span className="text-sm font-semibold text-on-surface">
-                        {method.label}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              ) : (
-                <p className="mt-3 text-sm text-on-surface-variant">
-                  Using global default ({data.global.enabled_payment_methods.length} methods).
                 </p>
               )}
             </section>
