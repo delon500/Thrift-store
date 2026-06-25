@@ -1,5 +1,6 @@
 import pool from "../config/db.js";
 import {
+  fetchTransactionPaid,
   isMatchingAmount,
   verifyPayFastSignature,
 } from "../services/payfastService.js";
@@ -468,12 +469,59 @@ const paymentWebhook = async (_req, res) => {
   });
 };
 
+// POST /api/payments/:orderReference/reconcile — buyer-triggered fallback when
+// the ITN is slow/lost. Asks PayFast directly whether the payment processed and,
+// if so, confirms the order (idempotent). Safe no-op otherwise.
+const reconcileOrder = async (req, res) => {
+  try {
+    const orderResult = await pool.query(
+      `SELECT order_reference, status, created_at
+       FROM collection_orders
+       WHERE order_reference = $1 AND user_id = $2`,
+      [req.params.orderReference, req.user.id],
+    );
+
+    if (orderResult.rows.length === 0) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const order = orderResult.rows[0];
+
+    // Already resolved (paid/cancelled/expired/…) — nothing to reconcile.
+    if (order.status !== "payment_pending") {
+      return res.json({ status: order.status, reconciled: false });
+    }
+
+    const paid = await fetchTransactionPaid(
+      order.order_reference,
+      order.created_at,
+    );
+
+    if (!paid) {
+      return res.json({ status: order.status, reconciled: false });
+    }
+
+    await markOrderPaid({
+      orderReference: order.order_reference,
+      providerPaymentId: "reconciled",
+      rawPayload: { reconciled: true },
+    });
+
+    return res.json({ status: "ready_for_collection", reconciled: true });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Reconcile failed", error: error.message });
+  }
+};
+
 export {
   confirmPayment,
   markOrderPaid,
   markOrderPaymentFailed,
   payfastItn,
   paymentWebhook,
+  reconcileOrder,
   releaseCollectionOrder,
   releaseExpiredOrders,
 };

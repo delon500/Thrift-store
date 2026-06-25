@@ -1,6 +1,11 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import useAuthStore from "../../auth/store/authStore";
-import { getMyOrder, getMyOrders, resumeOrderPayment } from "../api/ordersApi";
+import {
+  getMyOrder,
+  getMyOrders,
+  reconcileOrder,
+  resumeOrderPayment,
+} from "../api/ordersApi";
 
 // Statuses where the order has reached a final outcome — stop polling.
 const TERMINAL_STATUSES = [
@@ -58,6 +63,24 @@ export const useOrderStatus = (orderReference, enabled = true) => {
     refetchInterval: (query) => {
       const status = query.state.data?.status;
       return status && TERMINAL_STATUSES.includes(status) ? false : 2500;
+    },
+  });
+};
+
+// Buyer-triggered fallback: ask the backend to verify with PayFast directly,
+// then refresh the polled status if it was confirmed.
+export const useReconcileOrder = () => {
+  const token = useAuthStore((state) => state.token);
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (orderReference) => reconcileOrder({ orderReference, token }),
+    onSuccess: (data, orderReference) => {
+      if (data?.reconciled) {
+        queryClient.invalidateQueries({
+          queryKey: ["order-status", orderReference],
+        });
+      }
     },
   });
 };

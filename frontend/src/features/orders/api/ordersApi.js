@@ -30,3 +30,15 @@ export const resumeOrderPayment = async ({ orderReference, token }) => {
 
   return response.data.checkout;
 };
+
+// Ask the backend to verify payment with PayFast directly (fallback for a
+// slow/lost ITN). Idempotent; returns { status, reconciled }.
+export const reconcileOrder = async ({ orderReference, token }) => {
+  const response = await api.post(
+    `/payments/${orderReference}/reconcile`,
+    {},
+    authHeaders(token),
+  );
+
+  return response.data;
+};

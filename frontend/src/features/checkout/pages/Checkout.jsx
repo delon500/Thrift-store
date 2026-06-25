@@ -19,7 +19,7 @@ import {
   useCreateCheckout,
   usePaymentMethods,
 } from "../hooks/useCheckout";
-import { useOrderStatus } from "../../orders/hooks/useOrders";
+import { useOrderStatus, useReconcileOrder } from "../../orders/hooks/useOrders";
 
 const Checkout = () => {
   useDocumentTitle("Checkout");
@@ -75,6 +75,29 @@ const Checkout = () => {
     }
     return undefined;
   }, [isReturningSuccess, paymentConfirmed, paymentFailed]);
+
+  // Fallback while confirming: ask the backend to verify with PayFast directly,
+  // so a slow/lost ITN doesn't leave the order stuck. If it confirms, the polled
+  // status flips and the UI updates.
+  const { mutate: reconcile } = useReconcileOrder();
+  useEffect(() => {
+    if (
+      !(isReturningSuccess && !paymentConfirmed && !paymentFailed) ||
+      !returnedOrderReference
+    ) {
+      return undefined;
+    }
+    const timers = [4000, 15000, 30000].map((ms) =>
+      setTimeout(() => reconcile(returnedOrderReference), ms),
+    );
+    return () => timers.forEach(clearTimeout);
+  }, [
+    isReturningSuccess,
+    paymentConfirmed,
+    paymentFailed,
+    returnedOrderReference,
+    reconcile,
+  ]);
 
   const handleContinue = async () => {
     try {
