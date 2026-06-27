@@ -30,3 +30,14 @@ export const markReturned = async ({ id, token }) => {
   );
   return response.data;
 };
+
+// Turn an unclaimed found item into a draft Lost-and-Found product to complete
+// in Inventory.
+export const listForResale = async ({ id, token }) => {
+  const response = await api.post(
+    `/school/found-reports/${id}/list-for-resale`,
+    {},
+    authHeaders(token),
+  );
+  return response.data; // { product_id, reference_number, message }
+};

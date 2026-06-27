@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ScanLine, QrCode, CheckCircle2, AlertCircle } from "lucide-react";
 import {
   PageHeader,
@@ -11,6 +12,7 @@ import {
   useFoundReports,
   useReportFound,
   useMarkReturned,
+  useListForResale,
 } from "../hooks/useLostFound";
 
 // A scanned tag QR encodes <scan-base>/t/<token>; pull the token out. A typed
@@ -29,9 +31,11 @@ const fmtDate = (value) =>
     : "";
 
 const LostFoundPage = () => {
+  const navigate = useNavigate();
   const { data: reports = [], isLoading } = useFoundReports();
   const report = useReportFound();
   const markReturned = useMarkReturned();
+  const listForResale = useListForResale();
 
   const [code, setCode] = useState("");
   const [scanOpen, setScanOpen] = useState(false);
@@ -77,6 +81,22 @@ const LostFoundPage = () => {
       setResult({
         type: "error",
         text: error?.response?.data?.message || "Could not mark returned",
+      });
+    }
+  };
+
+  const handleListForResale = async (id) => {
+    try {
+      await listForResale.mutateAsync(id);
+      setResult({
+        type: "success",
+        text: "Listed as a draft in Inventory — set its price and add photos before publishing.",
+      });
+      navigate("/school/inventory");
+    } catch (error) {
+      setResult({
+        type: "error",
+        text: error?.response?.data?.message || "Could not list for resale",
       });
     }
   };
@@ -181,23 +201,54 @@ const LostFoundPage = () => {
                       {r.found_by ? ` · ${r.found_by}` : ""}
                     </td>
                     <td className="py-2">
-                      <Badge tone={r.status === "open" ? "info" : "success"}>
-                        {r.status === "open" ? "Open" : "Returned"}
-                      </Badge>
+                      <div className="flex items-center gap-1">
+                        <Badge
+                          tone={
+                            r.status === "open"
+                              ? "info"
+                              : r.status === "returned"
+                                ? "success"
+                                : "neutral"
+                          }
+                        >
+                          {r.status === "open"
+                            ? "Open"
+                            : r.status === "returned"
+                              ? "Returned"
+                              : "Resold"}
+                        </Badge>
+                        {r.unclaimed ? (
+                          <Badge tone="warning">Unclaimed</Badge>
+                        ) : null}
+                      </div>
                     </td>
                     <td className="py-2 text-right">
                       {r.status === "open" ? (
-                        <button
-                          type="button"
-                          onClick={() => handleReturn(r.id)}
-                          disabled={markReturned.isPending}
-                          className="rounded-lg border border-primary px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-surface-container-low disabled:opacity-60"
-                        >
-                          Mark returned
-                        </button>
-                      ) : (
+                        <div className="flex justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleReturn(r.id)}
+                            disabled={markReturned.isPending}
+                            className="rounded-lg border border-primary px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-surface-container-low disabled:opacity-60"
+                          >
+                            Mark returned
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleListForResale(r.id)}
+                            disabled={listForResale.isPending}
+                            className="rounded-lg border border-outline-variant px-3 py-1.5 text-xs font-semibold text-on-surface-variant transition-colors hover:bg-surface-container-low disabled:opacity-60"
+                          >
+                            List for resale
+                          </button>
+                        </div>
+                      ) : r.status === "returned" ? (
                         <span className="text-xs text-on-surface-variant">
                           {fmtDate(r.returned_at)}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-on-surface-variant">
+                          Listed for resale
                         </span>
                       )}
                     </td>

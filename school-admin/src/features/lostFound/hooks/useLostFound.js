@@ -4,6 +4,7 @@ import {
   reportFound,
   getFoundReports,
   markReturned,
+  listForResale,
 } from "../api/lostFoundApi";
 
 export const useFoundReports = () => {
@@ -33,6 +34,17 @@ export const useMarkReturned = () => {
 
   return useMutation({
     mutationFn: (id) => markReturned({ id, token }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["found-reports"] }),
+  });
+};
+
+export const useListForResale = () => {
+  const token = useAuthStore((state) => state.token);
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id) => listForResale({ id, token }),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ["found-reports"] }),
   });
