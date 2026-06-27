@@ -1,6 +1,8 @@
 import pool from "../config/db.js";
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 import { logActivity } from "../services/activityLog.js";
+import { sendCredentialsEmail } from "../services/emailService.js";
 import {
   institutionDeleteError,
   parsePagination,
@@ -298,13 +300,83 @@ const createInstitutionUser = async (req, res) => {
       description: `Created ${role} account ${email} for ${institution.institution_name}`,
     });
 
-    return res
-      .status(201)
-      .json({ message: "Account created", user: result.rows[0] });
+    // Email the new account their login details (the plaintext password is only
+    // available here). Never let a mail failure undo the creation.
+    const emailResult = await sendCredentialsEmail({
+      user: result.rows[0],
+      password,
+      institutionName: institution.institution_name,
+    });
+
+    return res.status(201).json({
+      message: "Account created",
+      user: result.rows[0],
+      emailed: emailResult?.sent === true,
+    });
   } catch (error) {
     return res
       .status(500)
       .json({ message: "Failed to create account", error: error.message });
+  }
+};
+
+// Generates a readable temporary password that satisfies the 6-char minimum.
+const generateTempPassword = () =>
+  crypto.randomBytes(9).toString("base64").replace(/[^a-zA-Z0-9]/g, "").slice(0, 10);
+
+// POST /api/admin/institutions/:id/staff/:userId/send-credentials — issue a
+// fresh temporary password for an existing institution account and email it.
+// (The original password is hashed and can't be recovered, so "resend" = reset.)
+const sendInstitutionUserCredentials = async (req, res) => {
+  try {
+    const institution = await findInstitution(req.params.id);
+    if (!institution) {
+      return res.status(404).json({ message: "Institution not found" });
+    }
+
+    const found = await pool.query(
+      `SELECT id, full_name, email FROM users
+       WHERE id = $1 AND institution_id = $2 AND role = $3`,
+      [req.params.userId, institution.id, institution.institution_category],
+    );
+    if (found.rows.length === 0) {
+      return res.status(404).json({ message: "Account not found" });
+    }
+
+    const user = found.rows[0];
+    const password = generateTempPassword();
+    const password_hash = await bcrypt.hash(password, 10);
+    await pool.query("UPDATE users SET password_hash = $1 WHERE id = $2", [
+      password_hash,
+      user.id,
+    ]);
+
+    const emailResult = await sendCredentialsEmail({
+      user,
+      password,
+      institutionName: institution.institution_name,
+    });
+
+    logActivity({
+      action: "institution.user.credentials_sent",
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      institutionId: institution.id,
+      entityType: "user",
+      entityRef: user.email,
+      description: `Re-issued login details for ${user.email} at ${institution.institution_name}`,
+    });
+
+    return res.json({
+      message: emailResult?.sent
+        ? "Login details sent"
+        : "Password reset, but the email could not be sent",
+      emailed: emailResult?.sent === true,
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Failed to send login details", error: error.message });
   }
 };
 
@@ -437,4 +509,5 @@ export {
   updateInstitutionSettings,
   listInstitutionUsers,
   createInstitutionUser,
+  sendInstitutionUserCredentials,
 };

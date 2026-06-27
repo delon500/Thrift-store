@@ -83,6 +83,17 @@ const createInstitutionStaff = async ({ id, body, token }) => {
   return response.data;
 };
 
+// Issues a fresh temporary password for an account and emails the login details.
+const sendInstitutionStaffCredentials = async ({ id, userId, token }) => {
+  const response = await api.post(
+    `/admin/institutions/${id}/staff/${userId}/send-credentials`,
+    {},
+    authHeaders(token),
+  );
+
+  return response.data; // { message, emailed }
+};
+
 export {
   deleteInstitution,
   getAdminInstitutions,
@@ -90,6 +101,7 @@ export {
   getInstitutionSettings,
   getInstitutionStaff,
   createInstitutionStaff,
+  sendInstitutionStaffCredentials,
   updateInstitution,
   updateInstitutionSettings,
 };

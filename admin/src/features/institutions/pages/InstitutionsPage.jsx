@@ -6,6 +6,7 @@ import {
   useInstitutions,
   useInstitutionSettings,
   useInstitutionStaff,
+  useSendInstitutionStaffCredentials,
   useUpdateInstitution,
   useUpdateInstitutionSettings,
 } from "../hooks/useInstitutions";
@@ -343,6 +344,7 @@ const AccountField = ({ label, children }) => (
 const InstitutionAccountsModal = ({ institution, onClose }) => {
   const { data, isLoading } = useInstitutionStaff(institution.id);
   const createMutation = useCreateInstitutionStaff();
+  const sendMutation = useSendInstitutionStaffCredentials();
   const accounts = data?.users || [];
 
   const empty = {
@@ -365,11 +367,36 @@ const InstitutionAccountsModal = ({ institution, onClose }) => {
       return toast.error("Password must be at least 6 characters");
     }
     try {
-      await createMutation.mutateAsync({ id: institution.id, body: form });
-      toast.success("Account created");
+      const result = await createMutation.mutateAsync({
+        id: institution.id,
+        body: form,
+      });
+      toast.success(
+        result?.emailed
+          ? `Account created — login details emailed to ${form.email}`
+          : "Account created (email not sent — SMTP not configured)",
+      );
       setForm(empty);
     } catch (error) {
       toast.error(error?.response?.data?.message || "Could not create account");
+    }
+  };
+
+  const handleSendCredentials = async (account) => {
+    try {
+      const result = await sendMutation.mutateAsync({
+        id: institution.id,
+        userId: account.id,
+      });
+      toast.success(
+        result?.emailed
+          ? `New login details sent to ${account.email}`
+          : "Password reset, but the email could not be sent (SMTP not configured)",
+      );
+    } catch (error) {
+      toast.error(
+        error?.response?.data?.message || "Could not send login details",
+      );
     }
   };
 
@@ -413,6 +440,7 @@ const InstitutionAccountsModal = ({ institution, onClose }) => {
                     <th className="px-4 py-2">Email</th>
                     <th className="px-4 py-2">Role</th>
                     <th className="px-4 py-2">Status</th>
+                    <th className="px-4 py-2 text-right">Login details</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -430,6 +458,20 @@ const InstitutionAccountsModal = ({ institution, onClose }) => {
                         >
                           {account.status}
                         </Badge>
+                      </td>
+                      <td className="px-4 py-2 text-right">
+                        <button
+                          type="button"
+                          onClick={() => handleSendCredentials(account)}
+                          disabled={sendMutation.isPending}
+                          className="rounded-lg border border-primary px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary hover:text-white transition disabled:opacity-50"
+                          title="Reset the password and email the new login details"
+                        >
+                          {sendMutation.isPending &&
+                          sendMutation.variables?.userId === account.id
+                            ? "Sending..."
+                            : "Send login details"}
+                        </button>
                       </td>
                     </tr>
                   ))}

@@ -116,9 +116,40 @@ The ${appName()} team`,
   });
 };
 
+// Sent when a staff account is created for an institution (or when an admin
+// re-sends credentials) — gives the new user their login email + password and
+// the portal link. The password is only available in plaintext at this moment
+// (on create) or when freshly generated (on resend); it is never stored in clear.
+const sendCredentialsEmail = ({ user, password, institutionName }) => {
+  const loginUrl = process.env.SCHOOL_ADMIN_URL || "http://localhost:5175";
+
+  return sendEmail({
+    to: user.email,
+    subject: `Your ${appName()} login details${
+      institutionName ? ` for ${institutionName}` : ""
+    }`,
+    text: `Hi ${user.full_name || "there"},
+
+An account has been created for you on ${appName()}${
+      institutionName ? ` for ${institutionName}` : ""
+    }.
+
+Sign in to the staff portal here:
+${loginUrl}
+
+  Email:    ${user.email}
+  Password: ${password}
+
+Please keep these details safe. If you didn't expect this, contact your administrator.
+
+The ${appName()} team`,
+  });
+};
+
 export {
   sendApprovalEmail,
   sendCollectionReadyEmail,
+  sendCredentialsEmail,
   sendEmail,
   sendRejectionEmail,
   verifyEmailTransport,
