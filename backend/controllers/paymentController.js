@@ -475,7 +475,7 @@ const paymentWebhook = async (_req, res) => {
 const reconcileOrder = async (req, res) => {
   try {
     const orderResult = await pool.query(
-      `SELECT order_reference, status, created_at
+      `SELECT order_reference, status, created_at, total::text AS total
        FROM collection_orders
        WHERE order_reference = $1 AND user_id = $2`,
       [req.params.orderReference, req.user.id],
@@ -495,6 +495,7 @@ const reconcileOrder = async (req, res) => {
     const paid = await fetchTransactionPaid(
       order.order_reference,
       order.created_at,
+      order.total,
     );
 
     if (!paid) {

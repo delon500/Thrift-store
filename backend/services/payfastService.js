@@ -139,10 +139,14 @@ const buildApiSignature = (params) =>
 
 // Best-effort reconcile: ask PayFast (server -> PayFast, no inbound webhook
 // needed) whether this m_payment_id (the order reference) shows up in the
-// processed-transaction history. History lists processed payments, so presence
-// == paid. Any failure (no passphrase, network, format) returns false so the
-// caller simply leaves the order pending — never throws, never false-confirms.
-const fetchTransactionPaid = async (orderReference, createdAt) => {
+// processed-transaction history. History lists processed payments. To avoid a
+// false-confirm, we require BOTH the order reference AND the expected gross
+// amount to appear, so a stray/failed/zero-amount row can't confirm an unpaid
+// order. (For an even stronger guarantee, parse the history's status column once
+// PayFast's exact response format is confirmed.) Any failure (no passphrase,
+// network, format) returns false so the caller leaves the order pending — never
+// throws, never false-confirms.
+const fetchTransactionPaid = async (orderReference, createdAt, expectedAmount) => {
   try {
     const config = getPayFastConfig();
     if (!config.passphrase) return false; // the PayFast API requires a passphrase
@@ -171,7 +175,13 @@ const fetchTransactionPaid = async (orderReference, createdAt) => {
 
     if (!response.ok) return false;
     const body = await response.text();
-    return body.includes(orderReference);
+
+    if (!body.includes(orderReference)) return false;
+    // Require the exact gross amount too — defence in depth.
+    if (expectedAmount != null && expectedAmount !== "") {
+      return body.includes(Number(expectedAmount).toFixed(2));
+    }
+    return true;
   } catch (error) {
     console.warn(`[PayFast reconcile] query failed: ${error.message}`);
     return false;
