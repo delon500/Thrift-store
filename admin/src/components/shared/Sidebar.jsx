@@ -22,6 +22,7 @@ import {
   PackageCheck,
   Store,
   ShoppingBag,
+  QrCode,
 } from "lucide-react";
 import useAuthStore from "../../features/auth/store/authStore";
 import { useMe } from "../../features/auth/hook/useAuth";
@@ -105,6 +106,7 @@ const GROUPS = [
 
 const BOTTOM_LINKS = [
   { to: "/admin/institutions", label: "Institutions", Icon: Building2 },
+  { to: "/admin/tags", label: "QR tags", Icon: QrCode, superOnly: true },
   { to: "/admin/payments", label: "Payments", Icon: CreditCard },
   { to: "/admin/reports", label: "Reports", Icon: BarChart3 },
   { to: "/admin/settings", label: "Settings", Icon: Settings, superOnly: true },
