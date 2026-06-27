@@ -23,6 +23,7 @@ import adminInstitutionRouter from "./routes/adminInstitutionRoute.js";
 import adminPaymentRouter from "./routes/adminPaymentRoute.js";
 import adminSettingsRouter from "./routes/adminSettingsRoute.js";
 import tagRouter from "./routes/tagRoute.js";
+import adminGuardianshipRouter from "./routes/adminGuardianshipRoute.js";
 import { errorHandler, notFound } from "./middleware/errorHandler.js";
 
 connectCloudinary();
@@ -73,6 +74,7 @@ app.use("/api/admin/institutions", adminInstitutionRouter);
 app.use("/api/admin/payments", adminPaymentRouter);
 app.use("/api/admin/settings", adminSettingsRouter);
 app.use("/api/admin/tags", tagRouter);
+app.use("/api/admin/parents", adminGuardianshipRouter);
 app.use("/api/admin", adminRouter);
 
 // Unmatched routes + centralised error handling (must come after the routes).
