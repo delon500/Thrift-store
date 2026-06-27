@@ -4,7 +4,10 @@ import { toast } from "react-toastify";
 import { QrCode } from "lucide-react";
 import { getInstitutions } from "../../institutions/api/institutionsApi";
 import { useMe } from "../../auth/hook/useAuth";
+import useAuthStore from "../../auth/store/authStore";
 import { useTagBatches, useCreateTagBatch } from "../hooks/useTags";
+import { getTagBatch } from "../api/tagsApi";
+import { downloadQrSheet } from "../lib/qrSheetPdf";
 import { PageHeader } from "../../../components/shared/ui";
 
 const EMPTY = { institution_id: "", quantity: 50, note: "" };
@@ -22,9 +25,37 @@ const TagBatchesPage = () => {
     queryFn: getInstitutions,
   });
 
+  const token = useAuthStore((state) => state.token);
+  const [downloadingId, setDownloadingId] = useState(null);
+
   const [form, setForm] = useState(EMPTY);
   const setField = (key) => (e) =>
     setForm((current) => ({ ...current, [key]: e.target.value }));
+
+  const handleDownload = async (batch) => {
+    setDownloadingId(batch.id);
+    try {
+      const { tags } = await getTagBatch({ id: batch.id, token });
+      const safeName = (batch.institution_name || "institution").replace(
+        /[^a-z0-9]+/gi,
+        "-",
+      );
+      await downloadQrSheet({
+        institutionName: batch.institution_name,
+        subtitle: `${batch.quantity} tags · ${new Date(
+          batch.created_at,
+        ).toLocaleDateString()}`,
+        tags,
+        filename: `qr-tags-${safeName}-${batch.id.slice(0, 8)}`,
+      });
+    } catch (error) {
+      toast.error(
+        error?.response?.data?.message || "Could not build the QR sheet",
+      );
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   const handleGenerate = async (event) => {
     event.preventDefault();
@@ -143,6 +174,7 @@ const TagBatchesPage = () => {
                   <th className="px-4 py-2">Activated</th>
                   <th className="px-4 py-2">Note</th>
                   <th className="px-4 py-2">Created</th>
+                  <th className="px-4 py-2 text-right">Sheet</th>
                 </tr>
               </thead>
               <tbody>
@@ -163,6 +195,18 @@ const TagBatchesPage = () => {
                     </td>
                     <td className="px-4 py-2 text-on-surface-variant">
                       {new Date(batch.created_at).toLocaleDateString()}
+                    </td>
+                    <td className="px-4 py-2 text-right">
+                      <button
+                        type="button"
+                        onClick={() => handleDownload(batch)}
+                        disabled={downloadingId === batch.id}
+                        className="rounded-lg border border-primary px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-primary hover:text-white disabled:opacity-50"
+                      >
+                        {downloadingId === batch.id
+                          ? "Preparing..."
+                          : "Download QR sheet"}
+                      </button>
                     </td>
                   </tr>
                 ))}
