@@ -7,6 +7,7 @@ import {
   History,
   Boxes,
   CircleUser,
+  PackageSearch,
   LogOut,
 } from "lucide-react";
 import useAuthStore from "../../features/auth/store/authStore";
@@ -14,6 +15,7 @@ import useAuthStore from "../../features/auth/store/authStore";
 const NAV = [
   { to: "/school", label: "Dashboard", Icon: LayoutDashboard, end: true },
   { to: "/school/collections", label: "Collections", Icon: PackageCheck },
+  { to: "/school/lost-found", label: "Lost & found", Icon: PackageSearch },
   { to: "/school/orders", label: "Orders", Icon: ClipboardList },
   { to: "/school/history", label: "History", Icon: History },
   { to: "/school/inventory", label: "Inventory", Icon: Boxes },
