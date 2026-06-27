@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "react-toastify";
 import { useRegisterStaff } from "../hooks/useRegisterUser";
 import useAuthStore from "../../auth/store/authStore";
 import { useNavigate } from "react-router-dom";
@@ -27,17 +28,25 @@ const RegisterStaff = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    registerStaffMutation.mutate({
-      formData: {
-        full_name: formData.fullName,
-        email: formData.email,
-        contact_number: formData.contactNumber,
-        role: formData.role,
-        password: formData.password,
-        confirm_password: formData.confirmPassword,
+    registerStaffMutation.mutate(
+      {
+        formData: {
+          full_name: formData.fullName,
+          email: formData.email,
+          contact_number: formData.contactNumber,
+          role: formData.role,
+          password: formData.password,
+          confirm_password: formData.confirmPassword,
+        },
+        token,
       },
-      token,
-    });
+      {
+        onSuccess: () => {
+          toast.success("Admin account created.");
+          navigate("/admin/registered-users/admin");
+        },
+      },
+    );
   };
 
   return (
@@ -187,9 +196,12 @@ const RegisterStaff = () => {
 
             <button
               type="submit"
-              className="bg-primary text-white px-8 py-3 rounded-xl font-semibold hover:bg-on-primary-container transition"
+              disabled={registerStaffMutation.isPending}
+              className="bg-primary text-white px-8 py-3 rounded-xl font-semibold hover:bg-on-primary-container transition disabled:opacity-60"
             >
-              Register Administrator
+              {registerStaffMutation.isPending
+                ? "Registering..."
+                : "Register Administrator"}
             </button>
           </div>
         </div>

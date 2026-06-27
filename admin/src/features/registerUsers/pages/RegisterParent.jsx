@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getInstitutions } from "../../institutions/api/institutionsApi";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import { useRegisterParent } from "../hooks/useRegisterUser";
 import useAuthStore from "../../auth/store/authStore";
 import { PageHeader } from "../../../components/shared/ui";
@@ -43,17 +44,25 @@ const RegisterParent = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    useRegisterParentMutation.mutate({
-      formData: {
-        full_name: formData.fullName,
-        email: formData.email,
-        contact_number: formData.contactNumber,
-        institution_id: formData.schoolId,
-        password: formData.password,
-        confirm_password: formData.confirmPassword,
+    useRegisterParentMutation.mutate(
+      {
+        formData: {
+          full_name: formData.fullName,
+          email: formData.email,
+          contact_number: formData.contactNumber,
+          institution_id: formData.schoolId,
+          password: formData.password,
+          confirm_password: formData.confirmPassword,
+        },
+        token,
       },
-      token,
-    });
+      {
+        onSuccess: () => {
+          toast.success("Parent account created.");
+          navigate("/admin/registered-users/parent");
+        },
+      },
+    );
   };
 
   return (
@@ -162,7 +171,7 @@ const RegisterParent = () => {
             <h2 className="font-bold text-on-surface text-lg">Security</h2>
 
             <p className="text-sm text-on-surface-variant">
-              Create login credentials for the staff member.
+              Create login credentials for the parent.
             </p>
           </div>
 
@@ -213,9 +222,12 @@ const RegisterParent = () => {
 
             <button
               type="submit"
-              className="bg-primary text-white px-8 py-3 rounded-xl font-semibold hover:bg-on-primary-container transition"
+              disabled={useRegisterParentMutation.isPending}
+              className="bg-primary text-white px-8 py-3 rounded-xl font-semibold hover:bg-on-primary-container transition disabled:opacity-60"
             >
-              Register Parent
+              {useRegisterParentMutation.isPending
+                ? "Registering..."
+                : "Register Parent"}
             </button>
           </div>
         </div>

@@ -76,7 +76,7 @@ const GROUPS = [
       },
       {
         to: "/admin/registered-users/admin",
-        label: "Staff members",
+        label: "Admins",
         Icon: Shield,
       },
       { to: "/admin/registered-users/student", label: "Students", Icon: User },
