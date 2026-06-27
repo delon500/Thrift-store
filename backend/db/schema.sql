@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict s0NoJkAVvQ0mS4yd8lqCGOInaGM2d296hVmJRIhop6QWdDl09gfh6r2gcfi3BTv
+\restrict 1E8ecdpLdjChD7tcviLbdY6yMdIC89Hu0ysMdqyB92Z7MJ1Z9SSQbr8yCO2RHUZ
 
 -- Dumped from database version 18.4
 -- Dumped by pg_dump version 18.4
@@ -237,6 +237,20 @@ CREATE TABLE public.carts (
 
 
 --
+-- Name: child_profiles; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.child_profiles (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    guardian_user_id uuid NOT NULL,
+    full_name character varying(120) NOT NULL,
+    grade character varying(40),
+    institution_id uuid NOT NULL,
+    created_at timestamp without time zone DEFAULT now() NOT NULL
+);
+
+
+--
 -- Name: collection_order_items; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -323,6 +337,60 @@ COMMENT ON COLUMN public.collection_orders.order_reference IS 'Order-level refer
 
 
 --
+-- Name: found_report_reference_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.found_report_reference_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: found_reports; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.found_reports (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    reference character varying(50) DEFAULT ((('LF-'::text || to_char(now(), 'YYYY'::text)) || '-'::text) || lpad((nextval('public.found_report_reference_seq'::regclass))::text, 6, '0'::text)) NOT NULL,
+    tag_id uuid NOT NULL,
+    institution_id uuid NOT NULL,
+    found_by_user_id uuid,
+    status character varying(20) DEFAULT 'open'::character varying NOT NULL,
+    found_at timestamp without time zone DEFAULT now() NOT NULL,
+    returned_at timestamp without time zone,
+    product_id uuid,
+    CONSTRAINT found_reports_status_check CHECK (((status)::text = ANY ((ARRAY['open'::character varying, 'returned'::character varying, 'resold'::character varying])::text[])))
+);
+
+
+--
+-- Name: guardianship; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.guardianship (
+    guardian_user_id uuid NOT NULL,
+    student_user_id uuid NOT NULL,
+    created_at timestamp without time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: institution_settings; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.institution_settings (
+    institution_id uuid NOT NULL,
+    key text NOT NULL,
+    value jsonb NOT NULL,
+    updated_at timestamp without time zone DEFAULT now(),
+    updated_by uuid
+);
+
+
+--
 -- Name: institutions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -340,6 +408,38 @@ CREATE TABLE public.institutions (
     updated_at timestamp without time zone DEFAULT now(),
     institution_category character varying(20) DEFAULT 'school'::character varying NOT NULL,
     CONSTRAINT institutions_category_check CHECK (((institution_category)::text = ANY (ARRAY[('school'::character varying)::text, ('university'::character varying)::text])))
+);
+
+
+--
+-- Name: tag_reference_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.tag_reference_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: item_tags; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.item_tags (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    code character varying(50) DEFAULT ((('TAG-'::text || to_char(now(), 'YYYY'::text)) || '-'::text) || lpad((nextval('public.tag_reference_seq'::regclass))::text, 6, '0'::text)) NOT NULL,
+    token character varying(32) NOT NULL,
+    batch_id uuid NOT NULL,
+    institution_id uuid NOT NULL,
+    status character varying(20) DEFAULT 'unactivated'::character varying NOT NULL,
+    owner_user_id uuid,
+    owner_child_id uuid,
+    label character varying(120),
+    activated_at timestamp without time zone,
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    CONSTRAINT item_tags_status_check CHECK (((status)::text = ANY ((ARRAY['unactivated'::character varying, 'active'::character varying, 'reported_found'::character varying, 'returned'::character varying, 'retired'::character varying])::text[])))
 );
 
 
@@ -448,6 +548,31 @@ COMMENT ON COLUMN public.products.reference_number IS 'Permanent item reference 
 
 
 --
+-- Name: schema_migrations; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.schema_migrations (
+    filename text NOT NULL,
+    applied_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: tag_batches; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.tag_batches (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    institution_id uuid NOT NULL,
+    quantity integer NOT NULL,
+    note text,
+    created_by uuid,
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    CONSTRAINT tag_batches_quantity_check CHECK (((quantity > 0) AND (quantity <= 1000)))
+);
+
+
+--
 -- Name: users; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -506,6 +631,14 @@ ALTER TABLE ONLY public.carts
 
 
 --
+-- Name: child_profiles child_profiles_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.child_profiles
+    ADD CONSTRAINT child_profiles_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: collection_order_items collection_order_items_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -530,6 +663,30 @@ ALTER TABLE ONLY public.collection_orders
 
 
 --
+-- Name: found_reports found_reports_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.found_reports
+    ADD CONSTRAINT found_reports_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: guardianship guardianship_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.guardianship
+    ADD CONSTRAINT guardianship_pkey PRIMARY KEY (guardian_user_id, student_user_id);
+
+
+--
+-- Name: institution_settings institution_settings_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.institution_settings
+    ADD CONSTRAINT institution_settings_pkey PRIMARY KEY (institution_id, key);
+
+
+--
 -- Name: institutions institutions_contact_email_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -543,6 +700,14 @@ ALTER TABLE ONLY public.institutions
 
 ALTER TABLE ONLY public.institutions
     ADD CONSTRAINT institutions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: item_tags item_tags_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.item_tags
+    ADD CONSTRAINT item_tags_pkey PRIMARY KEY (id);
 
 
 --
@@ -575,6 +740,22 @@ ALTER TABLE ONLY public.product_images
 
 ALTER TABLE ONLY public.products
     ADD CONSTRAINT products_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: schema_migrations schema_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.schema_migrations
+    ADD CONSTRAINT schema_migrations_pkey PRIMARY KEY (filename);
+
+
+--
+-- Name: tag_batches tag_batches_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tag_batches
+    ADD CONSTRAINT tag_batches_pkey PRIMARY KEY (id);
 
 
 --
@@ -650,6 +831,13 @@ CREATE INDEX carts_user_status_idx ON public.carts USING btree (user_id, status)
 
 
 --
+-- Name: child_profiles_guardian_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX child_profiles_guardian_idx ON public.child_profiles USING btree (guardian_user_id);
+
+
+--
 -- Name: collection_order_items_order_id_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -689,6 +877,55 @@ CREATE INDEX collection_orders_reference_idx ON public.collection_orders USING b
 --
 
 CREATE INDEX collection_orders_user_status_idx ON public.collection_orders USING btree (user_id, status);
+
+
+--
+-- Name: found_reports_inst_status_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX found_reports_inst_status_idx ON public.found_reports USING btree (institution_id, status);
+
+
+--
+-- Name: found_reports_reference_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX found_reports_reference_idx ON public.found_reports USING btree (reference);
+
+
+--
+-- Name: guardianship_student_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX guardianship_student_idx ON public.guardianship USING btree (student_user_id);
+
+
+--
+-- Name: item_tags_batch_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX item_tags_batch_idx ON public.item_tags USING btree (batch_id);
+
+
+--
+-- Name: item_tags_code_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX item_tags_code_idx ON public.item_tags USING btree (code);
+
+
+--
+-- Name: item_tags_inst_status_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX item_tags_inst_status_idx ON public.item_tags USING btree (institution_id, status);
+
+
+--
+-- Name: item_tags_token_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX item_tags_token_idx ON public.item_tags USING btree (token);
 
 
 --
@@ -814,6 +1051,22 @@ ALTER TABLE ONLY public.carts
 
 
 --
+-- Name: child_profiles child_profiles_guardian_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.child_profiles
+    ADD CONSTRAINT child_profiles_guardian_fkey FOREIGN KEY (guardian_user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: child_profiles child_profiles_institution_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.child_profiles
+    ADD CONSTRAINT child_profiles_institution_fkey FOREIGN KEY (institution_id) REFERENCES public.institutions(id) ON DELETE CASCADE;
+
+
+--
 -- Name: collection_order_items collection_order_items_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -843,6 +1096,94 @@ ALTER TABLE ONLY public.collection_orders
 
 ALTER TABLE ONLY public.collection_orders
     ADD CONSTRAINT collection_orders_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: found_reports found_reports_found_by_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.found_reports
+    ADD CONSTRAINT found_reports_found_by_user_id_fkey FOREIGN KEY (found_by_user_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: found_reports found_reports_institution_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.found_reports
+    ADD CONSTRAINT found_reports_institution_id_fkey FOREIGN KEY (institution_id) REFERENCES public.institutions(id) ON DELETE CASCADE;
+
+
+--
+-- Name: found_reports found_reports_product_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.found_reports
+    ADD CONSTRAINT found_reports_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE SET NULL;
+
+
+--
+-- Name: found_reports found_reports_tag_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.found_reports
+    ADD CONSTRAINT found_reports_tag_id_fkey FOREIGN KEY (tag_id) REFERENCES public.item_tags(id) ON DELETE CASCADE;
+
+
+--
+-- Name: guardianship guardianship_guardian_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.guardianship
+    ADD CONSTRAINT guardianship_guardian_fkey FOREIGN KEY (guardian_user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: guardianship guardianship_student_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.guardianship
+    ADD CONSTRAINT guardianship_student_fkey FOREIGN KEY (student_user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: institution_settings institution_settings_institution_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.institution_settings
+    ADD CONSTRAINT institution_settings_institution_id_fkey FOREIGN KEY (institution_id) REFERENCES public.institutions(id) ON DELETE CASCADE;
+
+
+--
+-- Name: item_tags item_tags_batch_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.item_tags
+    ADD CONSTRAINT item_tags_batch_id_fkey FOREIGN KEY (batch_id) REFERENCES public.tag_batches(id) ON DELETE CASCADE;
+
+
+--
+-- Name: item_tags item_tags_institution_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.item_tags
+    ADD CONSTRAINT item_tags_institution_id_fkey FOREIGN KEY (institution_id) REFERENCES public.institutions(id) ON DELETE CASCADE;
+
+
+--
+-- Name: item_tags item_tags_owner_child_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.item_tags
+    ADD CONSTRAINT item_tags_owner_child_fkey FOREIGN KEY (owner_child_id) REFERENCES public.child_profiles(id) ON DELETE SET NULL;
+
+
+--
+-- Name: item_tags item_tags_owner_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.item_tags
+    ADD CONSTRAINT item_tags_owner_user_id_fkey FOREIGN KEY (owner_user_id) REFERENCES public.users(id) ON DELETE SET NULL;
 
 
 --
@@ -878,6 +1219,22 @@ ALTER TABLE ONLY public.products
 
 
 --
+-- Name: tag_batches tag_batches_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tag_batches
+    ADD CONSTRAINT tag_batches_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: tag_batches tag_batches_institution_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tag_batches
+    ADD CONSTRAINT tag_batches_institution_id_fkey FOREIGN KEY (institution_id) REFERENCES public.institutions(id) ON DELETE CASCADE;
+
+
+--
 -- Name: users users_institution_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -889,5 +1246,5 @@ ALTER TABLE ONLY public.users
 -- PostgreSQL database dump complete
 --
 
-\unrestrict s0NoJkAVvQ0mS4yd8lqCGOInaGM2d296hVmJRIhop6QWdDl09gfh6r2gcfi3BTv
+\unrestrict 1E8ecdpLdjChD7tcviLbdY6yMdIC89Hu0ysMdqyB92Z7MJ1Z9SSQbr8yCO2RHUZ
 
