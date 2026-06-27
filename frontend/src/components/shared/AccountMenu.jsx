@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
-import { Package, Settings, LogOut, Users } from "lucide-react";
+import { Package, Settings, LogOut, Users, QrCode } from "lucide-react";
 import useAuthStore from "../../features/auth/store/authStore";
 
 const initialsOf = (name) =>
@@ -65,6 +65,15 @@ const AccountMenu = () => {
           >
             <Package size={18} aria-hidden="true" />
             My orders
+          </NavLink>
+          <NavLink
+            to="/tags"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-3 px-4 py-3 text-sm text-on-surface hover:bg-surface-container-low"
+          >
+            <QrCode size={18} aria-hidden="true" />
+            My stickers
           </NavLink>
           {user?.role === "parent" ? (
             <NavLink
