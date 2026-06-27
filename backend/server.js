@@ -24,6 +24,7 @@ import adminPaymentRouter from "./routes/adminPaymentRoute.js";
 import adminSettingsRouter from "./routes/adminSettingsRoute.js";
 import tagRouter from "./routes/tagRoute.js";
 import adminGuardianshipRouter from "./routes/adminGuardianshipRoute.js";
+import tagActivationRouter from "./routes/tagActivationRoute.js";
 import { errorHandler, notFound } from "./middleware/errorHandler.js";
 
 connectCloudinary();
@@ -67,6 +68,7 @@ app.use("/api/notifications", notificationRouter);
 app.use("/api/cart", cartRouter);
 app.use("/api/checkout", checkoutRouter);
 app.use("/api/payments", paymentRouter);
+app.use("/api/tags", tagActivationRouter);
 app.use("/api/admin/orders", adminOrderRouter);
 app.use("/api/admin/registrations", registrationRouter);
 app.use("/api/school", schoolRouter);
