@@ -17,7 +17,7 @@ const PAGE_SIZE = 10;
 const ROLE_LABELS = {
   school: "Registered Schools",
   university: "Registered Universities",
-  admin: "Staff Members",
+  admin: "Registered Admins",
   student: "Registered Students",
   parent: "Registered Parents",
 };

@@ -1,5 +1,6 @@
 import useAuthStore from "../../auth/store/authStore";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import { getInstitutions } from "../../institutions/api/institutionsApi";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -55,7 +56,15 @@ const RegisterStudent = () => {
       password: formData.password,
       confirm_password: formData.confirmPassword,
     };
-    useRegisterStudentMutation.mutate({ formData: payload, token });
+    useRegisterStudentMutation.mutate(
+      { formData: payload, token },
+      {
+        onSuccess: () => {
+          toast.success("Student account created.");
+          navigate("/admin/registered-users/student");
+        },
+      },
+    );
   };
   return (
     <div className="w-full">
@@ -163,7 +172,7 @@ const RegisterStudent = () => {
             <h2 className="font-bold text-on-surface text-lg">Security</h2>
 
             <p className="text-sm text-on-surface-variant">
-              Create login credentials for the staff member.
+              Create login credentials for the student.
             </p>
           </div>
 
@@ -214,9 +223,12 @@ const RegisterStudent = () => {
 
             <button
               type="submit"
-              className="bg-primary text-white px-8 py-3 rounded-xl font-semibold hover:bg-on-primary-container transition"
+              disabled={useRegisterStudentMutation.isPending}
+              className="bg-primary text-white px-8 py-3 rounded-xl font-semibold hover:bg-on-primary-container transition disabled:opacity-60"
             >
-              Register Parent
+              {useRegisterStudentMutation.isPending
+                ? "Registering..."
+                : "Register Student"}
             </button>
           </div>
         </div>

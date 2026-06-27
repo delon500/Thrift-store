@@ -49,9 +49,9 @@ export const action_card = [
 
 export const register_user_action_card = [
   {
-    name: "Register staff members",
+    name: "Register admin",
     description:
-      "Create a staff member profile with the correct access and platform visibility.",
+      "Create an administrator account with the correct access and platform visibility.",
     color: "#dbf0ee",
     Icon: Shield,
     to: "/register-users/staff",
@@ -116,8 +116,8 @@ export const registered_user_action_card = [
     to: "registered-users/university",
   },
   {
-    name: "Staff members",
-    description: "View platform staff and administrators.",
+    name: "Registered admins",
+    description: "View platform administrators.",
     color: "#d4e6e5",
     Icon: Shield,
     to: "registered-users/admin",
