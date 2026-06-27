@@ -17,6 +17,7 @@ import {
   reportFound,
   listFoundReports,
   markReturned,
+  listForResale,
 } from "../controllers/foundReportController.js";
 import upload from "../middleware/multer.js";
 import { allowRoles, protect } from "../middleware/authMiddleware.js";
@@ -52,5 +53,6 @@ schoolRouter.delete("/products/:id", deleteProduct);
 schoolRouter.post("/found-reports", reportFound);
 schoolRouter.get("/found-reports", listFoundReports);
 schoolRouter.patch("/found-reports/:id/return", markReturned);
+schoolRouter.post("/found-reports/:id/list-for-resale", listForResale);
 
 export default schoolRouter;

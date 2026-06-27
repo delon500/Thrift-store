@@ -2,6 +2,10 @@ import pool from "../config/db.js";
 import { logActivity } from "../services/activityLog.js";
 import { sendFoundItemEmail } from "../services/emailService.js";
 
+// Open found items older than this are flagged "unclaimed" (advisory — staff can
+// list for resale at any time, this just highlights the long-waiting ones).
+const UNCLAIMED_DAYS = 30;
+
 // POST /api/school/found-reports — staff scan/enter an active tag (token or code)
 // on a lost item. Records a found report, flips the tag to reported_found, and
 // emails the owner (a user, or the guardian of a child). The response carries no
@@ -119,15 +123,17 @@ const listFoundReports = async (req, res) => {
   try {
     const r = await pool.query(
       `SELECT fr.id, fr.reference, fr.status, fr.found_at, fr.returned_at,
+              fr.product_id,
+              (fr.status = 'open' AND fr.found_at < now() - make_interval(days => $2)) AS unclaimed,
               t.code, t.label, u.full_name AS found_by
        FROM found_reports fr
        JOIN item_tags t ON t.id = fr.tag_id
        LEFT JOIN users u ON u.id = fr.found_by_user_id
        WHERE fr.institution_id = $1
        ORDER BY (fr.status = 'open') DESC, fr.found_at DESC`,
-      [req.user.institution_id],
+      [req.user.institution_id, UNCLAIMED_DAYS],
     );
-    return res.json({ reports: r.rows });
+    return res.json({ reports: r.rows, unclaimedDays: UNCLAIMED_DAYS });
   } catch (error) {
     return res
       .status(500)
@@ -186,4 +192,76 @@ const markReturned = async (req, res) => {
   }
 };
 
-export { reportFound, listFoundReports, markReturned };
+// POST /api/school/found-reports/:id/list-for-resale — an unclaimed item becomes
+// a draft "Lost and Found" product (Pending, price 0) the staff complete in
+// Inventory. Closes the report (resold) and retires the tag.
+const listForResale = async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const fr = await client.query(
+      `SELECT fr.id, fr.status, fr.tag_id, t.label
+       FROM found_reports fr
+       JOIN item_tags t ON t.id = fr.tag_id
+       WHERE fr.id = $1 AND fr.institution_id = $2`,
+      [req.params.id, req.user.institution_id],
+    );
+    if (fr.rows.length === 0) {
+      return res.status(404).json({ message: "Report not found" });
+    }
+    if (fr.rows[0].status !== "open") {
+      return res
+        .status(409)
+        .json({ message: "Only open found items can be listed" });
+    }
+
+    await client.query("BEGIN");
+    const product = await client.query(
+      `INSERT INTO products
+         (name, description, gender, price, status, category, institution_id, age, condition, listing_type)
+       VALUES ($1, $2, 'Unisex', 0, 'Pending', 'Lost & Found', $3, 'Unknown', 'Used', 'Lost and Found')
+       RETURNING id, reference_number`,
+      [
+        fr.rows[0].label || "Found item",
+        "Unclaimed lost-and-found item — set a price and add photos before publishing.",
+        req.user.institution_id,
+      ],
+    );
+    await client.query(
+      "UPDATE found_reports SET status = 'resold', product_id = $1 WHERE id = $2",
+      [product.rows[0].id, req.params.id],
+    );
+    await client.query(
+      "UPDATE item_tags SET status = 'retired' WHERE id = $1",
+      [fr.rows[0].tag_id],
+    );
+    await client.query("COMMIT");
+
+    logActivity({
+      action: "found_report.listed_for_resale",
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      institutionId: req.user.institution_id,
+      entityType: "product",
+      entityRef: product.rows[0].reference_number,
+      description: `Unclaimed found item listed for resale (${product.rows[0].reference_number})`,
+    });
+    return res.status(201).json({
+      product_id: product.rows[0].id,
+      reference_number: product.rows[0].reference_number,
+      message: "Listed as a draft — set its price and publish from Inventory",
+    });
+  } catch (error) {
+    try {
+      await client.query("ROLLBACK");
+    } catch {
+      // ignore
+    }
+    return res
+      .status(500)
+      .json({ message: "Failed to list for resale", error: error.message });
+  } finally {
+    client.release();
+  }
+};
+
+export { reportFound, listFoundReports, markReturned, listForResale };
