@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import { useRegisterInstitution } from "../hooks/useRegisterUser";
 import useAuthStore from "../../auth/store/authStore";
 import { PageHeader } from "../../../components/shared/ui";
@@ -30,19 +31,32 @@ const RegisterSchool = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    registerSchoolMutation.mutate({
-      formData: {
-        contact_person_name: formData.contactName,
-        contact_email: formData.contactEmail,
-        contact_number: formData.contactNumber,
-        institution_name: formData.institutionName,
-        registration_number: formData.registrationNumber,
-        institution_phone: formData.institutionPhone,
-        institution_type: formData.institutionType,
-        institution_category: formData.institutionCategory,
+    registerSchoolMutation.mutate(
+      {
+        formData: {
+          contact_person_name: formData.contactName,
+          contact_email: formData.contactEmail,
+          contact_number: formData.contactNumber,
+          institution_name: formData.institutionName,
+          registration_number: formData.registrationNumber,
+          institution_phone: formData.institutionPhone,
+          institution_type: formData.institutionType,
+          institution_category: formData.institutionCategory,
+        },
+        token,
       },
-      token,
-    });
+      {
+        onSuccess: () => {
+          toast.success("School registered. Add accounts for it from Institutions.");
+          navigate("/admin/institutions");
+        },
+        onError: (error) => {
+          toast.error(
+            error?.response?.data?.message || "Could not register the school",
+          );
+        },
+      },
+    );
   };
 
   return (
@@ -196,9 +210,10 @@ const RegisterSchool = () => {
 
             <button
               type="submit"
-              className="bg-primary text-white px-8 py-3 rounded-xl font-semibold hover:bg-on-primary-container transition cursor-pointer"
+              disabled={registerSchoolMutation.isPending}
+              className="bg-primary text-white px-8 py-3 rounded-xl font-semibold hover:bg-on-primary-container transition cursor-pointer disabled:opacity-60"
             >
-              Register School
+              {registerSchoolMutation.isPending ? "Registering..." : "Register School"}
             </button>
           </div>
         </div>

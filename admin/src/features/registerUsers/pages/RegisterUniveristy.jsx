@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import { useRegisterInstitution } from "../hooks/useRegisterUser";
 import useAuthStore from "../../auth/store/authStore";
 import { PageHeader } from "../../../components/shared/ui";
@@ -39,7 +40,22 @@ const RegisterUniveristy = () => {
       institution_type: formData.institutionType,
       institution_category: "university",
     };
-    registerUniversityMutation.mutate({ formData: payload, token });
+    registerUniversityMutation.mutate(
+      { formData: payload, token },
+      {
+        onSuccess: () => {
+          toast.success(
+            "University registered. Add accounts for it from Institutions.",
+          );
+          navigate("/admin/institutions");
+        },
+        onError: (error) => {
+          toast.error(
+            error?.response?.data?.message || "Could not register the university",
+          );
+        },
+      },
+    );
   };
   return (
     <div className="w-full">
@@ -192,9 +208,12 @@ const RegisterUniveristy = () => {
 
             <button
               type="submit"
-              className="bg-primary text-white px-8 py-3 rounded-xl font-semibold hover:bg-on-primary-container transition cursor-pointer"
+              disabled={registerUniversityMutation.isPending}
+              className="bg-primary text-white px-8 py-3 rounded-xl font-semibold hover:bg-on-primary-container transition cursor-pointer disabled:opacity-60"
             >
-              Register University
+              {registerUniversityMutation.isPending
+                ? "Registering..."
+                : "Register University"}
             </button>
           </div>
         </div>
