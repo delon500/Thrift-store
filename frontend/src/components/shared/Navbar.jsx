@@ -10,6 +10,7 @@ import {
   Settings,
   LogOut,
   Users,
+  QrCode,
 } from "lucide-react";
 import { useProductStore } from "../../features/products/store/productStore";
 import useAuthStore from "../../features/auth/store/authStore";
@@ -161,6 +162,14 @@ const Navbar = () => {
           >
             <Package size={18} aria-hidden="true" />
             My orders
+          </NavLink>
+          <NavLink
+            to="/tags"
+            onClick={closeMenu}
+            className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-on-surface-variant hover:bg-surface-container-low"
+          >
+            <QrCode size={18} aria-hidden="true" />
+            My stickers
           </NavLink>
           {role === "parent" ? (
             <NavLink
