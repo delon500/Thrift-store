@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { ArrowLeft, ImagePlus, Plus, Sparkles } from "lucide-react";
@@ -35,9 +35,31 @@ const AddItemPage = () => {
 
   const [form, setForm] = useState(EMPTY);
   const [images, setImages] = useState({});
+  // Object URLs for previews — created once per pick, revoked on replace/unmount
+  // (creating them in render would leak a new URL every render).
+  const [previews, setPreviews] = useState({});
+
+  const previewsRef = useRef(previews);
+  useEffect(() => {
+    previewsRef.current = previews;
+  }, [previews]);
+  useEffect(
+    () => () => {
+      Object.values(previewsRef.current).forEach(
+        (url) => url && URL.revokeObjectURL(url),
+      );
+    },
+    [],
+  );
 
   const setField = (key, value) => setForm((c) => ({ ...c, [key]: value }));
-  const setImage = (key, file) => setImages((c) => ({ ...c, [key]: file }));
+  const setImage = (key, file) => {
+    setImages((current) => ({ ...current, [key]: file }));
+    setPreviews((current) => {
+      if (current[key]) URL.revokeObjectURL(current[key]);
+      return { ...current, [key]: file ? URL.createObjectURL(file) : undefined };
+    });
+  };
 
   const handleAnalyze = async () => {
     if (Object.values(images).filter(Boolean).length === 0) {
@@ -107,7 +129,7 @@ const AddItemPage = () => {
           <label htmlFor="image1" className="block cursor-pointer">
             {images.image1 ? (
               <img
-                src={URL.createObjectURL(images.image1)}
+                src={previews.image1}
                 alt="Main"
                 className="aspect-square w-full rounded-xl border border-outline-variant object-cover"
               />
@@ -131,7 +153,7 @@ const AddItemPage = () => {
               <label key={key} htmlFor={key} className="block cursor-pointer">
                 {images[key] ? (
                   <img
-                    src={URL.createObjectURL(images[key])}
+                    src={previews[key]}
                     alt=""
                     className="aspect-square w-full rounded-lg border border-outline-variant object-cover"
                   />

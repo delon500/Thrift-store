@@ -246,6 +246,11 @@ const createInstitutionUser = async (req, res) => {
     if (!institution) {
       return res.status(404).json({ message: "Institution not found" });
     }
+    if (!["school", "university"].includes(institution.institution_category)) {
+      return res
+        .status(400)
+        .json({ message: "Institution has no valid category for an account" });
+    }
 
     const { full_name, email, contact_number, password, confirm_password } =
       req.body;
