@@ -32,21 +32,53 @@ const GROUPS = [
     Icon: UserPlus,
     superOnly: true,
     items: [
-      { to: "/admin/register-users/staff", label: "Register staff", Icon: Shield },
-      { to: "/admin/register-users/school", label: "Register school", Icon: School },
-      { to: "/admin/register-users/parent", label: "Register parents", Icon: Users },
-      { to: "/admin/register-users/university", label: "Register university", Icon: GraduationCap },
-      { to: "/admin/register-users/student", label: "Register students", Icon: User },
+      {
+        to: "/admin/register-users/staff",
+        label: "Register admin",
+        Icon: Shield,
+      },
+      {
+        to: "/admin/register-users/school",
+        label: "Register school",
+        Icon: School,
+      },
+      {
+        to: "/admin/register-users/parent",
+        label: "Register parents",
+        Icon: Users,
+      },
+      {
+        to: "/admin/register-users/university",
+        label: "Register university",
+        Icon: GraduationCap,
+      },
+      {
+        to: "/admin/register-users/student",
+        label: "Register students",
+        Icon: User,
+      },
     ],
   },
   {
     label: "Registered users",
     Icon: Users,
     items: [
-      { to: "/admin/registrations", label: "Registration requests", Icon: ClipboardList },
+      {
+        to: "/admin/registrations",
+        label: "Registration requests",
+        Icon: ClipboardList,
+      },
       { to: "/admin/registered-users/school", label: "Schools", Icon: School },
-      { to: "/admin/registered-users/university", label: "Universities", Icon: GraduationCap },
-      { to: "/admin/registered-users/admin", label: "Staff members", Icon: Shield },
+      {
+        to: "/admin/registered-users/university",
+        label: "Universities",
+        Icon: GraduationCap,
+      },
+      {
+        to: "/admin/registered-users/admin",
+        label: "Staff members",
+        Icon: Shield,
+      },
       { to: "/admin/registered-users/student", label: "Students", Icon: User },
       { to: "/admin/registered-users/parent", label: "Parents", Icon: Users },
     ],
@@ -55,9 +87,17 @@ const GROUPS = [
     label: "Item management",
     Icon: Package,
     items: [
-      { to: "/admin/lost-and-found-management/add-items", label: "Add items", Icon: PackagePlus },
+      {
+        to: "/admin/lost-and-found-management/add-items",
+        label: "Add items",
+        Icon: PackagePlus,
+      },
       { to: "/admin/inventory", label: "Manage inventory", Icon: Boxes },
-      { to: "/admin/orders", label: "Pickup & collections", Icon: PackageCheck },
+      {
+        to: "/admin/orders",
+        label: "Pickup & collections",
+        Icon: PackageCheck,
+      },
       { to: "/admin/view-store", label: "View store", Icon: Store },
     ],
   },
@@ -98,7 +138,9 @@ const SidebarGroup = ({ group, onNavigate }) => {
         onClick={() => setIsOpen((current) => !current)}
         aria-expanded={isOpen}
         className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
-          active ? "text-on-surface" : "text-on-surface-variant hover:bg-surface-container-low"
+          active
+            ? "text-on-surface"
+            : "text-on-surface-variant hover:bg-surface-container-low"
         }`}
       >
         <group.Icon size={18} aria-hidden="true" />
@@ -132,7 +174,14 @@ export const SidebarNav = ({ onNavigate }) => {
   const logout = useAuthStore((state) => state.logout);
   const { data: me } = useMe();
   const isSuper = me?.role === "super_admin";
-
+  const roleName =
+    me?.role === "super_admin"
+      ? "Super Admin"
+      : me?.role === "admin"
+        ? "Admin"
+        : me?.role === "staff"
+          ? "Staff"
+          : "User";
   const groups = GROUPS.filter((group) => !group.superOnly || isSuper);
   const bottom = BOTTOM_LINKS.filter((link) => !link.superOnly || isSuper);
 
@@ -143,8 +192,10 @@ export const SidebarNav = ({ onNavigate }) => {
           <ShoppingBag size={18} aria-hidden="true" />
         </span>
         <div className="leading-tight">
-          <p className="text-sm font-extrabold text-on-surface">School Thrift</p>
-          <p className="text-xs text-on-surface-variant">Admin</p>
+          <p className="text-sm font-extrabold text-on-surface">
+            School Thrift
+          </p>
+          <p className="text-xs text-on-surface-variant">{roleName}</p>
         </div>
       </div>
 
@@ -155,13 +206,22 @@ export const SidebarNav = ({ onNavigate }) => {
         </NavLink>
 
         {groups.map((group) => (
-          <SidebarGroup key={group.label} group={group} onNavigate={onNavigate} />
+          <SidebarGroup
+            key={group.label}
+            group={group}
+            onNavigate={onNavigate}
+          />
         ))}
 
         <div className="my-2 border-t border-outline-variant" />
 
         {bottom.map((link) => (
-          <NavLink key={link.to} to={link.to} onClick={onNavigate} className={linkClass}>
+          <NavLink
+            key={link.to}
+            to={link.to}
+            onClick={onNavigate}
+            className={linkClass}
+          >
             <link.Icon size={18} aria-hidden="true" />
             {link.label}
           </NavLink>

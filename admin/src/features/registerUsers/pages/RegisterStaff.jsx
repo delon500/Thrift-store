@@ -43,8 +43,8 @@ const RegisterStaff = () => {
   return (
     <div className="w-full">
       <PageHeader
-        title="Register staff"
-        subtitle="Create a staff or administrator account."
+        title="Register admin"
+        subtitle="Create an administrator account."
       />
 
       <form onSubmit={handleSubmit}>
@@ -52,10 +52,10 @@ const RegisterStaff = () => {
           {/* Section Header */}
           <div className="mb-6">
             <h2 className="font-bold text-on-surface text-lg">
-              Staff Information
+              Administrator Information
             </h2>
             <p className="text-sm text-on-surface-variant">
-              Enter the details of the staff member you want to register.
+              Enter the details of the administrator you want to register.
             </p>
           </div>
 
@@ -136,7 +136,7 @@ const RegisterStaff = () => {
             <h2 className="font-bold text-on-surface text-lg">Security</h2>
 
             <p className="text-sm text-on-surface-variant">
-              Create login credentials for the staff member.
+              Create login credentials for the administrator.
             </p>
           </div>
 
@@ -189,7 +189,7 @@ const RegisterStaff = () => {
               type="submit"
               className="bg-primary text-white px-8 py-3 rounded-xl font-semibold hover:bg-on-primary-container transition"
             >
-              Register Staff
+              Register Administrator
             </button>
           </div>
         </div>
