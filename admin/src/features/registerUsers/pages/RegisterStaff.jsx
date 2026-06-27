@@ -41,8 +41,12 @@ const RegisterStaff = () => {
         token,
       },
       {
-        onSuccess: () => {
-          toast.success("Admin account created.");
+        onSuccess: (data) => {
+          toast.success(
+            data?.emailed
+              ? "Admin account created — login details emailed."
+              : "Admin account created (login email not sent).",
+          );
           navigate("/admin/registered-users/admin");
         },
       },

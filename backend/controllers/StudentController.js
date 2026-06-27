@@ -1,5 +1,9 @@
 import pool from "../config/db.js";
 import bcrypt from "bcrypt";
+import { sendCredentialsEmail } from "../services/emailService.js";
+
+const customerLoginUrl = () =>
+  process.env.FRONTEND_URL || "http://localhost:5173";
 
 const registerStudent = async (req, res) => {
   try {
@@ -37,7 +41,7 @@ const registerStudent = async (req, res) => {
     }
 
     const institutionCheck = await pool.query(
-      "SELECT id, status FROM institutions WHERE id = $1",
+      "SELECT id, status, institution_name FROM institutions WHERE id = $1",
       [institution_id],
     );
 
@@ -77,9 +81,21 @@ const registerStudent = async (req, res) => {
       ],
     );
 
+    // Email the student their login details (the plaintext password is only
+    // available here). Created approved, so they can sign in right away. Never
+    // let a mail failure undo the registration.
+    const emailResult = await sendCredentialsEmail({
+      user: newUser.rows[0],
+      password,
+      institutionName: institutionCheck.rows[0].institution_name,
+      loginUrl: customerLoginUrl(),
+      pendingApproval: newUser.rows[0].status === "pending",
+    });
+
     return res.status(201).json({
       message: "Student registered successfully",
       user: newUser.rows[0],
+      emailed: emailResult?.sent === true,
     });
   } catch (error) {
     console.error(error);

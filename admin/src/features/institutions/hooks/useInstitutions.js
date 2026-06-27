@@ -6,6 +6,7 @@ import {
   getAdminInstitutions,
   getInstitutionSettings,
   getInstitutionStaff,
+  sendInstitutionStaffCredentials,
   updateInstitution,
   updateInstitutionSettings,
 } from "../api/institutionsApi";
@@ -31,6 +32,15 @@ export const useCreateInstitutionStaff = () => {
         queryKey: ["admin-institution-staff", variables.id],
       });
     },
+  });
+};
+
+export const useSendInstitutionStaffCredentials = () => {
+  const token = useAuthStore((state) => state.token);
+
+  return useMutation({
+    mutationFn: ({ id, userId }) =>
+      sendInstitutionStaffCredentials({ id, userId, token }),
   });
 };
 

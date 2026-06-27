@@ -3,6 +3,9 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { logActivity } from "../services/activityLog.js";
 import { notifyAdmins } from "../services/notificationService.js";
+import { sendCredentialsEmail } from "../services/emailService.js";
+
+const adminLoginUrl = () => process.env.ADMIN_URL || "http://localhost:5174";
 
 const generateToken = (user) => {
   return jwt.sign(
@@ -257,9 +260,20 @@ const registerAdmin = async (req, res) => {
       [full_name, email, contact_number, password_hash],
     );
 
+    // Email the admin their login details (the plaintext password is only
+    // available here). Admins are created approved and sign in to the admin app.
+    // Never let a mail failure undo the registration.
+    const emailResult = await sendCredentialsEmail({
+      user: newAdmin.rows[0],
+      password,
+      loginUrl: adminLoginUrl(),
+      pendingApproval: newAdmin.rows[0].status === "pending",
+    });
+
     return res.status(201).json({
       message: "Admin registered successfully",
       user: newAdmin.rows[0],
+      emailed: emailResult?.sent === true,
     });
   } catch (error) {
     return res
