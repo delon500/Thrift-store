@@ -120,8 +120,17 @@ The ${appName()} team`,
 // re-sends credentials) — gives the new user their login email + password and
 // the portal link. The password is only available in plaintext at this moment
 // (on create) or when freshly generated (on resend); it is never stored in clear.
-const sendCredentialsEmail = ({ user, password, institutionName }) => {
-  const loginUrl = process.env.SCHOOL_ADMIN_URL || "http://localhost:5175";
+const sendCredentialsEmail = ({
+  user,
+  password,
+  institutionName,
+  loginUrl,
+  pendingApproval,
+}) => {
+  const url = loginUrl || process.env.SCHOOL_ADMIN_URL || "http://localhost:5175";
+  const pendingLine = pendingApproval
+    ? "\nYour account is awaiting approval — you'll be able to sign in once an administrator approves it.\n"
+    : "";
 
   return sendEmail({
     to: user.email,
@@ -134,12 +143,12 @@ An account has been created for you on ${appName()}${
       institutionName ? ` for ${institutionName}` : ""
     }.
 
-Sign in to the staff portal here:
-${loginUrl}
+Sign in here:
+${url}
 
   Email:    ${user.email}
   Password: ${password}
-
+${pendingLine}
 Please keep these details safe. If you didn't expect this, contact your administrator.
 
 The ${appName()} team`,

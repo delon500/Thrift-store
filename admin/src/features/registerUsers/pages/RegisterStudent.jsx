@@ -59,8 +59,12 @@ const RegisterStudent = () => {
     useRegisterStudentMutation.mutate(
       { formData: payload, token },
       {
-        onSuccess: () => {
-          toast.success("Student account created.");
+        onSuccess: (data) => {
+          toast.success(
+            data?.emailed
+              ? "Student account created — login details emailed."
+              : "Student account created (login email not sent).",
+          );
           navigate("/admin/registered-users/student");
         },
       },

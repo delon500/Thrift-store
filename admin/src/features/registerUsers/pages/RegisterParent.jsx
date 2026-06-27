@@ -57,8 +57,12 @@ const RegisterParent = () => {
         token,
       },
       {
-        onSuccess: () => {
-          toast.success("Parent account created.");
+        onSuccess: (data) => {
+          toast.success(
+            data?.emailed
+              ? "Parent account created — login details emailed."
+              : "Parent account created (login email not sent).",
+          );
           navigate("/admin/registered-users/parent");
         },
       },
