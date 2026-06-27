@@ -9,6 +9,7 @@ import {
 } from "../hooks/useRegisteredUsers";
 import { useDebouncedValue } from "../../../lib/useDebouncedValue";
 import Pagination from "../../../components/shared/Pagination";
+import { PageHeader } from "../../../components/shared/ui";
 import { useMe } from "../../auth/hook/useAuth";
 
 const PAGE_SIZE = 10;
@@ -45,7 +46,7 @@ const EditUserModal = ({ user, onClose }) => {
   const resetMutation = useResetUserPassword();
 
   const inputClass =
-    "rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:border-teal-600";
+    "rounded-md border border-outline-variant px-3 py-2 text-sm outline-none focus:border-primary";
 
   const handleSave = async () => {
     try {
@@ -80,16 +81,16 @@ const EditUserModal = ({ user, onClose }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="w-full max-w-md rounded-xl bg-white p-6">
         <div className="flex items-start justify-between">
-          <h2 className="text-xl font-black text-teal-600">Edit user</h2>
+          <h2 className="text-xl font-black text-primary">Edit user</h2>
           <button
             type="button"
             onClick={onClose}
-            className="text-2xl leading-none text-gray-400 hover:text-gray-700"
+            className="text-2xl leading-none text-on-surface-variant hover:text-on-surface"
           >
             ×
           </button>
         </div>
-        <p className="mt-1 text-xs text-gray-500">{user.email}</p>
+        <p className="mt-1 text-xs text-on-surface-variant">{user.email}</p>
 
         {msg ? (
           <div
@@ -105,7 +106,7 @@ const EditUserModal = ({ user, onClose }) => {
 
         <div className="mt-4 grid gap-4">
           <label className="grid gap-1 text-sm">
-            <span className="font-semibold text-gray-600">Full name</span>
+            <span className="font-semibold text-on-surface-variant">Full name</span>
             <input
               value={form.full_name}
               onChange={(e) => setForm((f) => ({ ...f, full_name: e.target.value }))}
@@ -113,7 +114,7 @@ const EditUserModal = ({ user, onClose }) => {
             />
           </label>
           <label className="grid gap-1 text-sm">
-            <span className="font-semibold text-gray-600">Contact number</span>
+            <span className="font-semibold text-on-surface-variant">Contact number</span>
             <input
               value={form.contact_number}
               onChange={(e) =>
@@ -123,7 +124,7 @@ const EditUserModal = ({ user, onClose }) => {
             />
           </label>
           <label className="grid gap-1 text-sm">
-            <span className="font-semibold text-gray-600">Status</span>
+            <span className="font-semibold text-on-surface-variant">Status</span>
             <select
               value={form.status}
               onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}
@@ -142,7 +143,7 @@ const EditUserModal = ({ user, onClose }) => {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-600"
+            className="rounded-lg border border-outline-variant px-4 py-2 text-sm font-semibold text-on-surface-variant"
           >
             Cancel
           </button>
@@ -150,14 +151,14 @@ const EditUserModal = ({ user, onClose }) => {
             type="button"
             onClick={handleSave}
             disabled={updateMutation.isPending}
-            className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-60"
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white disabled:opacity-60"
           >
             {updateMutation.isPending ? "Saving..." : "Save changes"}
           </button>
         </div>
 
-        <div className="mt-6 border-t border-gray-100 pt-4">
-          <p className="text-sm font-semibold text-gray-600">Reset password</p>
+        <div className="mt-6 border-t border-outline-variant pt-4">
+          <p className="text-sm font-semibold text-on-surface-variant">Reset password</p>
           <div className="mt-2 flex gap-2">
             <input
               type="password"
@@ -170,7 +171,7 @@ const EditUserModal = ({ user, onClose }) => {
               type="button"
               onClick={handleReset}
               disabled={resetMutation.isPending}
-              className="rounded-lg border border-teal-600 px-3 py-2 text-sm font-bold text-teal-700 disabled:opacity-60"
+              className="rounded-lg border border-primary px-3 py-2 text-sm font-bold text-primary disabled:opacity-60"
             >
               {resetMutation.isPending ? "..." : "Reset"}
             </button>
@@ -234,27 +235,25 @@ const RegisteredUsersList = () => {
   };
 
   return (
-    <div className="p-6">
+    <div>
       <button
         type="button"
         onClick={() => navigate("/admin/registered-users")}
-        className="mb-3 text-sm font-semibold text-teal-600 hover:underline"
+        className="mb-3 text-sm font-semibold text-primary hover:underline"
       >
         ← All registered users
       </button>
 
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-black text-teal-600">{title}</h1>
-        <p className="text-sm font-medium text-gray-500">
-          {total} {total === 1 ? "person" : "people"}
-        </p>
-      </div>
+      <PageHeader
+        title={title}
+        subtitle={`${total} ${total === 1 ? "person" : "people"}`}
+      />
 
       <input
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search by name, email, or institution..."
-        className="mt-6 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-teal-600"
+        className="mt-6 w-full rounded-lg border border-outline-variant bg-white px-4 py-3 text-sm outline-none focus:border-primary"
       />
 
       {isError ? (
@@ -263,15 +262,15 @@ const RegisteredUsersList = () => {
         </p>
       ) : null}
 
-      <section className="mt-6 overflow-hidden rounded-xl border border-gray-200 bg-white">
+      <section className="mt-6 overflow-hidden rounded-xl border border-outline-variant bg-white">
         {isLoading ? (
-          <p className="p-5 text-gray-500">Loading...</p>
+          <p className="p-5 text-on-surface-variant">Loading...</p>
         ) : users.length === 0 ? (
-          <p className="p-5 text-gray-500">No users found.</p>
+          <p className="p-5 text-on-surface-variant">No users found.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[860px] text-left text-sm">
-              <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+              <thead className="bg-surface-container-low text-xs uppercase text-on-surface-variant">
                 <tr>
                   <th className="px-4 py-3">Name</th>
                   <th className="px-4 py-3">Institution</th>
@@ -284,16 +283,16 @@ const RegisteredUsersList = () => {
               </thead>
               <tbody>
                 {users.map((user) => (
-                  <tr key={user.id} className="border-t border-gray-100">
+                  <tr key={user.id} className="border-t border-outline-variant">
                     <td className="px-4 py-3">
-                      <p className="font-semibold text-gray-800">{user.full_name}</p>
-                      <p className="text-xs text-gray-500">{user.email}</p>
+                      <p className="font-semibold text-on-surface">{user.full_name}</p>
+                      <p className="text-xs text-on-surface-variant">{user.email}</p>
                     </td>
                     <td className="px-4 py-3">{user.institution_name || "—"}</td>
                     <td className="px-4 py-3">
                       <span
                         className={`rounded-full px-3 py-1 text-xs font-bold capitalize ${
-                          STATUS_STYLES[user.status] || "bg-gray-100 text-gray-700"
+                          STATUS_STYLES[user.status] || "bg-surface-container-high text-on-surface"
                         }`}
                       >
                         {user.status}
@@ -314,7 +313,7 @@ const RegisteredUsersList = () => {
                         <button
                           type="button"
                           onClick={() => setEditing(user)}
-                          className="rounded-lg border border-teal-600 px-3 py-1.5 text-xs font-bold text-teal-700 hover:bg-teal-50"
+                          className="rounded-lg border border-primary px-3 py-1.5 text-xs font-bold text-primary hover:bg-surface-container-low"
                         >
                           Edit
                         </button>

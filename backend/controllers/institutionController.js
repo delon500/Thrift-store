@@ -1,5 +1,4 @@
 import pool from "../config/db.js";
-import bcrypt from "bcrypt";
 
 const getInstitutions = async (req, res) => {
   try {
@@ -19,6 +18,9 @@ const getInstitutions = async (req, res) => {
   }
 };
 
+// Registers an institution as a RECORD ONLY — no login/password. Accounts for
+// the institution are created separately (see adminInstitutionController
+// createInstitutionUser). Admin-only, so it's approved on creation.
 const registerInstitution = async (req, res) => {
   try {
     const {
@@ -30,11 +32,8 @@ const registerInstitution = async (req, res) => {
       institution_phone,
       institution_type,
       institution_category,
-      password,
-      confirm_password,
     } = req.body;
 
-    console.log("Received registration data:", req.body);
     if (
       !contact_person_name ||
       !contact_email ||
@@ -42,8 +41,6 @@ const registerInstitution = async (req, res) => {
       !institution_name ||
       !institution_phone ||
       !institution_type ||
-      !password ||
-      !confirm_password ||
       !institution_category
     ) {
       return res
@@ -55,12 +52,8 @@ const registerInstitution = async (req, res) => {
       return res.status(400).json({ message: "Invalid institution category" });
     }
 
-    if (password !== confirm_password) {
-      return res.status(400).json({ message: "Passwords do not match" });
-    }
-
     const existingInstitution = await pool.query(
-      "SELECT * FROM institutions WHERE contact_email = $1",
+      "SELECT id FROM institutions WHERE contact_email = $1",
       [contact_email],
     );
 
@@ -70,27 +63,20 @@ const registerInstitution = async (req, res) => {
         .json({ message: "Institution email already exists" });
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const password_hash = await bcrypt.hash(password, salt);
-
-    const status = ["admin", "super_admin"].includes(req.user?.role)
-      ? "approved"
-      : "pending";
-
     const institutionResult = await pool.query(
       `INSERT INTO institutions (
-    institution_name,
-    institution_category,
-    institution_type,
-    registration_number,
-    contact_person_name,
-    contact_email,
-    contact_number,
-    institution_phone,
-    status
-  )
-  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-  RETURNING *`,
+        institution_name,
+        institution_category,
+        institution_type,
+        registration_number,
+        contact_person_name,
+        contact_email,
+        contact_number,
+        institution_phone,
+        status
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'approved')
+      RETURNING *`,
       [
         institution_name,
         institution_category,
@@ -100,35 +86,15 @@ const registerInstitution = async (req, res) => {
         contact_email,
         contact_number,
         institution_phone,
-        status,
       ],
     );
-    const institution = institutionResult.rows[0];
-    const userRole = institution_category;
 
-    const userResult = await pool.query(
-      `INSERT INTO users (
-    role, full_name, email, contact_number, password_hash, institution_id, status
-  )
-  VALUES ($1, $2, $3, $4, $5, $6, $7)
-  RETURNING id, role, full_name, email, contact_number, institution_id, status`,
-      [
-        userRole,
-        contact_person_name,
-        contact_email,
-        contact_number,
-        password_hash,
-        institution.id,
-        status,
-      ],
-    );
-    res.status(201).json({
-      message: "Institution registration successful. Awaiting admin approval.",
-      institution,
-      user: userResult.rows[0],
+    return res.status(201).json({
+      message: "Institution registered. You can now add accounts for it.",
+      institution: institutionResult.rows[0],
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    return res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 

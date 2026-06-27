@@ -101,6 +101,113 @@ Four independently-run apps (no root `package.json` — install/run each separat
   `~/.claude/skills/persistent-project-memory-system/`.
 
 ## 6. Active work / status
+**ACTIVE: Admin app redesign on branch `admin-redesign`** (stacked on `frontend-redesign` so
+the working tree keeps the customer redesign; admin/ is otherwise the same on both). Same
+marketplace design language as the customer app (emerald `#0f7a52`, warm canvas `#faf8f3`,
+**lucide-react**, M3 tokens). User reviews each step. **Step plan:**
+1 ✅ Foundations + app shell — admin `index.css` tokens remapped to the marketplace palette +
+focus ring; `Sidebar` rebuilt (lucide, declarative groups/links, role-gated, logout) with a
+shared `SidebarNav` export; `Navbar` (sticky top bar + mobile drawer reusing `SidebarNav`);
+`AdminLayout` (canvas bg, sidebar+content, no notebook-grid); `NotificationBell` → lucide +
+tokens. 2 ✅ Dashboard (AdminHome) — lucide-iconed stat cards, token Panels, recharts rebranded to
+the palette, token activity-feed badges. 3 ✅ Data-table list pages — shared
+admin UI kit `components/shared/ui.jsx` (PageHeader, Badge tones, SummaryCard, Modal,
+input/table class constants); **PaymentsPage** fully on the kit; **app-wide token recolor**
+of every remaining admin page via sed (raw teal/gray → tokens); deleted dead `App.jsx`,
+branded `AdminNotFoundPage`, and cleared all ~14 pre-existing unused-import errors → **`eslint
+src` clean**. Part 2 ✅: all 5 list pages
+(Institutions, RegisteredUsersList, Orders, Inventory, ViewStore) now use the shared
+`PageHeader` (consistent titles, dropped redundant `p-6` that double-padded the new layout);
+Institutions uses `Badge` tones. NB after the recolor the tables already matched the kit's
+classes, so no per-table rewrite was needed. 4 ✅ Forms — all 5 Register* pages + AddItems + the two hub pages
+(RegisterUsersHomePage, ItemManagementHomePage) now use the shared `PageHeader` (forms were
+already token-recolored + in card wrappers). AddItems still imports the PNG `icons`/`images`
+for its upload UI + the hub `CardActions` use PNG icons → handled in step 6. 5 ✅ Auth + Account + Settings + Notifications + Registrations + Reports — admin AuthPage
+rebuilt as a split-screen (emerald brand panel + value props) with a cleaned-up `LoginForm`
+(removed console.log, token inputs, loading state); all remaining pages (+ RegisteredUsers
+hub) on the shared `PageHeader`. **Every admin page now uses PageHeader.**
+6 ✅ Cleanup — converted the last PNG-icon usages to lucide (`CardActions` + `data.js` action
+cards now carry a lucide `Icon`; AddItems section icons + image-upload placeholders → lucide
+dashed dropzones); deleted `assets/icons` + `assets/images`, dead `ConditionCard` + dead
+`ItemManagement/components/Input`, and the unused `condition_card` data. **ADMIN REDESIGN
+COMPLETE on `admin-redesign`** — no PNG refs left, `eslint src` clean, build passes.
+NB `admin-redesign` is stacked on `frontend-redesign`; its PR diff is admin-only once that
+merges first (else it includes the customer redesign too).
+
+**ACTIVE: School-admin app build-out + redesign on branch `school-admin-redesign`** (stacked on
+`admin-redesign`). The app was minimally scaffolded (auth + one Collections page on old
+teal/gray styling; backend `school` routes: `GET /school/orders?status=`, `GET /school/lookup`,
+`PATCH /school/orders/:ref/collect`). Goal: a complete, redesigned staff app in the shared
+marketplace look. **Feature set:** Dashboard, Collections (+ QR scan), Orders list+detail,
+Collection history (+CSV), read-only Inventory (optional), Account, redesigned shell+login.
+**Step plan:** 1 Foundations+shell+login · 2 Dashboard (needs stats endpoint) · 3 Collections
+redesign + QR · 4 Orders list+detail (needs search/pagination + detail endpoint) · 5 History+export
+· 6 Inventory read-only (optional, needs endpoint) · 7 Account + final polish.
+1 ✅ Foundations + shell + login — `index.css` tokens → marketplace palette + focus ring;
+added `lucide-react@^1.21.0`; ported shared UI kit `components/shared/ui.jsx` (PageHeader,
+Badge, SummaryCard w/ optional Icon, Modal, input/table classes); built `Sidebar` (lucide,
+data-driven `NAV` array — Collections only for now, grows per step — + shared `SidebarNav`
+export + logout) and `Navbar` (sticky top + mobile drawer); rewrote `SchoolLayout`
+(canvas bg, sidebar+content); redesigned `LoginPage` as a split-screen (keeps the
+`school`/`university` role gate + inline error); branded `NotFound`. `eslint src` clean,
+build passes. NB CollectionsPage itself is still old teal/gray → redesigned in step 3.
+2 ✅ Dashboard — backend `GET /api/school/dashboard` (`getDashboardStats` in
+`schoolController` + route) returns `{stats:{ready_count, ready_value, collected_today,
+collected_total}, recent:[last 5 collected]}`, all institution-scoped (uses `FILTER` aggregates;
+enum labels `paid`/`ready_for_collection`/`collected` verified valid). New `features/dashboard`
+(api/hook/page): `DashboardPage` = 4 SummaryCards + "Ready for collection" quick list (reuses
+`useReadyOrders`) + "Recent collections". Router: `/school` index → Dashboard, Collections moved
+to `/school/collections`; Sidebar NAV gained Dashboard; Navbar label → "School Thrift". Lint
+clean, build passes, backend syntax-checked.
+3 ✅ Collections redesign — rebuilt `CollectionsPage` in the marketplace look: big touch
+targets (text-base inputs/buttons, py-3.5/py-4), `ScanLine`-iconed verify field, `PageHeader`,
+`Badge` status tones (STATUS_TONE map), `cardClass` order card with per-item `Package` rows +
+item-status badges, full-width "Mark as collected". Logic unchanged (lookup/collect/ready
+hooks); `useMarkCollected` now also invalidates `school-dashboard`. **QR scanning ADDED** (follow-up to
+step 3): `html5-qrcode@^2.3.8` + `components/shared/QrScanner.jsx` — a camera modal
+(`facingMode:"environment"`, graceful permission/no-camera fallback to manual entry) that
+decodes the buyer's pass (plain `order_reference`) and calls `loadReference()`. Collections page
+got a "Scan" button next to Verify. NB camera needs HTTPS in prod (works on localhost in dev).
+**No old teal/gray utilities remain anywhere in school-admin src.** Lint clean, build passes.
+4 ✅ Orders list + detail — backend: `listSchoolOrders` gained `q` (ILIKE ref/name/email) +
+`limit`/`offset` pagination (only paginates when `limit` present, so `useReadyOrders`/dashboard
+keep getting all rows) + returns `{orders, total}`; new `GET /school/orders/:orderReference`
+(`getOrderDetail`, reuses `fetchScopedOrder`). Frontend `features/orders` (api/hooks/pages +
+`lib/orderStatus.js` shared STATUS_TONE/formatStatus/ORDER_STATUSES): `OrdersPage` = debounced
+search + status filter + paginated table (added `components/shared/Pagination` + `lib/useDebouncedValue`),
+rows link to `OrderDetailPage` (items, buyer/payment/dates sidebar, collect action). `useMarkCollected`
+now also invalidates `school-orders`/`school-order`. Mounted `ToastContainer` in main.jsx (detail
+page uses toast). Sidebar gained Orders. Lint clean, build passes, backend syntax-checked.
+5 ✅ Collection history + CSV export — backend: `listSchoolOrders` now selects `collected_at`
+and accepts `collectedFrom`/`collectedTo` (filter `collected_at::date`). Frontend: ported
+`lib/csv.js` (toCsv/downloadCsv from admin); `features/history/HistoryPage` (reuses `useOrders`
+with `status=collected` + date range + search + pagination) with an **Export CSV** that fetches
+ALL matching rows (no limit) and downloads. `getOrders` passes the date params. Router `/school/history`
++ Sidebar History item. Lint clean, build passes, backend syntax-checked.
+6 ✅ Inventory (read-only) — backend `GET /school/products` (`getSchoolProducts`): institution-scoped
+products with q/status filters + limit/offset pagination + cover images (mirrors admin product
+shape), returns `{products, total}`. Frontend `features/inventory` (api/hook/page): `InventoryPage`
+= responsive card grid (image, name, reference, listing_type, product-status `Badge`, condition,
+price) + debounced search + product_status filter + pagination. Router `/school/inventory` +
+Sidebar Inventory item. Read-only (no edit/delete — that stays in the platform admin app). Lint
+clean, build passes, backend syntax-checked.
+7 ✅ Account + final polish — account endpoints (`GET/PATCH /api/users/me`,
+`PATCH /api/users/me/password`) are gated only by `protect`, so school/university roles use them
+as-is (no backend change). Added `getMe`+`useMe` (auth), `setUser` (authStore, keeps navbar/sidebar
+name fresh), `features/account` (api/hooks/page mirroring admin): `AccountPage` = editable
+full_name/contact_number (email/institution read-only) + change-password, render-time form sync
+(no effect → satisfies `react-hooks/set-state-in-effect`). Router `/school/account` + Sidebar
+Account item. Final sweep: only intentional `bg-black/40` modal scrims remain. **SCHOOL-ADMIN
+REDESIGN COMPLETE on `school-admin-redesign`** — full nav (Dashboard·Collections·Orders·History·
+Inventory·Account) on one design system; lint clean, build passes, 27 backend unit tests pass.
+
+**PRs OPENED (stacked, user merges; origin already contains `payments-collection-flow` so PR #8
+landed):** all 3 redesign branches pushed to `origin`. **#9** `frontend-redesign → main` (13 commits,
+customer redesign + 2 nav/bugfix), **#10** `admin-redesign → frontend-redesign` (7), **#11**
+`school-admin-redesign → admin-redesign` (8). Stacked bases keep each diff scoped — **after #9
+merges, retarget #10 to `main`; after #10, retarget #11 to `main`.** Repo `delon500/Thrift-store`.
+
+
 **ACTIVE: Customer UI/UX redesign on branch `frontend-redesign`** (off
 `payments-collection-flow`). Direction = **modern secondhand-marketplace** (warm canvas
 `#faf8f3`, emerald primary `#0f7a52`, coral accent `#e8590c`; `--mk-*` vars in `index.css`

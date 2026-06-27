@@ -41,9 +41,55 @@ const deleteInstitution = async ({ id, token }) => {
   return response.data;
 };
 
+// Per-institution settings (effective + overrides + global + catalog).
+const getInstitutionSettings = async ({ id, token }) => {
+  const response = await api.get(
+    `/admin/institutions/${id}/settings`,
+    authHeaders(token),
+  );
+
+  return response.data;
+};
+
+// body: { service_fee?, checkout_expiry_minutes?, enabled_payment_methods?, clear?: [] }
+const updateInstitutionSettings = async ({ id, body, token }) => {
+  const response = await api.put(
+    `/admin/institutions/${id}/settings`,
+    body,
+    authHeaders(token),
+  );
+
+  return response.data;
+};
+
+// The institution's login accounts (school/university-role users).
+const getInstitutionStaff = async ({ id, token }) => {
+  const response = await api.get(
+    `/admin/institutions/${id}/staff`,
+    authHeaders(token),
+  );
+
+  return response.data; // { institution, users }
+};
+
+// body: { full_name, email, contact_number, password, confirm_password }
+const createInstitutionStaff = async ({ id, body, token }) => {
+  const response = await api.post(
+    `/admin/institutions/${id}/staff`,
+    body,
+    authHeaders(token),
+  );
+
+  return response.data;
+};
+
 export {
   deleteInstitution,
   getAdminInstitutions,
   getInstitutions,
+  getInstitutionSettings,
+  getInstitutionStaff,
+  createInstitutionStaff,
   updateInstitution,
+  updateInstitutionSettings,
 };

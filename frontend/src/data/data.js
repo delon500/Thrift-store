@@ -3,10 +3,4 @@
 export const roleCards = [
   { key: "parent", label: "Parent", desc: "Register to shop for a child" },
   { key: "student", label: "Student", desc: "Register to buy for yourself" },
-  { key: "school", label: "School", desc: "Register a school account" },
-  {
-    key: "university",
-    label: "University",
-    desc: "Register a university account",
-  },
 ];

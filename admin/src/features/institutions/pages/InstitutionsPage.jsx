@@ -1,31 +1,36 @@
 import { useState } from "react";
 import { toast } from "react-toastify";
 import {
+  useCreateInstitutionStaff,
   useDeleteInstitution,
   useInstitutions,
+  useInstitutionSettings,
+  useInstitutionStaff,
   useUpdateInstitution,
+  useUpdateInstitutionSettings,
 } from "../hooks/useInstitutions";
 import { useDebouncedValue } from "../../../lib/useDebouncedValue";
 import Pagination from "../../../components/shared/Pagination";
+import { Badge, PageHeader } from "../../../components/shared/ui";
 import { useMe } from "../../auth/hook/useAuth";
+
+const STATUS_TONE = {
+  approved: "success",
+  pending: "warning",
+  rejected: "danger",
+  suspended: "warning",
+};
 
 const PAGE_SIZE = 10;
 const STATUS_OPTIONS = ["approved", "suspended", "pending", "rejected"];
 const TYPE_OPTIONS = ["public", "private", "independent"];
 const CATEGORY_OPTIONS = ["school", "university"];
 
-const STATUS_STYLES = {
-  approved: "bg-green-100 text-green-800",
-  pending: "bg-yellow-100 text-yellow-800",
-  rejected: "bg-red-100 text-red-700",
-  suspended: "bg-orange-100 text-orange-700",
-};
-
 const formatDate = (value) =>
   value ? new Date(value).toLocaleDateString(undefined, { dateStyle: "medium" }) : "";
 
 const inputClass =
-  "rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:border-teal-600";
+  "rounded-md border border-outline-variant px-3 py-2 text-sm outline-none focus:border-primary";
 
 const EditInstitutionModal = ({ institution, onClose }) => {
   const [form, setForm] = useState({
@@ -56,14 +61,14 @@ const EditInstitutionModal = ({ institution, onClose }) => {
 
   const field = (label, key) => (
     <label className="grid gap-1 text-sm">
-      <span className="font-semibold text-gray-600">{label}</span>
+      <span className="font-semibold text-on-surface-variant">{label}</span>
       <input value={form[key]} onChange={setField(key)} className={inputClass} />
     </label>
   );
 
   const select = (label, key, options) => (
     <label className="grid gap-1 text-sm">
-      <span className="font-semibold text-gray-600">{label}</span>
+      <span className="font-semibold text-on-surface-variant">{label}</span>
       <select value={form[key]} onChange={setField(key)} className={inputClass}>
         {options.map((option) => (
           <option key={option} value={option}>
@@ -78,11 +83,11 @@ const EditInstitutionModal = ({ institution, onClose }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white p-6">
         <div className="flex items-start justify-between">
-          <h2 className="text-xl font-black text-teal-600">Edit institution</h2>
+          <h2 className="text-xl font-black text-primary">Edit institution</h2>
           <button
             type="button"
             onClick={onClose}
-            className="text-2xl leading-none text-gray-400 hover:text-gray-700"
+            className="text-2xl leading-none text-on-surface-variant hover:text-on-surface"
           >
             ×
           </button>
@@ -104,7 +109,7 @@ const EditInstitutionModal = ({ institution, onClose }) => {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-600"
+            className="rounded-lg border border-outline-variant px-4 py-2 text-sm font-semibold text-on-surface-variant"
           >
             Cancel
           </button>
@@ -112,11 +117,396 @@ const EditInstitutionModal = ({ institution, onClose }) => {
             type="button"
             onClick={handleSave}
             disabled={updateMutation.isPending}
-            className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-60"
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white disabled:opacity-60"
           >
             {updateMutation.isPending ? "Saving..." : "Save changes"}
           </button>
         </div>
+      </div>
+    </div>
+  );
+};
+
+const OverrideToggle = ({ checked, onChange }) => (
+  <label className="flex items-center gap-2 text-xs font-semibold text-on-surface-variant">
+    <input
+      type="checkbox"
+      checked={checked}
+      onChange={onChange}
+      className="h-4 w-4 accent-primary"
+    />
+    Override
+  </label>
+);
+
+// Per-institution overrides for service fee and checkout expiry. Each setting
+// can either use the global default or be overridden.
+const InstitutionSettingsModal = ({ institution, onClose }) => {
+  const { data, isLoading } = useInstitutionSettings(institution.id);
+  const updateMutation = useUpdateInstitutionSettings();
+
+  const [form, setForm] = useState(null);
+  const [override, setOverride] = useState(null);
+  const [initialOverrides, setInitialOverrides] = useState(null);
+  const [seeded, setSeeded] = useState(false);
+
+  if (data && !seeded) {
+    setSeeded(true);
+    const ov = data.overrides || {};
+    setInitialOverrides(ov);
+    setOverride({
+      service_fee: "service_fee" in ov,
+      checkout_expiry_minutes: "checkout_expiry_minutes" in ov,
+    });
+    setForm({
+      service_fee: String(data.settings.service_fee),
+      checkout_expiry_minutes: String(data.settings.checkout_expiry_minutes),
+    });
+  }
+
+  const toggleOverride = (key) =>
+    setOverride((current) => ({ ...current, [key]: !current[key] }));
+
+  const handleSave = async () => {
+    const patch = {};
+    const clear = [];
+
+    if (override.service_fee) {
+      const fee = Number(form.service_fee);
+      if (!Number.isFinite(fee) || fee < 0 || fee > 1000) {
+        return toast.error("Service fee must be between 0 and 1000");
+      }
+      patch.service_fee = fee;
+    } else if ("service_fee" in initialOverrides) clear.push("service_fee");
+
+    if (override.checkout_expiry_minutes) {
+      const minutes = Number(form.checkout_expiry_minutes);
+      if (!Number.isInteger(minutes) || minutes < 5 || minutes > 1440) {
+        return toast.error("Checkout expiry must be 5–1440 minutes");
+      }
+      patch.checkout_expiry_minutes = minutes;
+    } else if ("checkout_expiry_minutes" in initialOverrides) {
+      clear.push("checkout_expiry_minutes");
+    }
+
+    if (Object.keys(patch).length === 0 && clear.length === 0) {
+      return toast.info("No changes to save");
+    }
+
+    try {
+      await updateMutation.mutateAsync({
+        id: institution.id,
+        body: { ...patch, ...(clear.length ? { clear } : {}) },
+      });
+      toast.success("Institution settings saved");
+      onClose();
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Could not save settings");
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white p-6">
+        <div className="flex items-start justify-between">
+          <div>
+            <h2 className="text-xl font-black text-primary">Institution settings</h2>
+            <p className="text-sm text-on-surface-variant">
+              {institution.institution_name} — overrides the platform defaults.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-2xl leading-none text-on-surface-variant hover:text-on-surface"
+          >
+            ×
+          </button>
+        </div>
+
+        {isLoading || !form ? (
+          <p className="mt-6 text-on-surface-variant">Loading settings...</p>
+        ) : (
+          <>
+            <section className="mt-5 rounded-2xl border border-outline-variant p-5">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="font-bold text-on-surface">Service fee</p>
+                  <p className="text-sm text-on-surface-variant">
+                    Global default: R{data.global.service_fee}
+                  </p>
+                </div>
+                <OverrideToggle
+                  checked={!!override.service_fee}
+                  onChange={() => toggleOverride("service_fee")}
+                />
+              </div>
+              {override.service_fee ? (
+                <div className="mt-3 flex items-center gap-2">
+                  <span className="text-on-surface-variant">R</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={form.service_fee}
+                    onChange={(e) =>
+                      setForm((c) => ({ ...c, service_fee: e.target.value }))
+                    }
+                    className="w-40 rounded-lg border border-outline-variant px-4 py-2.5 text-sm outline-none focus:border-primary"
+                  />
+                </div>
+              ) : (
+                <p className="mt-3 text-sm text-on-surface-variant">
+                  Using global default (R{data.global.service_fee}).
+                </p>
+              )}
+            </section>
+
+            <section className="mt-4 rounded-2xl border border-outline-variant p-5">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="font-bold text-on-surface">Checkout expiry</p>
+                  <p className="text-sm text-on-surface-variant">
+                    Global default: {data.global.checkout_expiry_minutes} min
+                  </p>
+                </div>
+                <OverrideToggle
+                  checked={!!override.checkout_expiry_minutes}
+                  onChange={() => toggleOverride("checkout_expiry_minutes")}
+                />
+              </div>
+              {override.checkout_expiry_minutes ? (
+                <div className="mt-3 flex items-center gap-2">
+                  <input
+                    type="number"
+                    step="1"
+                    min="5"
+                    max="1440"
+                    value={form.checkout_expiry_minutes}
+                    onChange={(e) =>
+                      setForm((c) => ({
+                        ...c,
+                        checkout_expiry_minutes: e.target.value,
+                      }))
+                    }
+                    className="w-40 rounded-lg border border-outline-variant px-4 py-2.5 text-sm outline-none focus:border-primary"
+                  />
+                  <span className="text-on-surface-variant">min</span>
+                </div>
+              ) : (
+                <p className="mt-3 text-sm text-on-surface-variant">
+                  Using global default ({data.global.checkout_expiry_minutes} min).
+                </p>
+              )}
+            </section>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-lg border border-outline-variant px-4 py-2 text-sm font-semibold text-on-surface-variant"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={updateMutation.isPending}
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white disabled:opacity-60"
+              >
+                {updateMutation.isPending ? "Saving..." : "Save settings"}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const ACCOUNT_TONE = {
+  approved: "success",
+  pending: "warning",
+  suspended: "warning",
+  rejected: "danger",
+};
+
+const AccountField = ({ label, children }) => (
+  <label className="grid gap-1 text-sm">
+    <span className="font-semibold text-on-surface-variant">{label}</span>
+    {children}
+  </label>
+);
+
+// Lists an institution's login accounts and lets a super-admin add more. Every
+// account gets the institution's role (school/university).
+const InstitutionAccountsModal = ({ institution, onClose }) => {
+  const { data, isLoading } = useInstitutionStaff(institution.id);
+  const createMutation = useCreateInstitutionStaff();
+  const accounts = data?.users || [];
+
+  const empty = {
+    full_name: "",
+    email: "",
+    contact_number: "",
+    password: "",
+    confirm_password: "",
+  };
+  const [form, setForm] = useState(empty);
+  const setField = (key) => (e) =>
+    setForm((current) => ({ ...current, [key]: e.target.value }));
+
+  const handleCreate = async (event) => {
+    event.preventDefault();
+    if (form.password !== form.confirm_password) {
+      return toast.error("Passwords do not match");
+    }
+    if (form.password.length < 6) {
+      return toast.error("Password must be at least 6 characters");
+    }
+    try {
+      await createMutation.mutateAsync({ id: institution.id, body: form });
+      toast.success("Account created");
+      setForm(empty);
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Could not create account");
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white p-6">
+        <div className="flex items-start justify-between">
+          <div>
+            <h2 className="text-xl font-black text-primary">Institution accounts</h2>
+            <p className="text-sm text-on-surface-variant">
+              {institution.institution_name} — accounts get the{" "}
+              <span className="font-semibold capitalize">
+                {institution.institution_category}
+              </span>{" "}
+              role.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-2xl leading-none text-on-surface-variant hover:text-on-surface"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="mt-5">
+          <p className="text-sm font-bold text-on-surface">Existing accounts</p>
+          {isLoading ? (
+            <p className="mt-2 text-sm text-on-surface-variant">Loading...</p>
+          ) : accounts.length === 0 ? (
+            <p className="mt-2 text-sm text-on-surface-variant">
+              No accounts yet — add one below.
+            </p>
+          ) : (
+            <div className="mt-2 overflow-hidden rounded-xl border border-outline-variant">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-surface-container-low text-xs uppercase text-on-surface-variant">
+                  <tr>
+                    <th className="px-4 py-2">Name</th>
+                    <th className="px-4 py-2">Email</th>
+                    <th className="px-4 py-2">Role</th>
+                    <th className="px-4 py-2">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {accounts.map((account) => (
+                    <tr key={account.id} className="border-t border-outline-variant">
+                      <td className="px-4 py-2 font-medium text-on-surface">
+                        {account.full_name}
+                      </td>
+                      <td className="px-4 py-2">{account.email}</td>
+                      <td className="px-4 py-2 capitalize">{account.role}</td>
+                      <td className="px-4 py-2">
+                        <Badge
+                          tone={ACCOUNT_TONE[account.status] || "neutral"}
+                          className="capitalize"
+                        >
+                          {account.status}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        <form
+          onSubmit={handleCreate}
+          className="mt-6 rounded-2xl border border-outline-variant p-5"
+        >
+          <p className="font-bold text-on-surface">Add account</p>
+          <div className="mt-3 grid gap-4 sm:grid-cols-2">
+            <AccountField label="Full name">
+              <input
+                value={form.full_name}
+                onChange={setField("full_name")}
+                className={inputClass}
+                required
+              />
+            </AccountField>
+            <AccountField label="Email">
+              <input
+                type="email"
+                value={form.email}
+                onChange={setField("email")}
+                className={inputClass}
+                required
+              />
+            </AccountField>
+            <AccountField label="Contact number">
+              <input
+                value={form.contact_number}
+                onChange={setField("contact_number")}
+                className={inputClass}
+                required
+              />
+            </AccountField>
+            <div className="hidden sm:block" />
+            <AccountField label="Password">
+              <input
+                type="password"
+                value={form.password}
+                onChange={setField("password")}
+                className={inputClass}
+                required
+              />
+            </AccountField>
+            <AccountField label="Confirm password">
+              <input
+                type="password"
+                value={form.confirm_password}
+                onChange={setField("confirm_password")}
+                className={inputClass}
+                required
+              />
+            </AccountField>
+          </div>
+          <div className="mt-5 flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg border border-outline-variant px-4 py-2 text-sm font-semibold text-on-surface-variant"
+            >
+              Close
+            </button>
+            <button
+              type="submit"
+              disabled={createMutation.isPending}
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white disabled:opacity-60"
+            >
+              {createMutation.isPending ? "Creating..." : "Create account"}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
@@ -131,6 +521,8 @@ const InstitutionsPage = () => {
   const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(1);
   const [editing, setEditing] = useState(null);
+  const [settingsFor, setSettingsFor] = useState(null);
+  const [accountsFor, setAccountsFor] = useState(null);
 
   const debouncedQuery = useDebouncedValue(query);
 
@@ -188,25 +580,23 @@ const InstitutionsPage = () => {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-black text-teal-600">Institutions</h1>
-        <p className="text-sm font-medium text-gray-500">
-          Schools and universities on the platform. {total} total.
-        </p>
-      </div>
+    <div>
+      <PageHeader
+        title="Institutions"
+        subtitle={`Schools and universities on the platform. ${total} total.`}
+      />
 
-      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+      <div className="flex flex-col gap-3 sm:flex-row">
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search by name or contact email..."
-          className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-teal-600"
+          className="w-full rounded-lg border border-outline-variant bg-white px-4 py-3 text-sm outline-none focus:border-primary"
         />
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-teal-600"
+          className="rounded-lg border border-outline-variant bg-white px-4 py-3 text-sm outline-none focus:border-primary"
         >
           <option value="">All statuses</option>
           {STATUS_OPTIONS.map((status) => (
@@ -223,15 +613,15 @@ const InstitutionsPage = () => {
         </p>
       ) : null}
 
-      <section className="mt-6 overflow-hidden rounded-xl border border-gray-200 bg-white">
+      <section className="mt-6 overflow-hidden rounded-xl border border-outline-variant bg-white">
         {isLoading ? (
-          <p className="p-5 text-gray-500">Loading...</p>
+          <p className="p-5 text-on-surface-variant">Loading...</p>
         ) : institutions.length === 0 ? (
-          <p className="p-5 text-gray-500">No institutions found.</p>
+          <p className="p-5 text-on-surface-variant">No institutions found.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[900px] text-left text-sm">
-              <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+              <thead className="bg-surface-container-low text-xs uppercase text-on-surface-variant">
                 <tr>
                   <th className="px-4 py-3">Institution</th>
                   <th className="px-4 py-3">Type</th>
@@ -245,12 +635,12 @@ const InstitutionsPage = () => {
               </thead>
               <tbody>
                 {institutions.map((institution) => (
-                  <tr key={institution.id} className="border-t border-gray-100">
+                  <tr key={institution.id} className="border-t border-outline-variant">
                     <td className="px-4 py-3">
-                      <p className="font-semibold text-gray-800">
+                      <p className="font-semibold text-on-surface">
                         {institution.institution_name}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-on-surface-variant">
                         {institution.contact_email}
                       </p>
                     </td>
@@ -262,14 +652,12 @@ const InstitutionsPage = () => {
                       {institution.user_count} / {institution.product_count}
                     </td>
                     <td className="px-4 py-3">
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-bold capitalize ${
-                          STATUS_STYLES[institution.status] ||
-                          "bg-gray-100 text-gray-700"
-                        }`}
+                      <Badge
+                        tone={STATUS_TONE[institution.status] || "neutral"}
+                        className="capitalize"
                       >
                         {institution.status}
-                      </span>
+                      </Badge>
                     </td>
                     <td className="px-4 py-3">
                       {formatDate(institution.created_at)}
@@ -290,9 +678,23 @@ const InstitutionsPage = () => {
                           <button
                             type="button"
                             onClick={() => setEditing(institution)}
-                            className="rounded-lg border border-teal-600 px-3 py-1.5 text-xs font-bold text-teal-700 hover:bg-teal-50"
+                            className="rounded-lg border border-primary px-3 py-1.5 text-xs font-bold text-primary hover:bg-surface-container-low"
                           >
                             Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setAccountsFor(institution)}
+                            className="rounded-lg border border-outline-variant px-3 py-1.5 text-xs font-bold text-on-surface-variant hover:bg-surface-container-low"
+                          >
+                            Accounts
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSettingsFor(institution)}
+                            className="rounded-lg border border-outline-variant px-3 py-1.5 text-xs font-bold text-on-surface-variant hover:bg-surface-container-low"
+                          >
+                            Settings
                           </button>
                           <button
                             type="button"
@@ -319,6 +721,20 @@ const InstitutionsPage = () => {
         <EditInstitutionModal
           institution={editing}
           onClose={() => setEditing(null)}
+        />
+      ) : null}
+
+      {settingsFor ? (
+        <InstitutionSettingsModal
+          institution={settingsFor}
+          onClose={() => setSettingsFor(null)}
+        />
+      ) : null}
+
+      {accountsFor ? (
+        <InstitutionAccountsModal
+          institution={accountsFor}
+          onClose={() => setAccountsFor(null)}
         />
       ) : null}
     </div>

@@ -1,22 +1,22 @@
 import { Link } from "react-router-dom";
 
-const CardActions = ({ icon, color, name, description, to, comingSoon }) => {
+const CardActions = ({ Icon, color, name, description, to, comingSoon }) => {
   const baseClass =
     "bg-white p-8 rounded-lg sticker-shadow border-2 border-primary-container card-tilt flex flex-col justify-between group relative overflow-hidden gap-4";
 
   const content = (
     <>
       {comingSoon ? (
-        <span className="absolute right-3 top-3 rounded-full bg-gray-200 px-2 py-1 text-[10px] font-bold uppercase text-gray-500">
+        <span className="absolute right-3 top-3 rounded-full bg-surface-container-high px-2 py-1 text-[10px] font-bold uppercase text-on-surface-variant">
           Coming soon
         </span>
       ) : null}
       <div className="w-fit p-4 rounded-full" style={{ backgroundColor: color }}>
-        <img src={icon} alt={name} className="w-6 h-6" />
+        {Icon ? <Icon size={24} className="text-on-primary-container" aria-hidden="true" /> : null}
       </div>
       <div className="flex flex-col gap-2">
         <h2 className="text-sm sm:text-xl font-bold">{name}</h2>
-        <p className="text-xs text-gray-500">{description}</p>
+        <p className="text-xs text-on-surface-variant">{description}</p>
       </div>
     </>
   );

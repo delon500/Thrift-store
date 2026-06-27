@@ -1,20 +1,15 @@
 import { useMemo, useState } from "react";
-import { Users, User, School, GraduationCap } from "lucide-react";
+import { Users, User } from "lucide-react";
 import Input from "../../../components/ui/Input";
 import { roleCards } from "../../../data/data.js";
 import RoleCard from "./RoleCard";
-import {
-  useRegisterInstitution,
-  useRegisterParentStudent,
-} from "../hooks/useAuth.js";
+import { useRegisterParentStudent } from "../hooks/useAuth.js";
 import { useQuery } from "@tanstack/react-query";
 import { getInstitutions } from "../../institutions/api/institutionApi.js";
 
 const ROLE_ICONS = {
   parent: Users,
   student: User,
-  school: School,
-  university: GraduationCap,
 };
 
 const Field = ({ label, children }) => (
@@ -28,7 +23,6 @@ const Field = ({ label, children }) => (
 
 const RegisterForm = () => {
   const parentStudentMutation = useRegisterParentStudent();
-  const institutionMutation = useRegisterInstitution();
   const [formData, setFormData] = useState({
     role: "parent",
     fullName: "",
@@ -36,11 +30,6 @@ const RegisterForm = () => {
     contactNumber: "",
     institutionSearch: "",
     selectedInstitution: null,
-    contactPerson: "",
-    institutionName: "",
-    institutionType: "",
-    registrationNumber: "",
-    institutionPhone: "",
     password: "",
     confirmPassword: "",
   });
@@ -65,24 +54,13 @@ const RegisterForm = () => {
     setFormData((prev) => ({
       ...prev,
       institutionSearch: institution.institution_name,
-      institutionName: institution.institution_name,
       selectedInstitution: institution,
     }));
     setShowSuggestions(false);
   };
 
-  const isInstitutionAccount =
-    formData.role === "school" || formData.role === "university";
-
   const handleRoleChange = (role) => {
-    setFormData((prev) => ({
-      ...prev,
-      role,
-      institutionSearch: "",
-      selectedInstitution: null,
-      institutionName: "",
-    }));
-    setShowSuggestions(false);
+    setFormData((prev) => ({ ...prev, role }));
   };
 
   const handleChange = (event) => {
@@ -90,9 +68,7 @@ const RegisterForm = () => {
     setFormData((prev) => ({
       ...prev,
       [name]: value,
-      ...(name === "institutionSearch"
-        ? { selectedInstitution: null, institutionName: value }
-        : {}),
+      ...(name === "institutionSearch" ? { selectedInstitution: null } : {}),
     }));
   };
 
@@ -101,10 +77,7 @@ const RegisterForm = () => {
     setMessage(null);
 
     try {
-      const result = isInstitutionAccount
-        ? await institutionMutation.mutateAsync(formData)
-        : await parentStudentMutation.mutateAsync(formData);
-
+      const result = await parentStudentMutation.mutateAsync(formData);
       setMessage({
         type: "success",
         text:
@@ -118,9 +91,6 @@ const RegisterForm = () => {
       });
     }
   };
-
-  const submitting =
-    parentStudentMutation.isPending || institutionMutation.isPending;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -142,159 +112,75 @@ const RegisterForm = () => {
         </div>
       </div>
 
-      {isInstitutionAccount ? (
-        <>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Contact person">
-              <Input
-                name="contactPerson"
-                type="text"
-                placeholder="John Smith"
-                value={formData.contactPerson}
-                onChange={handleChange}
-              />
-            </Field>
-            <Field label="Contact email">
-              <Input
-                name="email"
-                type="email"
-                placeholder="contact@school.com"
-                value={formData.email}
-                onChange={handleChange}
-              />
-            </Field>
-          </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Full name">
+          <Input
+            name="fullName"
+            type="text"
+            placeholder="Your name"
+            value={formData.fullName}
+            onChange={handleChange}
+          />
+        </Field>
+        <Field label="Email">
+          <Input
+            name="email"
+            type="email"
+            placeholder="you@example.com"
+            value={formData.email}
+            onChange={handleChange}
+          />
+        </Field>
+      </div>
 
-          <Field label="Contact number">
-            <Input
-              name="contactNumber"
-              type="tel"
-              placeholder="+27 12 345 6789"
-              value={formData.contactNumber}
-              onChange={handleChange}
-            />
-          </Field>
+      <Field label="Contact number">
+        <Input
+          name="contactNumber"
+          type="tel"
+          placeholder="+27 12 345 6789"
+          value={formData.contactNumber}
+          onChange={handleChange}
+        />
+      </Field>
 
-          <Field label="Institution name">
-            <Input
-              name="institutionName"
-              type="text"
-              placeholder="Enter school or university name"
-              value={formData.institutionName}
-              onChange={handleChange}
-            />
-          </Field>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Registration number (optional)">
-              <Input
-                name="registrationNumber"
-                type="text"
-                placeholder="#"
-                value={formData.registrationNumber}
-                onChange={handleChange}
-              />
-            </Field>
-            <Field label="Institution phone">
-              <Input
-                name="institutionPhone"
-                type="tel"
-                placeholder="Institution phone number"
-                value={formData.institutionPhone}
-                onChange={handleChange}
-              />
-            </Field>
-          </div>
-
-          <Field label="Institution type">
-            <select
-              name="institutionType"
-              value={formData.institutionType}
-              onChange={handleChange}
-              className="w-full rounded-xl border border-outline-variant bg-surface px-4 py-3 text-sm text-on-surface outline-none focus:border-primary"
-            >
-              <option value="">Select type</option>
-              <option value="public">Public</option>
-              <option value="private">Private</option>
-              <option value="Independent">Independent</option>
-              <option value="public University">Public university</option>
-              <option value="private University">Private university</option>
-            </select>
-          </Field>
-        </>
-      ) : (
-        <>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Full name">
-              <Input
-                name="fullName"
-                type="text"
-                placeholder="Your name"
-                value={formData.fullName}
-                onChange={handleChange}
-              />
-            </Field>
-            <Field label="Email">
-              <Input
-                name="email"
-                type="email"
-                placeholder="you@example.com"
-                value={formData.email}
-                onChange={handleChange}
-              />
-            </Field>
-          </div>
-
-          <Field label="Contact number">
-            <Input
-              name="contactNumber"
-              type="tel"
-              placeholder="+27 12 345 6789"
-              value={formData.contactNumber}
-              onChange={handleChange}
-            />
-          </Field>
-
-          <div className="relative">
-            <Field label="Your school or university">
-              <Input
-                name="institutionSearch"
-                type="text"
-                placeholder="Type to search..."
-                value={formData.institutionSearch}
-                onChange={(event) => {
-                  handleChange(event);
-                  setShowSuggestions(true);
-                }}
-                onFocus={() => setShowSuggestions(true)}
-              />
-            </Field>
-            {showSuggestions && formData.institutionSearch.trim() !== "" ? (
-              <div className="absolute z-20 mt-2 max-h-56 w-full overflow-auto rounded-xl border border-outline-variant bg-surface shadow-lg">
-                {filteredInstitutions.length > 0 ? (
-                  filteredInstitutions.map((institution) => (
-                    <button
-                      key={institution.id}
-                      type="button"
-                      onMouseDown={(event) => event.preventDefault()}
-                      onClick={() => handleSelectInstitution(institution)}
-                      className="block w-full border-b border-outline-variant px-4 py-3 text-left transition-colors last:border-0 hover:bg-surface-container-low"
-                    >
-                      <span className="font-semibold text-on-surface">
-                        {institution.institution_name}
-                      </span>
-                    </button>
-                  ))
-                ) : (
-                  <div className="px-4 py-3 text-sm text-on-surface-variant">
-                    No matching institution found
-                  </div>
-                )}
+      <div className="relative">
+        <Field label="Your school or university">
+          <Input
+            name="institutionSearch"
+            type="text"
+            placeholder="Type to search..."
+            value={formData.institutionSearch}
+            onChange={(event) => {
+              handleChange(event);
+              setShowSuggestions(true);
+            }}
+            onFocus={() => setShowSuggestions(true)}
+          />
+        </Field>
+        {showSuggestions && formData.institutionSearch.trim() !== "" ? (
+          <div className="absolute z-20 mt-2 max-h-56 w-full overflow-auto rounded-xl border border-outline-variant bg-surface shadow-lg">
+            {filteredInstitutions.length > 0 ? (
+              filteredInstitutions.map((institution) => (
+                <button
+                  key={institution.id}
+                  type="button"
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => handleSelectInstitution(institution)}
+                  className="block w-full border-b border-outline-variant px-4 py-3 text-left transition-colors last:border-0 hover:bg-surface-container-low"
+                >
+                  <span className="font-semibold text-on-surface">
+                    {institution.institution_name}
+                  </span>
+                </button>
+              ))
+            ) : (
+              <div className="px-4 py-3 text-sm text-on-surface-variant">
+                No matching institution found
               </div>
-            ) : null}
+            )}
           </div>
-        </>
-      )}
+        ) : null}
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Password">
@@ -331,10 +217,10 @@ const RegisterForm = () => {
 
       <button
         type="submit"
-        disabled={submitting}
+        disabled={parentStudentMutation.isPending}
         className="w-full rounded-full bg-primary py-3.5 font-semibold text-on-primary transition-colors hover:bg-on-primary-container disabled:opacity-60"
       >
-        {submitting ? "Submitting..." : "Submit registration"}
+        {parentStudentMutation.isPending ? "Submitting..." : "Submit registration"}
       </button>
     </form>
   );

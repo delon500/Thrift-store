@@ -1,9 +1,10 @@
-import React, { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { getInstitutions } from "../../institutions/api/institutionsApi";
 import { useNavigate } from "react-router-dom";
 import { useRegisterParent } from "../hooks/useRegisterUser";
 import useAuthStore from "../../auth/store/authStore";
+import { PageHeader } from "../../../components/shared/ui";
 const RegisterParent = () => {
   const token = useAuthStore((state) => state.token);
   const useRegisterParentMutation = useRegisterParent();
@@ -57,25 +58,18 @@ const RegisterParent = () => {
 
   return (
     <div className="w-full">
-      {/* Header */}
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-black text-teal-600">Register Parent</h1>
+      <PageHeader
+        title="Register parent"
+        subtitle="Create a parent account. They can sign in once approved."
+      />
 
-        <p className="text-sm text-gray-500">
-          Create parent accounts to manage inventory, verify pickups, monitor
-          orders, and operate the school shop.
-        </p>
-      </div>
-
-      {/* Form */}
-
-      <form onSubmit={handleSubmit} className="mt-8">
-        <div className="bg-white border border-gray-200 rounded-3xl p-6 shadow-sm">
+      <form onSubmit={handleSubmit}>
+        <div className="bg-white border border-outline-variant rounded-3xl p-6 shadow-sm">
           <div className="mb-6">
-            <h2 className="font-bold text-gray-800 text-lg">
+            <h2 className="font-bold text-on-surface text-lg">
               Parent Information
             </h2>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-on-surface-variant">
               Enter the details of the parent you want to register.
             </p>
           </div>
@@ -85,7 +79,7 @@ const RegisterParent = () => {
           {/* Row 1 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-              <label className="block text-sm font-semibold text-gray-600 mb-2">
+              <label className="block text-sm font-semibold text-on-surface-variant mb-2">
                 Full Name
               </label>
 
@@ -96,12 +90,12 @@ const RegisterParent = () => {
                 onChange={handleChange}
                 placeholder="John Doe"
                 required
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-teal-500"
+                className="w-full border border-outline-variant rounded-xl px-4 py-3 outline-none focus:border-primary"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-600 mb-2">
+              <label className="block text-sm font-semibold text-on-surface-variant mb-2">
                 Email Address
               </label>
 
@@ -111,7 +105,7 @@ const RegisterParent = () => {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="john@school.com"
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-teal-500"
+                className="w-full border border-outline-variant rounded-xl px-4 py-3 outline-none focus:border-primary"
                 required
               />
             </div>
@@ -120,7 +114,7 @@ const RegisterParent = () => {
           {/* Row 2 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
             <div>
-              <label className="block text-sm font-semibold text-gray-600 mb-2">
+              <label className="block text-sm font-semibold text-on-surface-variant mb-2">
                 Contact Number
               </label>
 
@@ -130,20 +124,20 @@ const RegisterParent = () => {
                 value={formData.contactNumber}
                 onChange={handleChange}
                 placeholder="+27..."
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-teal-500"
+                className="w-full border border-outline-variant rounded-xl px-4 py-3 outline-none focus:border-primary"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-600 mb-2">
+              <label className="block text-sm font-semibold text-on-surface-variant mb-2">
                 School Name
               </label>
 
               <select
                 value={formData.schoolId}
                 onChange={handleSchoolChange}
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-teal-500"
+                className="w-full border border-outline-variant rounded-xl px-4 py-3 outline-none focus:border-primary"
               >
                 <option value="">Select School</option>
 
@@ -161,13 +155,13 @@ const RegisterParent = () => {
           </div>
 
           {/* Divider */}
-          <div className="my-8 border-t border-gray-200"></div>
+          <div className="my-8 border-t border-outline-variant"></div>
 
           {/* Security Section */}
           <div className="mb-6">
-            <h2 className="font-bold text-gray-800 text-lg">Security</h2>
+            <h2 className="font-bold text-on-surface text-lg">Security</h2>
 
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-on-surface-variant">
               Create login credentials for the staff member.
             </p>
           </div>
@@ -175,7 +169,7 @@ const RegisterParent = () => {
           {/* Passwords */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-              <label className="block text-sm font-semibold text-gray-600 mb-2">
+              <label className="block text-sm font-semibold text-on-surface-variant mb-2">
                 Password
               </label>
 
@@ -185,13 +179,13 @@ const RegisterParent = () => {
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="********"
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-teal-500"
+                className="w-full border border-outline-variant rounded-xl px-4 py-3 outline-none focus:border-primary"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-600 mb-2">
+              <label className="block text-sm font-semibold text-on-surface-variant mb-2">
                 Confirm Password
               </label>
 
@@ -201,7 +195,7 @@ const RegisterParent = () => {
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 placeholder="********"
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-teal-500"
+                className="w-full border border-outline-variant rounded-xl px-4 py-3 outline-none focus:border-primary"
                 required
               />
             </div>
@@ -211,7 +205,7 @@ const RegisterParent = () => {
           <div className="flex justify-end gap-3 mt-10">
             <button
               type="button"
-              className="px-6 py-3 rounded-xl border border-gray-300 font-medium hover:bg-gray-50"
+              className="px-6 py-3 rounded-xl border border-outline-variant font-medium hover:bg-surface-container-low"
               onClick={() => navigate(-1)}
             >
               Cancel
@@ -219,7 +213,7 @@ const RegisterParent = () => {
 
             <button
               type="submit"
-              className="bg-teal-600 text-white px-8 py-3 rounded-xl font-semibold hover:bg-teal-700 transition"
+              className="bg-primary text-white px-8 py-3 rounded-xl font-semibold hover:bg-on-primary-container transition"
             >
               Register Parent
             </button>

@@ -9,6 +9,9 @@
     "dev": "nodemon server.js",
     "test": "node --test",
     "test:integration": "node test-int/run.js",
+    "migrate": "node db/migrate.js",
+    "migrate:status": "node db/migrate.js --status",
+    "migrate:baseline": "node db/migrate.js --baseline",
     "mail:test": "node scripts/send-test-email.js"
   },
   "author": "",

@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   XCircle,
   Loader2,
+  Clock,
   ShieldCheck,
   ShoppingBag,
   ArrowRight,
@@ -18,7 +19,7 @@ import {
   useCreateCheckout,
   usePaymentMethods,
 } from "../hooks/useCheckout";
-import { useOrderStatus } from "../../orders/hooks/useOrders";
+import { useOrderStatus, useReconcileOrder } from "../../orders/hooks/useOrders";
 
 const Checkout = () => {
   useDocumentTitle("Checkout");
@@ -62,6 +63,41 @@ const Checkout = () => {
       cancelCheckout(returnedOrderReference);
     }
   }, [paymentState, returnedOrderReference, cancelCheckout]);
+
+  // If the payment confirmation (PayFast ITN) hasn't arrived after a while, stop
+  // showing an endless spinner and reassure the buyer — the order still updates
+  // on its own once the confirmation lands.
+  const [confirmTimedOut, setConfirmTimedOut] = useState(false);
+  useEffect(() => {
+    if (isReturningSuccess && !paymentConfirmed && !paymentFailed) {
+      const timer = setTimeout(() => setConfirmTimedOut(true), 45000);
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [isReturningSuccess, paymentConfirmed, paymentFailed]);
+
+  // Fallback while confirming: ask the backend to verify with PayFast directly,
+  // so a slow/lost ITN doesn't leave the order stuck. If it confirms, the polled
+  // status flips and the UI updates.
+  const { mutate: reconcile } = useReconcileOrder();
+  useEffect(() => {
+    if (
+      !(isReturningSuccess && !paymentConfirmed && !paymentFailed) ||
+      !returnedOrderReference
+    ) {
+      return undefined;
+    }
+    const timers = [4000, 15000, 30000].map((ms) =>
+      setTimeout(() => reconcile(returnedOrderReference), ms),
+    );
+    return () => timers.forEach(clearTimeout);
+  }, [
+    isReturningSuccess,
+    paymentConfirmed,
+    paymentFailed,
+    returnedOrderReference,
+    reconcile,
+  ]);
 
   const handleContinue = async () => {
     try {
@@ -109,6 +145,12 @@ const Checkout = () => {
       heading = "Payment not completed";
       body =
         "We couldn't confirm this payment. If money was deducted, please contact support; otherwise you can start a new checkout.";
+    } else if (isSuccess && confirmTimedOut) {
+      Icon = Clock;
+      iconColor = "text-tertiary";
+      heading = "Payment received — confirming it";
+      body =
+        "Your payment went through. Confirmation is taking a little longer than usual — you don't need to wait here. We'll update your order automatically, and you can track it under My orders.";
     } else if (isSuccess) {
       Icon = Loader2;
       iconColor = "text-tertiary";

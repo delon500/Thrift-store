@@ -117,6 +117,77 @@ const verifyPayFastSignature = (payload) => {
   return payload.signature === expectedSignature;
 };
 
+const PAYFAST_API_BASE = "https://api.payfast.co.za";
+
+// PayFast API signature (different from the process/ITN one): md5 of ALL
+// submitted variables — headers + query params + passphrase — sorted
+// alphabetically as key=urlencode(value) joined by "&".
+const buildApiSignature = (params) =>
+  crypto
+    .createHash("md5")
+    .update(
+      Object.keys(params)
+        .sort()
+        .filter((key) => key !== "signature")
+        .map(
+          (key) =>
+            `${key}=${encodeURIComponent(params[key]).replace(/%20/g, "+")}`,
+        )
+        .join("&"),
+    )
+    .digest("hex");
+
+// Best-effort reconcile: ask PayFast (server -> PayFast, no inbound webhook
+// needed) whether this m_payment_id (the order reference) shows up in the
+// processed-transaction history. History lists processed payments. To avoid a
+// false-confirm, we require BOTH the order reference AND the expected gross
+// amount to appear, so a stray/failed/zero-amount row can't confirm an unpaid
+// order. (For an even stronger guarantee, parse the history's status column once
+// PayFast's exact response format is confirmed.) Any failure (no passphrase,
+// network, format) returns false so the caller leaves the order pending — never
+// throws, never false-confirms.
+const fetchTransactionPaid = async (orderReference, createdAt, expectedAmount) => {
+  try {
+    const config = getPayFastConfig();
+    if (!config.passphrase) return false; // the PayFast API requires a passphrase
+
+    const day = (value) => new Date(value).toISOString().slice(0, 10);
+    const query = { from: day(createdAt || Date.now()), to: day(Date.now()) };
+    if (config.mode === "sandbox") query.testing = "true";
+
+    const headers = {
+      "merchant-id": config.merchantId,
+      version: "v1",
+      timestamp: new Date().toISOString().split(".")[0],
+    };
+
+    const signature = buildApiSignature({
+      ...query,
+      ...headers,
+      passphrase: config.passphrase,
+    });
+
+    const url = `${PAYFAST_API_BASE}/transactions/history?${new URLSearchParams(query).toString()}`;
+    const response = await fetch(url, {
+      method: "GET",
+      headers: { ...headers, signature, "content-type": "application/json" },
+    });
+
+    if (!response.ok) return false;
+    const body = await response.text();
+
+    if (!body.includes(orderReference)) return false;
+    // Require the exact gross amount too — defence in depth.
+    if (expectedAmount != null && expectedAmount !== "") {
+      return body.includes(Number(expectedAmount).toFixed(2));
+    }
+    return true;
+  } catch (error) {
+    console.warn(`[PayFast reconcile] query failed: ${error.message}`);
+    return false;
+  }
+};
+
 const toMoney = (amount) => Number(amount || 0).toFixed(2);
 
 const isMatchingAmount = (expectedAmount, receivedAmount) =>
@@ -125,6 +196,7 @@ const isMatchingAmount = (expectedAmount, receivedAmount) =>
 export {
   buildSignatureString,
   createPayFastPayment,
+  fetchTransactionPaid,
   generatePayFastSignature,
   getPayFastConfig,
   isMatchingAmount,

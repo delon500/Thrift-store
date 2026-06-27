@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import { useRegisterInstitution } from "../hooks/useRegisterUser";
 import useAuthStore from "../../auth/store/authStore";
+import { PageHeader } from "../../../components/shared/ui";
 
 const RegisterSchool = () => {
   const navigate = useNavigate();
@@ -16,8 +18,6 @@ const RegisterSchool = () => {
     institutionPhone: "",
     institutionType: "private",
     institutionCategory: "school",
-    password: "",
-    confirmPassword: "",
   });
 
   const handleChange = (e) => {
@@ -31,44 +31,48 @@ const RegisterSchool = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    registerSchoolMutation.mutate({
-      formData: {
-        contact_person_name: formData.contactName,
-        contact_email: formData.contactEmail,
-        contact_number: formData.contactNumber,
-        institution_name: formData.institutionName,
-        registration_number: formData.registrationNumber,
-        institution_phone: formData.institutionPhone,
-        institution_type: formData.institutionType,
-        role: formData.role,
-        password: formData.password,
-        confirm_password: formData.confirmPassword,
-        institution_category: formData.institutionCategory,
+    registerSchoolMutation.mutate(
+      {
+        formData: {
+          contact_person_name: formData.contactName,
+          contact_email: formData.contactEmail,
+          contact_number: formData.contactNumber,
+          institution_name: formData.institutionName,
+          registration_number: formData.registrationNumber,
+          institution_phone: formData.institutionPhone,
+          institution_type: formData.institutionType,
+          institution_category: formData.institutionCategory,
+        },
+        token,
       },
-      token,
-    });
+      {
+        onSuccess: () => {
+          toast.success("School registered. Add accounts for it from Institutions.");
+          navigate("/admin/institutions");
+        },
+        onError: (error) => {
+          toast.error(
+            error?.response?.data?.message || "Could not register the school",
+          );
+        },
+      },
+    );
   };
 
   return (
     <div className="w-full">
-      {/* Header */}
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-black text-teal-600">Register School</h1>
+      <PageHeader
+        title="Register school"
+        subtitle="Register the school. Add login accounts for it afterwards from Institutions."
+      />
 
-        <p className="text-sm text-gray-500">
-          Create school accounts to manage inventory, verify pickups, monitor
-          orders, and operate the school shop.
-        </p>
-      </div>
-
-      {/* Form Card */}
-      <form onSubmit={handleSubmit} className="mt-8">
-        <div className="bg-white border border-gray-200 rounded-3xl p-6 shadow-sm">
+      <form onSubmit={handleSubmit}>
+        <div className="bg-white border border-outline-variant rounded-3xl p-6 shadow-sm">
           <div className="mb-6">
-            <h2 className="font-bold text-gray-800 text-lg">
+            <h2 className="font-bold text-on-surface text-lg">
               School Information
             </h2>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-on-surface-variant">
               Enter the details of the school you want to register.
             </p>
           </div>
@@ -76,7 +80,7 @@ const RegisterSchool = () => {
           {/* Row 1 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-              <label className="block text-sm font-semibold text-gray-600 mb-2">
+              <label className="block text-sm font-semibold text-on-surface-variant mb-2">
                 Contact Person Name
               </label>
 
@@ -87,12 +91,12 @@ const RegisterSchool = () => {
                 onChange={handleChange}
                 placeholder="John Doe"
                 required
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-teal-500"
+                className="w-full border border-outline-variant rounded-xl px-4 py-3 outline-none focus:border-primary"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-600 mb-2">
+              <label className="block text-sm font-semibold text-on-surface-variant mb-2">
                 Contact Email Address
               </label>
 
@@ -102,7 +106,7 @@ const RegisterSchool = () => {
                 value={formData.contactEmail}
                 onChange={handleChange}
                 placeholder="saintmartins@school.com"
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-teal-500"
+                className="w-full border border-outline-variant rounded-xl px-4 py-3 outline-none focus:border-primary"
                 required
               />
             </div>
@@ -111,7 +115,7 @@ const RegisterSchool = () => {
           {/* Row 2 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
             <div>
-              <label className="block text-sm font-semibold text-gray-600 mb-2">
+              <label className="block text-sm font-semibold text-on-surface-variant mb-2">
                 Contact Number
               </label>
 
@@ -121,13 +125,13 @@ const RegisterSchool = () => {
                 value={formData.contactNumber}
                 onChange={handleChange}
                 placeholder="+27..."
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-teal-500"
+                className="w-full border border-outline-variant rounded-xl px-4 py-3 outline-none focus:border-primary"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-600 mb-2">
+              <label className="block text-sm font-semibold text-on-surface-variant mb-2">
                 Institution Name
               </label>
 
@@ -138,7 +142,7 @@ const RegisterSchool = () => {
                 onChange={handleChange}
                 placeholder="John Doe"
                 required
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-teal-500"
+                className="w-full border border-outline-variant rounded-xl px-4 py-3 outline-none focus:border-primary"
               />
             </div>
           </div>
@@ -146,7 +150,7 @@ const RegisterSchool = () => {
           {/* Row 3 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
             <div>
-              <label className="block text-sm font-semibold text-gray-600 mb-2">
+              <label className="block text-sm font-semibold text-on-surface-variant mb-2">
                 Institution Phone
               </label>
 
@@ -156,13 +160,13 @@ const RegisterSchool = () => {
                 value={formData.institutionPhone}
                 onChange={handleChange}
                 placeholder="+27..."
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-teal-500"
+                className="w-full border border-outline-variant rounded-xl px-4 py-3 outline-none focus:border-primary"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-600 mb-2">
+              <label className="block text-sm font-semibold text-on-surface-variant mb-2">
                 Institution Type
               </label>
 
@@ -170,7 +174,7 @@ const RegisterSchool = () => {
                 name="institutionType"
                 value={formData.institutionType}
                 onChange={handleChange}
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-teal-500"
+                className="w-full border border-outline-variant rounded-xl px-4 py-3 outline-none focus:border-primary"
               >
                 <option value="private">Private</option>
                 <option value="public">Public</option>
@@ -180,7 +184,7 @@ const RegisterSchool = () => {
           </div>
 
           <div className="mt-5">
-            <label className="block text-sm font-semibold text-gray-600 mb-2">
+            <label className="block text-sm font-semibold text-on-surface-variant mb-2">
               Institution Registration Number
             </label>
 
@@ -190,62 +194,15 @@ const RegisterSchool = () => {
               value={formData.registrationNumber}
               onChange={handleChange}
               placeholder="TA-001"
-              className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-teal-500"
+              className="w-full border border-outline-variant rounded-xl px-4 py-3 outline-none focus:border-primary"
             />
-          </div>
-
-          {/* Divider */}
-          <div className="my-8 border-t border-gray-200"></div>
-
-          {/* Security Section */}
-          <div className="mb-6">
-            <h2 className="font-bold text-gray-800 text-lg">Security</h2>
-
-            <p className="text-sm text-gray-500">
-              Create login credentials for the staff member.
-            </p>
-          </div>
-
-          {/* Passwords */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div>
-              <label className="block text-sm font-semibold text-gray-600 mb-2">
-                Password
-              </label>
-
-              <input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="********"
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-teal-500"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-600 mb-2">
-                Confirm Password
-              </label>
-
-              <input
-                type="password"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                placeholder="********"
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-teal-500"
-                required
-              />
-            </div>
           </div>
 
           {/* Buttons */}
           <div className="flex justify-end gap-3 mt-10">
             <button
               type="button"
-              className="px-6 py-3 rounded-xl border border-gray-300 font-medium hover:bg-gray-50  cursor-pointer"
+              className="px-6 py-3 rounded-xl border border-outline-variant font-medium hover:bg-surface-container-low  cursor-pointer"
               onClick={() => navigate(-1)}
             >
               Cancel
@@ -253,9 +210,10 @@ const RegisterSchool = () => {
 
             <button
               type="submit"
-              className="bg-teal-600 text-white px-8 py-3 rounded-xl font-semibold hover:bg-teal-700 transition cursor-pointer"
+              disabled={registerSchoolMutation.isPending}
+              className="bg-primary text-white px-8 py-3 rounded-xl font-semibold hover:bg-on-primary-container transition cursor-pointer disabled:opacity-60"
             >
-              Register School
+              {registerSchoolMutation.isPending ? "Registering..." : "Register School"}
             </button>
           </div>
         </div>

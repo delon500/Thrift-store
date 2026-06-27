@@ -9,16 +9,17 @@ import {
 } from "../hooks/useOrders";
 import { useDebouncedValue } from "../../../lib/useDebouncedValue";
 import Pagination from "../../../components/shared/Pagination";
+import { PageHeader } from "../../../components/shared/ui";
 import { useMe } from "../../auth/hook/useAuth";
 
 const PAGE_SIZE = 10;
 
 const statusStyles = {
   payment_pending: "bg-yellow-100 text-yellow-800",
-  ready_for_collection: "bg-teal-100 text-teal-800",
+  ready_for_collection: "bg-primary-container text-on-primary-container",
   collected: "bg-green-100 text-green-800",
   payment_failed: "bg-red-100 text-red-800",
-  cancelled: "bg-gray-100 text-gray-700",
+  cancelled: "bg-surface-container-high text-on-surface",
 };
 
 const formatStatus = (status) =>
@@ -107,20 +108,16 @@ const OrdersAndCollections = () => {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-black text-teal-600">
-          Orders & Collections
-        </h1>
-        <p className="text-sm font-medium text-gray-500">
-          Track payments, verify references, and mark school collections.
-        </p>
-      </div>
+    <div>
+      <PageHeader
+        title="Orders & collections"
+        subtitle="Track payments, verify references, and mark school collections."
+      />
 
       <input
         value={query}
         onChange={(event) => setQuery(event.target.value)}
-        className="mt-6 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-teal-600"
+        className="mt-6 w-full rounded-lg border border-outline-variant bg-white px-4 py-3 text-sm outline-none focus:border-primary"
         placeholder="Search by order reference, user, email, school, payment method..."
       />
 
@@ -132,15 +129,15 @@ const OrdersAndCollections = () => {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(340px,0.75fr)]">
         <div>
-        <section className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+        <section className="overflow-hidden rounded-xl border border-outline-variant bg-white">
           {isLoading ? (
-            <p className="p-5 text-gray-500">Loading orders...</p>
+            <p className="p-5 text-on-surface-variant">Loading orders...</p>
           ) : orders.length === 0 ? (
-            <p className="p-5 text-gray-500">No orders found.</p>
+            <p className="p-5 text-on-surface-variant">No orders found.</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[760px] text-left text-sm">
-                <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+                <thead className="bg-surface-container-low text-xs uppercase text-on-surface-variant">
                   <tr>
                     <th className="px-4 py-3">Reference</th>
                     <th className="px-4 py-3">Customer</th>
@@ -155,21 +152,21 @@ const OrdersAndCollections = () => {
                     <tr
                       key={order.order_reference}
                       onClick={() => setSelectedReference(order.order_reference)}
-                      className="cursor-pointer border-t border-gray-100 hover:bg-teal-50"
+                      className="cursor-pointer border-t border-outline-variant hover:bg-surface-container-low"
                     >
-                      <td className="px-4 py-4 font-bold text-teal-700">
+                      <td className="px-4 py-4 font-bold text-primary">
                         {order.order_reference}
                       </td>
                       <td className="px-4 py-4">
                         <p className="font-semibold">{order.user_full_name}</p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-on-surface-variant">
                           {order.user_email}
                         </p>
                       </td>
                       <td className="px-4 py-4">{order.institution_name}</td>
                       <td className="px-4 py-4">
                         <p>{formatStatus(order.payment_status)}</p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-on-surface-variant">
                           {formatStatus(order.payment_method)}
                         </p>
                       </td>
@@ -177,7 +174,7 @@ const OrdersAndCollections = () => {
                         <span
                           className={`rounded-full px-3 py-1 text-xs font-bold ${
                             statusStyles[order.status] ||
-                            "bg-gray-100 text-gray-700"
+                            "bg-surface-container-high text-on-surface"
                           }`}
                         >
                           {formatStatus(order.status)}
@@ -194,16 +191,16 @@ const OrdersAndCollections = () => {
         <Pagination page={page} totalPages={totalPages} onPage={setPage} />
         </div>
 
-        <aside className="h-fit rounded-xl border border-gray-200 bg-white p-5">
+        <aside className="h-fit rounded-xl border border-outline-variant bg-white p-5">
           {selectedOrder ? (
             <>
-              <p className="text-xs font-bold uppercase text-teal-600">
+              <p className="text-xs font-bold uppercase text-primary">
                 Selected order
               </p>
               <h2 className="mt-2 text-xl font-black">
                 {selectedOrder.order_reference}
               </h2>
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-on-surface-variant">
                 {selectedOrder.user_full_name} · {selectedOrder.user_email}
               </p>
               <div className="mt-5 grid gap-3 text-sm">
@@ -226,7 +223,7 @@ const OrdersAndCollections = () => {
                 {selectedOrder.items.map((item) => (
                   <div
                     key={item.id}
-                    className="rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm"
+                    className="rounded-lg border border-outline-variant bg-surface-container-low p-4 text-sm"
                   >
                     <p className="font-bold">{item.product_name}</p>
                     <p>Item reference: {item.product_reference_number}</p>
@@ -242,7 +239,7 @@ const OrdersAndCollections = () => {
                   selectedOrder.status === "collected" ||
                   markCollectedMutation.isPending
                 }
-                className="mt-6 w-full rounded-lg bg-teal-600 px-4 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
+                className="mt-6 w-full rounded-lg bg-primary px-4 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {markCollectedMutation.isPending
                   ? "Updating..."
@@ -257,7 +254,7 @@ const OrdersAndCollections = () => {
                     type="button"
                     onClick={handleCancel}
                     disabled={cancelMutation.isPending}
-                    className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+                    className="flex-1 rounded-lg border border-outline-variant px-4 py-2 text-sm font-bold text-on-surface hover:bg-surface-container-low disabled:opacity-60"
                   >
                     {cancelMutation.isPending ? "..." : "Cancel order"}
                   </button>
@@ -277,7 +274,7 @@ const OrdersAndCollections = () => {
               </div>
             </>
           ) : (
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-on-surface-variant">
               Select an order to view references, payment state, and collection
               actions.
             </p>

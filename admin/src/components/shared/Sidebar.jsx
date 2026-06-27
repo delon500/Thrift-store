@@ -1,52 +1,131 @@
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
+import {
+  LayoutDashboard,
+  UserPlus,
+  Users,
+  Package,
+  Building2,
+  CreditCard,
+  BarChart3,
+  Settings,
+  UserCircle,
+  LogOut,
+  ChevronDown,
+  Shield,
+  School,
+  GraduationCap,
+  User,
+  ClipboardList,
+  PackagePlus,
+  Boxes,
+  PackageCheck,
+  Store,
+  ShoppingBag,
+} from "lucide-react";
 import useAuthStore from "../../features/auth/store/authStore";
 import { useMe } from "../../features/auth/hook/useAuth";
-import { icons } from "../../assets/icons/icons";
-import {
-  action_card,
-  registered_user_action_card,
-  register_user_action_card,
-} from "../../data/data";
 
-const toAdminPath = (path) =>
-  path.startsWith("/") ? `/admin${path}` : `/admin/${path}`;
+const GROUPS = [
+  {
+    label: "Register users",
+    Icon: UserPlus,
+    superOnly: true,
+    items: [
+      {
+        to: "/admin/register-users/staff",
+        label: "Register admin",
+        Icon: Shield,
+      },
+      {
+        to: "/admin/register-users/school",
+        label: "Register school",
+        Icon: School,
+      },
+      {
+        to: "/admin/register-users/parent",
+        label: "Register parents",
+        Icon: Users,
+      },
+      {
+        to: "/admin/register-users/university",
+        label: "Register university",
+        Icon: GraduationCap,
+      },
+      {
+        to: "/admin/register-users/student",
+        label: "Register students",
+        Icon: User,
+      },
+    ],
+  },
+  {
+    label: "Registered users",
+    Icon: Users,
+    items: [
+      {
+        to: "/admin/registrations",
+        label: "Registration requests",
+        Icon: ClipboardList,
+      },
+      { to: "/admin/registered-users/school", label: "Schools", Icon: School },
+      {
+        to: "/admin/registered-users/university",
+        label: "Universities",
+        Icon: GraduationCap,
+      },
+      {
+        to: "/admin/registered-users/admin",
+        label: "Staff members",
+        Icon: Shield,
+      },
+      { to: "/admin/registered-users/student", label: "Students", Icon: User },
+      { to: "/admin/registered-users/parent", label: "Parents", Icon: Users },
+    ],
+  },
+  {
+    label: "Item management",
+    Icon: Package,
+    items: [
+      {
+        to: "/admin/lost-and-found-management/add-items",
+        label: "Add items",
+        Icon: PackagePlus,
+      },
+      { to: "/admin/inventory", label: "Manage inventory", Icon: Boxes },
+      {
+        to: "/admin/orders",
+        label: "Pickup & collections",
+        Icon: PackageCheck,
+      },
+      { to: "/admin/view-store", label: "View store", Icon: Store },
+    ],
+  },
+];
+
+const BOTTOM_LINKS = [
+  { to: "/admin/institutions", label: "Institutions", Icon: Building2 },
+  { to: "/admin/payments", label: "Payments", Icon: CreditCard },
+  { to: "/admin/reports", label: "Reports", Icon: BarChart3 },
+  { to: "/admin/settings", label: "Settings", Icon: Settings, superOnly: true },
+  { to: "/admin/account", label: "Account", Icon: UserCircle },
+];
+
+const linkClass = ({ isActive }) =>
+  `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+    isActive
+      ? "bg-primary text-on-primary"
+      : "text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"
+  }`;
 
 const isPathActive = (pathname, path) =>
   pathname === path || pathname.startsWith(`${path}/`);
 
-const sidebarGroups = [
-  {
-    label: "Register Users",
-    to: "/admin/register-users",
-    icon: icons.admin_register_users_icon,
-    items: register_user_action_card,
-  },
-  {
-    label: "Registered Users",
-    to: "/admin/registered-users",
-    icon: icons.admin_register_users_icon,
-    items: registered_user_action_card,
-  },
-  {
-    label: "Item Management Center",
-    to: "/admin/lost-and-found-management",
-    icon: icons.admin_item_management_icon,
-    items: action_card,
-  },
-];
-
-const SidebarGroup = ({ group }) => {
+const SidebarGroup = ({ group, onNavigate }) => {
   const { pathname } = useLocation();
-  const childPaths = group.items.map((item) => toAdminPath(item.to));
-  const active =
-    isPathActive(pathname, group.to) ||
-    childPaths.some((path) => isPathActive(pathname, path));
+  const active = group.items.some((item) => isPathActive(pathname, item.to));
   const [isOpen, setIsOpen] = useState(active);
   const [wasActive, setWasActive] = useState(active);
-
-  // Auto-expand a group when navigation makes it active (render-time pattern,
-  // no effect / cascading renders).
   if (active !== wasActive) {
     setWasActive(active);
     if (active) setIsOpen(true);
@@ -54,56 +133,35 @@ const SidebarGroup = ({ group }) => {
 
   return (
     <div>
-      <div className="flex items-center">
-        <NavLink
-          to={group.to}
-          className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2"
-          onClick={() => setIsOpen(true)}
-        >
-          <img src={group.icon} alt="" className="h-5 w-5 shrink-0" />
-          <p className="hidden truncate text-gray-500 md:block">{group.label}</p>
-        </NavLink>
-        <button
-          type="button"
-          onClick={() => setIsOpen((current) => !current)}
-          className="hidden px-2 py-2 text-gray-500 md:block"
-          aria-label={`${isOpen ? "Collapse" : "Expand"} ${group.label}`}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className={`h-4 w-4 transition-transform ${
-              isOpen ? "rotate-180" : ""
-            }`}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
-        </button>
-      </div>
-
+      <button
+        type="button"
+        onClick={() => setIsOpen((current) => !current)}
+        aria-expanded={isOpen}
+        className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
+          active
+            ? "text-on-surface"
+            : "text-on-surface-variant hover:bg-surface-container-low"
+        }`}
+      >
+        <group.Icon size={18} aria-hidden="true" />
+        <span className="flex-1 text-left">{group.label}</span>
+        <ChevronDown
+          size={16}
+          className={`transition-transform ${isOpen ? "rotate-180" : ""}`}
+          aria-hidden="true"
+        />
+      </button>
       {isOpen ? (
-        <div className="ml-6 border-l border-gray-200 py-1">
+        <div className="mt-1 ml-4 flex flex-col gap-0.5 border-l border-outline-variant pl-2">
           {group.items.map((item) => (
             <NavLink
-              key={item.name}
-              to={toAdminPath(item.to)}
-              className={({ isActive }) =>
-                `flex items-center gap-2 px-3 py-2 text-xs font-medium transition-colors ${
-                  isActive
-                    ? "text-teal-700"
-                    : "text-gray-500 hover:text-teal-700"
-                }`
-              }
+              key={item.to}
+              to={item.to}
+              onClick={onNavigate}
+              className={linkClass}
             >
-              <img src={item.icons} alt="" className="h-4 w-4 shrink-0" />
-              <span className="hidden truncate md:block">{item.name}</span>
+              <item.Icon size={16} aria-hidden="true" />
+              {item.label}
             </NavLink>
           ))}
         </div>
@@ -112,144 +170,82 @@ const SidebarGroup = ({ group }) => {
   );
 };
 
-const Sidebar = () => {
+export const SidebarNav = ({ onNavigate }) => {
   const logout = useAuthStore((state) => state.logout);
   const { data: me } = useMe();
   const isSuper = me?.role === "super_admin";
-  // Creating accounts (Register Users) is super-admin only.
-  const groups = sidebarGroups.filter(
-    (group) => group.label !== "Register Users" || isSuper,
-  );
+  const roleName =
+    me?.role === "super_admin"
+      ? "Super Admin"
+      : me?.role === "admin"
+        ? "Admin"
+        : me?.role === "staff"
+          ? "Staff"
+          : "User";
+  const groups = GROUPS.filter((group) => !group.superOnly || isSuper);
+  const bottom = BOTTOM_LINKS.filter((link) => !link.superOnly || isSuper);
+
   return (
-    <div className="w-[15%] min-h-screen border-gray-300  border-r-2 bg-white">
-      <div className="flex flex-col gap-4 pt-6 pl-[3%] text-[15px]">
-        <span>MAIN</span>
+    <div className="flex h-full flex-col">
+      <div className="flex items-center gap-2 px-2 py-4">
+        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-on-primary">
+          <ShoppingBag size={18} aria-hidden="true" />
+        </span>
+        <div className="leading-tight">
+          <p className="text-sm font-extrabold text-on-surface">
+            School Thrift
+          </p>
+          <p className="text-xs text-on-surface-variant">{roleName}</p>
+        </div>
       </div>
 
-      <NavLink to={"/admin"} className="flex items-center gap-3 px-3 py-2">
-        <img src={icons.admin_home_icon} alt="" className="w-5 h-5" />
-        <p className="hidden md:block text-gray-500">Dashboard</p>
-      </NavLink>
-      {groups.map((group) => (
-        <SidebarGroup key={group.label} group={group} />
-      ))}
-      <NavLink
-        to={"/admin/institutions"}
-        className="flex items-center gap-3 px-3 py-2"
-      >
-        <img src={icons.admin_school_icon} alt="" className="w-5 h-5" />
-        <p className="hidden md:block text-gray-500">Institutions</p>
-      </NavLink>
-      <NavLink
-        to={"/admin/payments"}
-        className="flex items-center gap-3 px-3 py-2"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-5 h-5 text-gray-500"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth="2"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-          />
-        </svg>
-        <p className="hidden md:block text-gray-500">Payments</p>
-      </NavLink>
-      <NavLink
-        to={"/admin/reports"}
-        className="flex items-center gap-3 px-3 py-2"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-5 h-5 text-gray-500"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth="2"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M9 17v-6m3 6V7m3 10v-3M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"
-          />
-        </svg>
-        <p className="hidden md:block text-gray-500">Reports</p>
-      </NavLink>
-      {isSuper ? (
-        <NavLink
-          to={"/admin/settings"}
-          className="flex items-center gap-3 px-3 py-2"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="w-5 h-5 text-gray-500"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-            />
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-            />
-          </svg>
-          <p className="hidden md:block text-gray-500">Settings</p>
+      <nav className="flex-1 space-y-1 overflow-y-auto px-2 pb-4">
+        <NavLink to="/admin" end onClick={onNavigate} className={linkClass}>
+          <LayoutDashboard size={18} aria-hidden="true" />
+          Dashboard
         </NavLink>
-      ) : null}
-      <NavLink
-        to={"/admin/account"}
-        className="flex items-center gap-3 px-3 py-2"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-5 h-5 text-gray-500"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth="2"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-          />
-        </svg>
-        <p className="hidden md:block text-gray-500">Account</p>
-      </NavLink>
 
-      <button
-        onClick={logout}
-        className="mt-8 flex w-full items-center gap-3 px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-5 h-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth="2"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+        {groups.map((group) => (
+          <SidebarGroup
+            key={group.label}
+            group={group}
+            onNavigate={onNavigate}
           />
-        </svg>
-        <span className="hidden md:block">Logout</span>
-      </button>
+        ))}
+
+        <div className="my-2 border-t border-outline-variant" />
+
+        {bottom.map((link) => (
+          <NavLink
+            key={link.to}
+            to={link.to}
+            onClick={onNavigate}
+            className={linkClass}
+          >
+            <link.Icon size={18} aria-hidden="true" />
+            {link.label}
+          </NavLink>
+        ))}
+      </nav>
+
+      <div className="border-t border-outline-variant p-2">
+        <button
+          type="button"
+          onClick={logout}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-error transition-colors hover:bg-error-container/40"
+        >
+          <LogOut size={18} aria-hidden="true" />
+          Logout
+        </button>
+      </div>
     </div>
   );
 };
+
+const Sidebar = () => (
+  <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r border-outline-variant bg-surface md:block">
+    <SidebarNav />
+  </aside>
+);
 
 export default Sidebar;

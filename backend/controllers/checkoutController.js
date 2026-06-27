@@ -33,8 +33,10 @@ const getPaymentMethod = (paymentMethod) => {
 };
 
 // GET — only the methods currently enabled by the admin.
-const getPaymentMethods = async (_req, res) => {
-  return res.json({ payment_methods: await getEnabledPaymentMethods() });
+const getPaymentMethods = async (req, res) => {
+  return res.json({
+    payment_methods: await getEnabledPaymentMethods(req.user.institution_id),
+  });
 };
 
 const getActiveCartRows = async (client, userId) => {
@@ -71,14 +73,6 @@ const createCheckout = async (req, res) => {
   try {
     const method = getPaymentMethod(req.body.payment_method);
 
-    // The method must be in the catalog (above) AND currently enabled by admin.
-    const enabledMethods = await getEnabledPaymentMethods();
-    if (!enabledMethods.some((enabled) => enabled.id === method.id)) {
-      return res
-        .status(400)
-        .json({ message: "That payment method is not currently available" });
-    }
-
     // Reclaim items from abandoned/expired holds before reading availability,
     // so a previous lapsed checkout never blocks a fresh one.
     await releaseExpiredOrders();
@@ -110,13 +104,25 @@ const createCheckout = async (req, res) => {
       });
     }
 
+    // Settings (fee, expiry, methods) resolve to this order's institution.
+    const institutionId = rows[0].institution_id;
+
+    // The method must be in the catalog AND enabled for this institution.
+    const enabledMethods = await getEnabledPaymentMethods(institutionId);
+    if (!enabledMethods.some((enabled) => enabled.id === method.id)) {
+      await client.query("ROLLBACK");
+      return res
+        .status(400)
+        .json({ message: "That payment method is not currently available" });
+    }
+
     const userResult = await client.query(
       "SELECT full_name, email FROM users WHERE id = $1",
       [req.user.id],
     );
     const user = userResult.rows[0];
-    const summary = calculateCartSummary(rows, await getServiceFee());
-    const expiryMinutes = await getCheckoutExpiryMinutes();
+    const summary = calculateCartSummary(rows, await getServiceFee(institutionId));
+    const expiryMinutes = await getCheckoutExpiryMinutes(institutionId);
 
     const orderResult = await client.query(
       `INSERT INTO collection_orders (
