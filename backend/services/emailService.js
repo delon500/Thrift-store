@@ -155,10 +155,37 @@ The ${appName()} team`,
   });
 };
 
+// Sent to the owner (or a child's guardian) when school staff scan a tagged item
+// that was lost. Gives the LF reference to bring to the desk — no finder details.
+const sendFoundItemEmail = ({
+  to,
+  recipientName,
+  label,
+  institutionName,
+  reference,
+  childName,
+}) => {
+  const whose = childName ? `${childName}'s item` : "an item you tagged";
+  return sendEmail({
+    to,
+    subject: `Found: ${label || "a tagged item"} at ${institutionName}`,
+    text: `Hi ${recipientName || "there"},
+
+Good news — ${whose}${label ? ` (${label})` : ""} was found at ${institutionName} and is now at the Lost & Found desk.
+
+Bring this reference to collect it:
+  ${reference}
+
+Thanks,
+The ${appName()} team`,
+  });
+};
+
 export {
   sendApprovalEmail,
   sendCollectionReadyEmail,
   sendCredentialsEmail,
+  sendFoundItemEmail,
   sendEmail,
   sendRejectionEmail,
   verifyEmailTransport,
