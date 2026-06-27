@@ -204,11 +204,25 @@ const lookupByReference = async (req, res) => {
     let orderReference = byOrder.rows[0]?.order_reference || null;
 
     if (!orderReference) {
+      // A product can have belonged to several orders over time (e.g. a
+      // cancelled/expired order frees it back to Available and it is bought
+      // again). Resolve to the collectible order, preferring a live one over a
+      // terminal one, newest first — so a stale cancelled order can't shadow the
+      // real ready-for-collection order.
       const byItem = await pool.query(
         `SELECT co.order_reference
          FROM collection_order_items it
          JOIN collection_orders co ON co.id = it.collection_order_id
-         WHERE co.institution_id = $1 AND it.product_reference_number = $2`,
+         WHERE co.institution_id = $1 AND it.product_reference_number = $2
+         ORDER BY
+           CASE co.status
+             WHEN 'ready_for_collection' THEN 0
+             WHEN 'paid'                 THEN 1
+             WHEN 'collected'            THEN 2
+             ELSE 3
+           END,
+           co.created_at DESC
+         LIMIT 1`,
         [institutionId, reference],
       );
       orderReference = byItem.rows[0]?.order_reference || null;
