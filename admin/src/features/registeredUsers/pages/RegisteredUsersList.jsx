@@ -11,6 +11,7 @@ import { useDebouncedValue } from "../../../lib/useDebouncedValue";
 import Pagination from "../../../components/shared/Pagination";
 import { PageHeader } from "../../../components/shared/ui";
 import { useMe } from "../../auth/hook/useAuth";
+import LinkStudentsModal from "../components/LinkStudentsModal";
 
 const PAGE_SIZE = 10;
 
@@ -192,6 +193,7 @@ const RegisteredUsersList = () => {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const [editing, setEditing] = useState(null);
+  const [managingStudents, setManagingStudents] = useState(null);
 
   const title = ROLE_LABELS[role] || "Registered Users";
 
@@ -310,6 +312,15 @@ const RegisteredUsersList = () => {
                         >
                           {user.status === "approved" ? "Suspend" : "Reactivate"}
                         </button>
+                        {role === "parent" ? (
+                          <button
+                            type="button"
+                            onClick={() => setManagingStudents(user)}
+                            className="rounded-lg border border-primary px-3 py-1.5 text-xs font-bold text-primary hover:bg-surface-container-low"
+                          >
+                            Students
+                          </button>
+                        ) : null}
                         <button
                           type="button"
                           onClick={() => setEditing(user)}
@@ -340,6 +351,13 @@ const RegisteredUsersList = () => {
 
       {editing ? (
         <EditUserModal user={editing} onClose={() => setEditing(null)} />
+      ) : null}
+
+      {managingStudents ? (
+        <LinkStudentsModal
+          parent={managingStudents}
+          onClose={() => setManagingStudents(null)}
+        />
       ) : null}
     </div>
   );

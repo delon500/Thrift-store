@@ -9,6 +9,7 @@ import {
   Package,
   Settings,
   LogOut,
+  Users,
 } from "lucide-react";
 import { useProductStore } from "../../features/products/store/productStore";
 import useAuthStore from "../../features/auth/store/authStore";
@@ -34,6 +35,7 @@ const Navbar = () => {
   const searchQuery = useProductStore((state) => state.searchQuery);
   const setSearchQuery = useProductStore((state) => state.setSearchQuery);
   const logout = useAuthStore((state) => state.logout);
+  const role = useAuthStore((state) => state.user?.role);
   const wishlistCount = useWishlistStore((state) => state.wishlistItems.length);
   const { data: cart } = useServerCart();
   const cartCount = cart?.items?.length || 0;
@@ -160,6 +162,16 @@ const Navbar = () => {
             <Package size={18} aria-hidden="true" />
             My orders
           </NavLink>
+          {role === "parent" ? (
+            <NavLink
+              to="/family"
+              onClick={closeMenu}
+              className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-on-surface-variant hover:bg-surface-container-low"
+            >
+              <Users size={18} aria-hidden="true" />
+              My family
+            </NavLink>
+          ) : null}
           <NavLink
             to="/settings"
             onClick={closeMenu}
