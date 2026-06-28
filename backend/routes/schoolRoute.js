@@ -6,6 +6,7 @@ import {
   getSchoolProducts,
   lookupByReference,
   markCollected,
+  lookupSticker,
 } from "../controllers/schoolController.js";
 import {
   createProduct,
@@ -13,12 +14,6 @@ import {
   deleteProduct,
   analyseProduct,
 } from "../controllers/productController.js";
-import {
-  reportFound,
-  listFoundReports,
-  markReturned,
-  listForResale,
-} from "../controllers/foundReportController.js";
 import upload from "../middleware/multer.js";
 import { allowRoles, protect } from "../middleware/authMiddleware.js";
 
@@ -38,6 +33,7 @@ schoolRouter.get("/dashboard", getDashboardStats);
 schoolRouter.get("/products", getSchoolProducts);
 schoolRouter.get("/orders", listSchoolOrders);
 schoolRouter.get("/lookup", lookupByReference);
+schoolRouter.get("/sticker/:value", lookupSticker);
 schoolRouter.get("/orders/:orderReference", getOrderDetail);
 schoolRouter.patch("/orders/:orderReference/collect", markCollected);
 
@@ -47,12 +43,5 @@ schoolRouter.post("/products", productImageUpload, createProduct);
 schoolRouter.post("/products/analyze", productImageUpload, analyseProduct);
 schoolRouter.patch("/products/:id", updateProduct);
 schoolRouter.delete("/products/:id", deleteProduct);
-
-// Lost & found: scan/enter an active tag to report a found item, list reports,
-// and mark one returned.
-schoolRouter.post("/found-reports", reportFound);
-schoolRouter.get("/found-reports", listFoundReports);
-schoolRouter.patch("/found-reports/:id/return", markReturned);
-schoolRouter.post("/found-reports/:id/list-for-resale", listForResale);
 
 export default schoolRouter;
