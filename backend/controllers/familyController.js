@@ -94,21 +94,44 @@ const updateChild = async (req, res) => {
 // DELETE /api/parents/me/children/:id — remove a child profile. Any tag bound to
 // it is unbound (item_tags.owner_child_id FK is ON DELETE SET NULL).
 const deleteChild = async (req, res) => {
+  const client = await pool.connect();
   try {
-    const result = await pool.query(
-      `DELETE FROM child_profiles
-       WHERE id = $1 AND guardian_user_id = $2
-       RETURNING id`,
+    const owned = await client.query(
+      "SELECT id FROM child_profiles WHERE id = $1 AND guardian_user_id = $2",
       [req.params.id, req.user.id],
     );
-    if (result.rows.length === 0) {
+    if (owned.rows.length === 0) {
       return res.status(404).json({ message: "Child not found" });
     }
-    return res.json({ message: "Child removed", id: result.rows[0].id });
+
+    await client.query("BEGIN");
+    // Free any active stickers bound to this child so none are left active but
+    // ownerless (the FK would otherwise just null owner_child_id). They return
+    // to 'unactivated' and can be re-claimed.
+    await client.query(
+      `UPDATE item_tags
+       SET status = 'unactivated', owner_user_id = NULL, owner_child_id = NULL,
+           label = NULL, activated_at = NULL
+       WHERE owner_child_id = $1 AND status = 'active'`,
+      [req.params.id],
+    );
+    await client.query("DELETE FROM child_profiles WHERE id = $1", [
+      req.params.id,
+    ]);
+    await client.query("COMMIT");
+
+    return res.json({ message: "Child removed", id: req.params.id });
   } catch (error) {
+    try {
+      await client.query("ROLLBACK");
+    } catch {
+      // ignore
+    }
     return res
       .status(500)
       .json({ message: "Failed to remove child", error: error.message });
+  } finally {
+    client.release();
   }
 };
 

@@ -22,17 +22,25 @@ const lookupTag = async (req, res) => {
     if (!tag) return res.status(404).json({ message: "Sticker not found" });
 
     const sameInstitution = tag.institution_id === req.user.institution_id;
+    // Don't reveal anything about stickers issued by a different institution.
+    if (!sameInstitution) {
+      return res.json({ sameInstitution: false, claimable: false });
+    }
+
+    const ownedByMe = tag.owner_user_id === req.user.id;
+    const claimable = tag.status === "unactivated";
     return res.json({
       tag: {
         code: tag.code,
-        token: tag.token,
         status: tag.status,
-        label: tag.label,
         institution_name: tag.institution_name,
+        // Only reveal the label for a claimable sticker or one that's already
+        // yours — never another person's active sticker. Never expose the token.
+        label: claimable || ownedByMe ? tag.label : null,
       },
-      sameInstitution,
-      ownedByMe: tag.owner_user_id === req.user.id,
-      claimable: tag.status === "unactivated" && sameInstitution,
+      sameInstitution: true,
+      ownedByMe,
+      claimable,
     });
   } catch (error) {
     return res

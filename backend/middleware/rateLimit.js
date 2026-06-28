@@ -12,4 +12,17 @@ const loginLimiter = rateLimit({
   },
 });
 
-export { loginLimiter };
+// Throttles sticker lookup/activation per IP so the sequential codes can't be
+// enumerated (harvesting labels or claiming unclaimed stickers wholesale).
+// Generous for legitimate use — a real user does a handful, not hundreds.
+const tagActivationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    message: "Too many attempts. Please slow down and try again shortly.",
+  },
+});
+
+export { loginLimiter, tagActivationLimiter };
