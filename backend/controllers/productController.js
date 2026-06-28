@@ -224,40 +224,9 @@ const createProduct = async (req, res) => {
       );
     }
 
-    // Lost & found: if a sticker was supplied and resolves to an owned tag in
-    // this institution, link the product to it, flag the tag, and remember whom
-    // to notify (the email is sent after commit, best-effort).
-    let notify = null;
+    // A found item may carry a sticker. It's resolved AFTER commit (below) so the
+    // optional sticker can never roll back the product itself.
     const stickerValue = String(req.body.sticker || "").trim();
-    if (stickerValue) {
-      const tagRes = await client.query(
-        `SELECT t.id, t.code,
-                t.owner_user_id, ou.email AS owner_email, ou.full_name AS owner_name,
-                gu.email AS guardian_email, gu.full_name AS guardian_name
-         FROM item_tags t
-         LEFT JOIN users ou ON ou.id = t.owner_user_id
-         LEFT JOIN child_profiles cp ON cp.id = t.owner_child_id
-         LEFT JOIN users gu ON gu.id = cp.guardian_user_id
-         WHERE (t.token = $1 OR t.code = $1) AND t.institution_id = $2`,
-        [stickerValue, finalInstitutionId],
-      );
-      if (tagRes.rows.length > 0) {
-        const tag = tagRes.rows[0];
-        const to = tag.owner_user_id ? tag.owner_email : tag.guardian_email;
-        const name = tag.owner_user_id ? tag.owner_name : tag.guardian_name;
-        if (to) {
-          await client.query(
-            "UPDATE products SET found_tag_id = $1 WHERE id = $2",
-            [tag.id, product.id],
-          );
-          await client.query(
-            "UPDATE item_tags SET status = 'reported_found' WHERE id = $1 AND status = 'active'",
-            [tag.id],
-          );
-          notify = { to, name, stickerCode: tag.code };
-        }
-      }
-    }
 
     const finalProductResult = await client.query(
       `SELECT
@@ -295,18 +264,56 @@ const createProduct = async (req, res) => {
       image: imageResult.rows.map((row) => row.image_url),
     };
 
-    // Notify the sticker's owner that their found item was added (best-effort).
-    if (notify) {
-      sendFoundItemAddedEmail({
-        to: notify.to,
-        recipientName: notify.name,
-        productName: finalProduct.name,
-        description: finalProduct.description,
-        condition: finalProduct.condition,
-        institutionName: finalProduct.schoolName,
-        stickerCode: notify.stickerCode,
-        reference: finalProduct.reference_number,
-      }).catch(() => {});
+    // Found-item sticker handling — fully isolated from the (already-committed)
+    // product so it can never fail the add. We CLAIM the tag exactly once
+    // (active -> reported_found) and only then link + notify, so re-adding the
+    // same sticker (or a concurrent add) can't double-notify or double-link.
+    let notified = false;
+    if (stickerValue) {
+      try {
+        const tagRes = await pool.query(
+          `SELECT t.id, t.code,
+                  t.owner_user_id, ou.email AS owner_email, ou.full_name AS owner_name,
+                  gu.email AS guardian_email, gu.full_name AS guardian_name
+           FROM item_tags t
+           LEFT JOIN users ou ON ou.id = t.owner_user_id
+           LEFT JOIN child_profiles cp ON cp.id = t.owner_child_id
+           LEFT JOIN users gu ON gu.id = cp.guardian_user_id
+           WHERE (t.token = $1 OR t.code = $1) AND t.institution_id = $2`,
+          [stickerValue, finalInstitutionId],
+        );
+        const tag = tagRes.rows[0];
+        const to = tag && (tag.owner_user_id ? tag.owner_email : tag.guardian_email);
+        const name = tag && (tag.owner_user_id ? tag.owner_name : tag.guardian_name);
+        if (to) {
+          const claim = await pool.query(
+            "UPDATE item_tags SET status = 'reported_found' WHERE id = $1 AND status = 'active'",
+            [tag.id],
+          );
+          if (claim.rowCount === 1) {
+            await pool.query(
+              "UPDATE products SET found_tag_id = $1 WHERE id = $2",
+              [tag.id, product.id],
+            );
+            const mail = await sendFoundItemAddedEmail({
+              to,
+              recipientName: name,
+              productName: finalProduct.name,
+              description: finalProduct.description,
+              condition: finalProduct.condition,
+              institutionName: finalProduct.schoolName,
+              stickerCode: tag.code,
+              reference: finalProduct.reference_number,
+            });
+            notified = mail?.sent === true;
+          }
+        }
+      } catch (stickerError) {
+        console.warn(
+          "Found-sticker handling failed (product still created):",
+          stickerError.message,
+        );
+      }
     }
 
     logActivity({
@@ -317,13 +324,13 @@ const createProduct = async (req, res) => {
       entityType: "product",
       entityId: finalProduct.id,
       entityRef: finalProduct.reference_number,
-      description: `Added product ${finalProduct.name}${notify ? " (found item — owner notified)" : ""}`,
+      description: `Added product ${finalProduct.name}${notified ? " (found item — owner notified)" : ""}`,
     });
 
     return res.status(201).json({
       message: "Product created successfully",
       product: finalProduct,
-      notified: !!notify,
+      notified,
     });
   } catch (error) {
     await client.query("ROLLBACK");

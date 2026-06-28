@@ -25,4 +25,16 @@ const tagActivationLimiter = rateLimit({
   },
 });
 
-export { loginLimiter, tagActivationLimiter };
+// Staff sticker lookups while adding found items. Generous (legit bulk add-item
+// sessions do many), but still caps mass enumeration of student names by code.
+const stickerLookupLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    message: "Too many sticker lookups. Please slow down and try again shortly.",
+  },
+});
+
+export { loginLimiter, tagActivationLimiter, stickerLookupLimiter };
