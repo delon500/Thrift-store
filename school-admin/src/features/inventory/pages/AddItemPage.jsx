@@ -1,12 +1,21 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { ArrowLeft, ImagePlus, Plus, Sparkles } from "lucide-react";
+import { ArrowLeft, ImagePlus, Plus, Sparkles, QrCode } from "lucide-react";
 import { PageHeader, cardClass, inputClass } from "../../../components/shared/ui";
+import QrScanner from "../../../components/shared/QrScanner";
+import { useDebouncedValue } from "../../../lib/useDebouncedValue";
 import {
   useAnalyzeSchoolProduct,
   useCreateSchoolProduct,
+  useStickerLookup,
 } from "../hooks/useInventory";
+
+// A scanned tag QR encodes <scan-base>/t/<token>; pull the token out.
+const stickerFromScan = (text) => {
+  const match = String(text || "").match(/\/t\/([^/?#]+)/);
+  return match ? decodeURIComponent(match[1]) : String(text || "").trim();
+};
 
 const LISTING_TYPES = ["Thrift Store", "Lost and Found"];
 const CONDITIONS = ["Excellent", "Good", "Fair", "Poor"];
@@ -26,6 +35,7 @@ const EMPTY = {
   condition: "Good",
   listing_type: "",
   status: "Available",
+  sticker: "",
 };
 
 const AddItemPage = () => {
@@ -53,6 +63,16 @@ const AddItemPage = () => {
   );
 
   const setField = (key, value) => setForm((c) => ({ ...c, [key]: value }));
+
+  const [scanOpen, setScanOpen] = useState(false);
+  const debouncedSticker = useDebouncedValue(form.sticker.trim(), 400);
+  const { data: stickerInfo, isFetching: stickerLoading } =
+    useStickerLookup(debouncedSticker);
+
+  const handleScan = (decoded) => {
+    setScanOpen(false);
+    setField("sticker", stickerFromScan(decoded));
+  };
   const setImage = (key, file) => {
     setImages((current) => ({ ...current, [key]: file }));
     setPreviews((current) => {
@@ -95,8 +115,12 @@ const AddItemPage = () => {
       return;
     }
     try {
-      await createMutation.mutateAsync({ formData: form, images });
-      toast.success("Item added to your store");
+      const res = await createMutation.mutateAsync({ formData: form, images });
+      toast.success(
+        res?.notified
+          ? "Item added — the owner has been notified."
+          : "Item added to your store",
+      );
       navigate("/school/inventory");
     } catch (error) {
       toast.error(error?.response?.data?.message || "Could not add the item");
@@ -182,6 +206,51 @@ const AddItemPage = () => {
             <Sparkles size={16} aria-hidden="true" />
             {analyzeMutation.isPending ? "Analyzing..." : "Auto-fill with AI"}
           </button>
+        </section>
+
+        {/* Found item sticker (optional) */}
+        <section className={`${cardClass} p-5`}>
+          <h2 className="mb-1 font-bold text-on-surface">
+            Found item sticker
+            <span className="ml-2 text-sm font-normal text-on-surface-variant">
+              (optional)
+            </span>
+          </h2>
+          <p className="mb-4 text-sm text-on-surface-variant">
+            If this is a found item with a QR sticker, scan or enter it — the
+            owner will be notified once you add the item.
+          </p>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <input
+              value={form.sticker}
+              onChange={(e) => setField("sticker", e.target.value)}
+              placeholder="e.g. TAG-2026-000123"
+              className={`${inputClass} sm:flex-1`}
+            />
+            <button
+              type="button"
+              onClick={() => setScanOpen(true)}
+              className="flex items-center justify-center gap-2 rounded-xl border border-outline-variant px-5 py-2.5 text-sm font-semibold text-on-surface transition-colors hover:bg-surface-container-low"
+            >
+              <QrCode size={18} aria-hidden="true" />
+              Scan
+            </button>
+          </div>
+          {debouncedSticker ? (
+            stickerLoading ? (
+              <p className="mt-2 text-sm text-on-surface-variant">
+                Checking sticker...
+              </p>
+            ) : stickerInfo?.found ? (
+              <p className="mt-2 text-sm font-semibold text-primary">
+                Linked to {stickerInfo.ownerName} — they'll be notified.
+              </p>
+            ) : (
+              <p className="mt-2 text-sm text-on-surface-variant">
+                No matching activated sticker in your school.
+              </p>
+            )
+          ) : null}
         </section>
 
         {/* Details */}
@@ -326,6 +395,10 @@ const AddItemPage = () => {
           </div>
         </section>
       </div>
+
+      {scanOpen ? (
+        <QrScanner onResult={handleScan} onClose={() => setScanOpen(false)} />
+      ) : null}
     </form>
   );
 };

@@ -6,6 +6,16 @@ const authHeaders = (token) => ({
   },
 });
 
+// Resolve a sticker (token or code) to the linked owner's name, so the add-item
+// form can show whose found item it is. Returns { found, code?, ownerName? }.
+export const lookupSticker = async ({ value, token }) => {
+  const response = await api.get(
+    `/school/sticker/${encodeURIComponent(value)}`,
+    authHeaders(token),
+  );
+  return response.data;
+};
+
 export const getSchoolProducts = async ({ token, q, status, limit, offset }) => {
   const response = await api.get("/school/products", {
     ...authHeaders(token),

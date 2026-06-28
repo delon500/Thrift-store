@@ -5,8 +5,20 @@ import {
   createSchoolProduct,
   deleteSchoolProduct,
   getSchoolProducts,
+  lookupSticker,
   updateSchoolProduct,
 } from "../api/inventoryApi";
+
+export const useStickerLookup = (value) => {
+  const token = useAuthStore((state) => state.token);
+
+  return useQuery({
+    queryKey: ["sticker", value],
+    queryFn: () => lookupSticker({ value, token }),
+    enabled: !!token && !!value,
+    retry: false,
+  });
+};
 
 export const useInventory = (params) => {
   const token = useAuthStore((state) => state.token);
