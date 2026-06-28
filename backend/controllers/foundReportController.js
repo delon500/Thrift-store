@@ -57,15 +57,23 @@ const reportFound = async (req, res) => {
     }
 
     await client.query("BEGIN");
+    // Flip the tag first, conditional on it still being active — this row-locks
+    // and serialises concurrent scans of the same item (second one gets 0 rows).
+    const claimed = await client.query(
+      "UPDATE item_tags SET status = 'reported_found' WHERE id = $1 AND status = 'active'",
+      [tag.id],
+    );
+    if (claimed.rowCount === 0) {
+      await client.query("ROLLBACK");
+      return res
+        .status(409)
+        .json({ message: "This item has already been reported found" });
+    }
     const report = await client.query(
       `INSERT INTO found_reports (tag_id, institution_id, found_by_user_id)
        VALUES ($1, $2, $3)
        RETURNING reference, status`,
       [tag.id, tag.institution_id, req.user.id],
-    );
-    await client.query(
-      "UPDATE item_tags SET status = 'reported_found' WHERE id = $1",
-      [tag.id],
     );
     await client.query("COMMIT");
 
@@ -215,6 +223,19 @@ const listForResale = async (req, res) => {
     }
 
     await client.query("BEGIN");
+    // Claim the report first, conditional on it still being open — row-locks and
+    // serialises concurrent "list for resale" clicks so only one draft product
+    // is ever created.
+    const claimed = await client.query(
+      "UPDATE found_reports SET status = 'resold' WHERE id = $1 AND status = 'open'",
+      [req.params.id],
+    );
+    if (claimed.rowCount === 0) {
+      await client.query("ROLLBACK");
+      return res
+        .status(409)
+        .json({ message: "Only open found items can be listed" });
+    }
     const product = await client.query(
       `INSERT INTO products
          (name, description, gender, price, status, category, institution_id, age, condition, listing_type)
@@ -227,7 +248,7 @@ const listForResale = async (req, res) => {
       ],
     );
     await client.query(
-      "UPDATE found_reports SET status = 'resold', product_id = $1 WHERE id = $2",
+      "UPDATE found_reports SET product_id = $1 WHERE id = $2",
       [product.rows[0].id, req.params.id],
     );
     await client.query(

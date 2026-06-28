@@ -486,6 +486,27 @@ const updateProduct = async (req, res) => {
       return res.status(400).json({ message: "Invalid price" });
     }
 
+    // Don't let an item go on sale (Available) for free — guards the price-0
+    // Lost-and-Found resale drafts from being published without a price.
+    if (req.body.status === "Available" || req.body.price !== undefined) {
+      const current = await pool.query(
+        "SELECT status, price FROM products WHERE id = $1",
+        [req.params.id],
+      );
+      if (current.rows.length > 0) {
+        const nextStatus = req.body.status ?? current.rows[0].status;
+        const nextPrice =
+          req.body.price !== undefined
+            ? Number(req.body.price)
+            : Number(current.rows[0].price);
+        if (nextStatus === "Available" && !(nextPrice > 0)) {
+          return res.status(400).json({
+            message: "Set a price above 0 before making the item available",
+          });
+        }
+      }
+    }
+
     const updates = [];
     const values = [];
 
