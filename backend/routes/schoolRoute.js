@@ -16,6 +16,7 @@ import {
 } from "../controllers/productController.js";
 import upload from "../middleware/multer.js";
 import { allowRoles, protect } from "../middleware/authMiddleware.js";
+import { stickerLookupLimiter } from "../middleware/rateLimit.js";
 
 const schoolRouter = express.Router();
 
@@ -33,7 +34,7 @@ schoolRouter.get("/dashboard", getDashboardStats);
 schoolRouter.get("/products", getSchoolProducts);
 schoolRouter.get("/orders", listSchoolOrders);
 schoolRouter.get("/lookup", lookupByReference);
-schoolRouter.get("/sticker/:value", lookupSticker);
+schoolRouter.get("/sticker/:value", stickerLookupLimiter, lookupSticker);
 schoolRouter.get("/orders/:orderReference", getOrderDetail);
 schoolRouter.patch("/orders/:orderReference/collect", markCollected);
 
