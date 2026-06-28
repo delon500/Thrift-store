@@ -6,6 +6,7 @@ import {
   getSchoolProducts,
   lookupByReference,
   markCollected,
+  lookupSticker,
 } from "../controllers/schoolController.js";
 import {
   createProduct,
@@ -32,6 +33,7 @@ schoolRouter.get("/dashboard", getDashboardStats);
 schoolRouter.get("/products", getSchoolProducts);
 schoolRouter.get("/orders", listSchoolOrders);
 schoolRouter.get("/lookup", lookupByReference);
+schoolRouter.get("/sticker/:value", lookupSticker);
 schoolRouter.get("/orders/:orderReference", getOrderDetail);
 schoolRouter.patch("/orders/:orderReference/collect", markCollected);
 

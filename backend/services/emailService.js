@@ -155,26 +155,46 @@ The ${appName()} team`,
   });
 };
 
-// Sent to the owner (or a child's guardian) when school staff scan a tagged item
-// that was lost. Gives the LF reference to bring to the desk — no finder details.
-const sendFoundItemEmail = ({
+// Sent to the owner (or a child's guardian) when school staff add a found item —
+// matched by its sticker — to the Lost & Found inventory. Includes enough detail
+// for the owner to recognise it, plus how to view and collect it.
+const sendFoundItemAddedEmail = ({
   to,
   recipientName,
-  label,
+  productName,
+  description,
+  condition,
   institutionName,
+  stickerCode,
   reference,
-  childName,
 }) => {
-  const whose = childName ? `${childName}'s item` : "an item you tagged";
+  const portal = process.env.FRONTEND_URL || "http://localhost:5173";
+  const details = [
+    `Item: ${productName}`,
+    description ? `Description: ${description}` : null,
+    condition ? `Condition: ${condition}` : null,
+    `Date found: ${new Date().toLocaleDateString()}`,
+    `School: ${institutionName}`,
+    stickerCode ? `Sticker: ${stickerCode}` : null,
+    reference ? `Reference: ${reference}` : null,
+  ]
+    .filter(Boolean)
+    .map((line) => `  ${line}`)
+    .join("\n");
+
   return sendEmail({
     to,
-    subject: `Found: ${label || "a tagged item"} at ${institutionName}`,
+    subject: `Found: ${productName} at ${institutionName}`,
     text: `Hi ${recipientName || "there"},
 
-Good news — ${whose}${label ? ` (${label})` : ""} was found at ${institutionName} and is now at the Lost & Found desk.
+Good news — an item we believe is yours has been found and added to the Lost & Found section of ${institutionName}'s thrift platform.
 
-Bring this reference to collect it:
-  ${reference}
+${details}
+
+You can view it in the Lost & Found section here:
+${portal}/lost-found
+
+To collect it, visit ${institutionName} and quote the reference above.
 
 Thanks,
 The ${appName()} team`,
@@ -185,7 +205,7 @@ export {
   sendApprovalEmail,
   sendCollectionReadyEmail,
   sendCredentialsEmail,
-  sendFoundItemEmail,
+  sendFoundItemAddedEmail,
   sendEmail,
   sendRejectionEmail,
   verifyEmailTransport,

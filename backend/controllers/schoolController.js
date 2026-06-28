@@ -395,6 +395,40 @@ const getSchoolProducts = async (req, res) => {
   }
 };
 
+// GET /api/school/sticker/:value — resolve a sticker (token or code) to the name
+// of the student/owner linked to it, so staff can confirm whose found item it is
+// while adding it to inventory. Scoped to the staff's own institution.
+const lookupSticker = async (req, res) => {
+  try {
+    const value = String(req.params.value || "").trim();
+    if (!value) {
+      return res.status(400).json({ message: "A sticker code is required" });
+    }
+    const r = await pool.query(
+      `SELECT t.code,
+              COALESCE(ou.full_name, cp.full_name) AS owner_name
+       FROM item_tags t
+       LEFT JOIN users ou ON ou.id = t.owner_user_id
+       LEFT JOIN child_profiles cp ON cp.id = t.owner_child_id
+       WHERE (t.token = $1 OR t.code = $1) AND t.institution_id = $2`,
+      [value, req.user.institution_id],
+    );
+    if (r.rows.length === 0 || !r.rows[0].owner_name) {
+      // Either no sticker in this school, or it isn't activated to anyone.
+      return res.json({ found: false });
+    }
+    return res.json({
+      found: true,
+      code: r.rows[0].code,
+      ownerName: r.rows[0].owner_name,
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Sticker lookup failed", error: error.message });
+  }
+};
+
 export {
   getDashboardStats,
   listSchoolOrders,
@@ -402,4 +436,5 @@ export {
   getSchoolProducts,
   lookupByReference,
   markCollected,
+  lookupSticker,
 };
